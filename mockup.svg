@@ -1,0 +1,243 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920">
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="14%" r="78%">
+      <stop offset="0%" stop-color="#0d2331"/><stop offset="100%" stop-color="#04070b"/>
+    </radialGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity=".055"/>
+      <stop offset="26%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="bar" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#1c6f83"/><stop offset="100%" stop-color="#5fd8ef"/>
+    </linearGradient>
+
+    <!-- CPU CORE DOT MATRIX -------------------------------------------------
+         One global 11px dot lattice, phase-locked so every core box gets whole
+         dots and no clipped edges. Constraints you must preserve if you resize:
+           horizontal core pitch (154) % 11 == 0
+           vertical row pitch (672-584=88) % 11 == 0
+           fill heights snap to multiples of 11 (5 rows = 0,20,40,60,80,100%)
+    ---------------------------------------------------------------------- -->
+    <pattern id="dots" patternUnits="userSpaceOnUse" width="11" height="11" patternTransform="translate(5,3)">
+      <circle cx="7" cy="7" r="3.2" fill="#ffffff"/>
+    </pattern>
+    <pattern id="dotsDim" patternUnits="userSpaceOnUse" width="11" height="11" patternTransform="translate(5,3)">
+      <circle cx="7" cy="7" r="3.2" fill="#15323d"/>
+    </pattern>
+    <mask id="dotMask">
+      <rect x="88" y="584" width="904" height="152" fill="url(#dots)"/>
+    </mask>
+
+    <style>
+      text{font-family:ui-monospace,"DejaVu Sans Mono",monospace;fill:#9fd4e3}
+      .lbl{font-size:23px;letter-spacing:3px;fill:#4d7f8f}
+      .val{font-size:28px;fill:#cdeef7}
+      .dim{font-size:24px;fill:#6b9dad}
+      .sm{font-size:19px;letter-spacing:1px;fill:#5d8b9a}
+      .hi{font-size:132px;font-weight:600}
+      .quip{font-size:30px;fill:#f0b429;font-style:italic}
+      .gpu{font-size:104px;fill:#5fd8ef;font-weight:600}
+      .fah{font-size:42px;fill:#cdeef7}
+      .cel{font-size:25px;fill:#6b9dad}
+    </style>
+  </defs>
+
+  <rect width="1080" height="1920" fill="url(#glow)"/>
+
+  <!-- TITLE -->
+  <text x="540" y="126" text-anchor="middle" font-size="78" letter-spacing="14" fill="#5fd8ef">HEART OF GOLD</text>
+  <line x1="64" y1="170" x2="1016" y2="170" stroke="#1d4a5a" stroke-width="2"/>
+
+  <!-- PHRASE -->
+  <rect x="64" y="190" width="952" height="128" rx="14" fill="#0c1620" stroke="#3a2f14"/>
+  <text x="540" y="240" text-anchor="middle" class="quip">THE HEART OF GOLD HAS THE WORST PROBABILITY</text>
+  <text x="540" y="280" text-anchor="middle" class="quip">COEFFICIENT IN THE GALAXY. MY TEMP IS SECOND.</text>
+  <text x="984" y="310" text-anchor="end" font-size="19" letter-spacing="3" fill="#6b7f5a">— MARVIN, ON BOARD SINCE LAUNCH</text>
+
+  <!-- PROCESSOR -------------------------------------------------------------
+       BIG NUMBER FILL = CPU TEMP BAND (swap this one attribute per tick):
+         temp C <  60        -> #5fd8ef   (cyan, current)
+         60 <= temp C < 90   -> #f0b429   (gold)
+         temp C >= 90        -> #ff6a3d   (red)
+       Shown here at 48C -> cyan.
+    ---------------------------------------------------------------------- -->
+  <rect x="64" y="338" width="952" height="470" rx="14" fill="#08131c" stroke="#153a48"/>
+  <text x="96" y="382" font-size="30" letter-spacing="3">PROCESSOR: <tspan fill="#4d7f8f">AMD RYZEN 5 9600X</tspan></text>
+  <text x="992" y="386" text-anchor="end" class="sm">LAST 120 s</text>
+  <text x="96" y="500" class="hi" fill="#5fd8ef">52<tspan font-size="56">%</tspan></text>
+  <text x="96" y="548" class="val">4.9 GHZ | TEMP: 118°F / 48°C</text>
+
+  <!-- utilization graph, right of the big number -->
+  <g stroke="#173d4a" stroke-width="1">
+    <line x1="356" y1="398" x2="986" y2="398"/>
+    <line x1="356" y1="446" x2="986" y2="446"/>
+    <line x1="356" y1="494" x2="986" y2="494"/>
+  </g>
+  <g class="sm" text-anchor="end" stroke="none">
+    <text x="344" y="404">100</text><text x="344" y="452">50</text><text x="344" y="500">0</text>
+  </g>
+  <polygon points="356,477 379,473 403,476 426,461 449,467 473,455 496,459 519,444 543,452 566,464 589,469 613,458 636,435 659,448 683,460 706,466 729,452 753,439 776,425 799,434 823,447 846,458 869,462 893,455 916,441 939,449 963,460 986,444 986,494 356,494"
+           fill="#5fd8ef" fill-opacity=".14"/>
+  <polyline points="356,477 379,473 403,476 426,461 449,467 473,455 496,459 519,444 543,452 566,464 589,469 613,458 636,435 659,448 683,460 706,466 729,452 753,439 776,425 799,434 823,447 846,458 869,462 893,455 916,441 939,449 963,460 986,444"
+            fill="none" stroke="#5fd8ef" stroke-width="3"/>
+  <circle cx="776" cy="425" r="4" fill="#f0b429"/>
+  <text x="790" y="418" text-anchor="end" class="sm">PEAK 72%</text>
+  <circle cx="986" cy="444" r="9" fill="#5fd8ef" fill-opacity=".22"/>
+  <circle cx="986" cy="444" r="5" fill="#5fd8ef"/>
+
+  <!-- 12 cores, two rows of six, same footprint as before -->
+  <g fill="none" stroke="#1c4a5a">
+    <rect x="88"  y="584" width="134" height="64" rx="8"/><rect x="242" y="584" width="134" height="64" rx="8"/>
+    <rect x="396" y="584" width="134" height="64" rx="8"/><rect x="550" y="584" width="134" height="64" rx="8"/>
+    <rect x="704" y="584" width="134" height="64" rx="8"/><rect x="858" y="584" width="134" height="64" rx="8"/>
+    <rect x="88"  y="672" width="134" height="64" rx="8"/><rect x="242" y="672" width="134" height="64" rx="8"/>
+    <rect x="396" y="672" width="134" height="64" rx="8"/><rect x="550" y="672" width="134" height="64" rx="8"/>
+    <rect x="704" y="672" width="134" height="64" rx="8"/><rect x="858" y="672" width="134" height="64" rx="8"/>
+  </g>
+  <g fill="url(#dotsDim)">
+    <rect x="93"  y="588" width="124" height="56"/><rect x="247" y="588" width="124" height="56"/>
+    <rect x="401" y="588" width="124" height="56"/><rect x="555" y="588" width="124" height="56"/>
+    <rect x="709" y="588" width="124" height="56"/><rect x="863" y="588" width="124" height="56"/>
+    <rect x="93"  y="676" width="124" height="56"/><rect x="247" y="676" width="124" height="56"/>
+    <rect x="401" y="676" width="124" height="56"/><rect x="555" y="676" width="124" height="56"/>
+    <rect x="709" y="676" width="124" height="56"/><rect x="863" y="676" width="124" height="56"/>
+  </g>
+  <g mask="url(#dotMask)"><!-- fill = utilization, colour = severity ramp -->
+    <rect x="93"  y="600" width="124" height="44" fill="#ff6a3d"/><rect x="247" y="622" width="124" height="22" fill="#f0b429"/>
+    <rect x="401" y="633" width="124" height="11" fill="#5fd8ef"/><rect x="555" y="611" width="124" height="33" fill="#f0b429"/>
+    <rect x="709" y="633" width="124" height="11" fill="#5fd8ef"/><rect x="863" y="600" width="124" height="44" fill="#ff6a3d"/>
+    <rect x="93"  y="710" width="124" height="22" fill="#5fd8ef"/><rect x="247" y="677" width="124" height="55" fill="#ff6a3d"/>
+    <rect x="401" y="721" width="124" height="11" fill="#5fd8ef"/><rect x="555" y="699" width="124" height="33" fill="#f0b429"/>
+    <rect x="709" y="710" width="124" height="22" fill="#f0b429"/><rect x="863" y="688" width="124" height="44" fill="#ff6a3d"/>
+  </g>
+  <g class="sm" text-anchor="middle" font-size="18">
+    <text x="155" y="665">C0 78%</text><text x="309" y="665">C1 44%</text><text x="463" y="665">C2 11%</text>
+    <text x="617" y="665">C3 67%</text><text x="771" y="665">C4 22%</text><text x="925" y="665">C5 89%</text>
+    <text x="155" y="752">C6 35%</text><text x="309" y="752">C7 94%</text><text x="463" y="752">C8 16%</text>
+    <text x="617" y="752">C9 58%</text><text x="771" y="752">C10 41%</text><text x="925" y="752">C11 73%</text>
+  </g>
+
+  <!-- GPU -->
+  <rect x="64" y="828" width="952" height="350" rx="14" fill="#08131c" stroke="#153a48"/>
+  <text x="96" y="866" class="lbl">GRAPHICS</text>
+  <text x="992" y="866" text-anchor="end" class="lbl">TOTAL GPU UTILIZATION</text>
+  <text x="96" y="962" class="gpu">44<tspan font-size="46">%</tspan></text>
+  <text x="340" y="918" class="val">VRAM  19.4 / 48.0 GiB</text>
+  <text x="340" y="956" class="val">POWER 301 / 410 W</text>
+  <text x="340" y="994" class="val">CLK   2640 MHz AVG</text>
+  <rect x="96" y="1020" width="896" height="20" rx="10" fill="#12303c"/>
+  <rect x="96" y="1020" width="394" height="20" rx="10" fill="url(#bar)"/>
+
+  <rect x="88" y="1060" width="440" height="110" rx="10" fill="#0b1a24" stroke="#1c4a5a"/>
+  <text x="104" y="1092" class="val">GPU0 · RTX 4090</text>
+  <text x="512" y="1092" text-anchor="end" font-size="28" fill="#ff6a3d">78%</text>
+  <text x="104" y="1118" class="dim">24 GiB · 142°F / 61°C</text>
+  <line x1="104" y1="1162" x2="512" y2="1162" stroke="#1c4a5a"/>
+  <polyline points="104,1145 133,1139 162,1148 191,1134 220,1141 249,1132 278,1146 307,1136 336,1150 365,1138 394,1133 423,1143 452,1137 481,1147 510,1140"
+            fill="none" stroke="#5fd8ef" stroke-width="3"/>
+
+  <rect x="552" y="1060" width="440" height="110" rx="10" fill="#0b1a24" stroke="#1c4a5a"/>
+  <text x="568" y="1092" class="val">GPU1 · RTX A5000</text>
+  <text x="976" y="1092" text-anchor="end" font-size="28" fill="#5fd8ef">9%</text>
+  <text x="568" y="1118" class="dim">24 GiB · 111°F / 44°C</text>
+  <line x1="568" y1="1162" x2="976" y2="1162" stroke="#1c4a5a"/>
+  <polyline points="568,1159 597,1158 626,1160 655,1157 684,1144 713,1159 742,1158 771,1160 800,1156 829,1138 858,1159 887,1158 916,1157 945,1159 974,1158"
+            fill="none" stroke="#5fd8ef" stroke-width="3"/>
+
+  <!-- MEMORY | NETWORK -->
+  <rect x="64" y="1198" width="952" height="170" rx="14" fill="#08131c" stroke="#153a48"/>
+  <line x1="520" y1="1216" x2="520" y2="1352" stroke="#1c4a5a"/>
+  <text x="96" y="1232" class="lbl">MEMORY</text>
+  <text x="504" y="1236" text-anchor="end" font-size="30" fill="#5fd8ef">34%</text>
+  <rect x="96" y="1250" width="408" height="22" rx="11" fill="#12303c"/>
+  <rect x="96" y="1250" width="139" height="22" rx="11" fill="url(#bar)"/>
+  <text x="96" y="1304" font-size="24" fill="#cdeef7">10.8 / 32.0 GiB · CACHE 6.2</text>
+  <text x="96" y="1338" class="dim">SWAP 0% — SPARE, UNLIKE ME</text>
+
+  <text x="560" y="1232" class="lbl">NETWORK — eth0</text>
+  <text x="976" y="1232" text-anchor="end" class="sm">ESTAB 87 · ERR 0</text>
+  <text x="560" y="1272" font-size="24" fill="#cdeef7">RX 118.4 MiB/s</text>
+  <text x="976" y="1272" text-anchor="end" class="sm">47% OF LINK</text>
+  <rect x="560" y="1282" width="416" height="16" rx="8" fill="#12303c"/>
+  <rect x="560" y="1282" width="196" height="16" rx="8" fill="url(#bar)"/>
+  <text x="560" y="1326" font-size="24" fill="#cdeef7">TX 14.9 MiB/s</text>
+  <text x="976" y="1326" text-anchor="end" class="sm">6% OF LINK</text>
+  <rect x="560" y="1336" width="416" height="16" rx="8" fill="#12303c"/>
+  <rect x="560" y="1336" width="25" height="16" rx="8" fill="url(#bar)"/>
+
+  <!-- STORAGE: I/O | SPACE -->
+  <rect x="64" y="1388" width="952" height="170" rx="14" fill="#08131c" stroke="#153a48"/>
+  <line x1="520" y1="1406" x2="520" y2="1542" stroke="#1c4a5a"/>
+  <text x="96" y="1424" class="lbl">STORAGE · I/O</text>
+  <text x="504" y="1424" text-anchor="end" class="sm">SCALE 200 MiB/s</text>
+  <text x="96" y="1462" font-size="26" fill="#cdeef7">READ 128.6 MiB/s</text>
+  <rect x="96" y="1472" width="408" height="14" rx="7" fill="#12303c"/>
+  <rect x="96" y="1472" width="261" height="14" rx="7" fill="url(#bar)"/>
+  <text x="96" y="1512" font-size="26" fill="#cdeef7">WRITE 41.7 MiB/s</text>
+  <rect x="96" y="1522" width="408" height="14" rx="7" fill="#12303c"/>
+  <rect x="96" y="1522" width="86" height="14" rx="7" fill="url(#bar)"/>
+  <text x="96" y="1550" class="sm">IOPS 214/1.8k · QUEUE 0.4</text>
+
+  <text x="560" y="1424" class="lbl">SPACE</text>
+  <text x="976" y="1424" text-anchor="end" class="sm">IOWAIT 0.8% · SMART OK</text>
+  <text x="560" y="1466" font-size="22" fill="#cdeef7">/</text>
+  <rect x="648" y="1453" width="140" height="16" rx="8" fill="#12303c"/>
+  <rect x="648" y="1453" width="57" height="16" rx="8" fill="#5fd8ef"/>
+  <text x="976" y="1466" text-anchor="end" class="sm">41% · 128/512 GiB</text>
+  <text x="560" y="1506" font-size="22" fill="#cdeef7">/tank</text>
+  <rect x="648" y="1493" width="140" height="16" rx="8" fill="#12303c"/>
+  <rect x="648" y="1493" width="101" height="16" rx="8" fill="#f0b429"/>
+  <text x="976" y="1506" text-anchor="end" class="sm">72% · 14.2/19.6 TiB</text>
+  <text x="560" y="1546" font-size="22" fill="#cdeef7">docker</text>
+  <rect x="648" y="1533" width="140" height="16" rx="8" fill="#12303c"/>
+  <rect x="648" y="1533" width="81" height="16" rx="8" fill="#5fd8ef"/>
+  <text x="976" y="1546" text-anchor="end" class="sm">58% · 46/80 GiB</text>
+
+  <!-- THERMALS -->
+  <rect x="64" y="1578" width="952" height="278" rx="14" fill="#08131c" stroke="#153a48"/>
+  <text x="96" y="1616" class="lbl">THERMALS</text>
+  <text x="992" y="1616" text-anchor="end" class="lbl">| = LIMIT · AMBER OVER 70°C</text>
+
+  <text x="96" y="1660" class="lbl">CPU</text>
+  <text x="96" y="1716" class="fah">118°F</text>
+  <text x="96" y="1750" class="cel">48°C</text>
+  <rect x="96" y="1762" width="206" height="12" rx="6" fill="#12303c"/>
+  <rect x="96" y="1762" width="99" height="12" rx="6" fill="#5fd8ef"/>
+  <line x1="291" y1="1758" x2="291" y2="1778" stroke="#4d7f8f" stroke-width="3"/>
+
+  <text x="322" y="1660" class="lbl">GPU0</text>
+  <text x="322" y="1716" class="fah">142°F</text>
+  <text x="322" y="1750" class="cel">61°C</text>
+  <rect x="322" y="1762" width="206" height="12" rx="6" fill="#12303c"/>
+  <rect x="322" y="1762" width="126" height="12" rx="6" fill="#5fd8ef"/>
+  <line x1="517" y1="1758" x2="517" y2="1778" stroke="#4d7f8f" stroke-width="3"/>
+
+  <text x="548" y="1660" class="lbl">GPU1</text>
+  <text x="548" y="1716" class="fah">111°F</text>
+  <text x="548" y="1750" class="cel">44°C</text>
+  <rect x="548" y="1762" width="206" height="12" rx="6" fill="#12303c"/>
+  <rect x="548" y="1762" width="91" height="12" rx="6" fill="#5fd8ef"/>
+  <line x1="743" y1="1758" x2="743" y2="1778" stroke="#4d7f8f" stroke-width="3"/>
+
+  <text x="774" y="1660" class="lbl">NVME M.2</text>
+  <text x="774" y="1716" class="fah" fill="#f0b429">160°F</text>
+  <text x="774" y="1750" class="cel">71°C</text>
+  <rect x="774" y="1762" width="206" height="12" rx="6" fill="#12303c"/>
+  <rect x="774" y="1762" width="146" height="12" rx="6" fill="#f0b429"/>
+  <line x1="853" y1="1758" x2="853" y2="1778" stroke="#4d7f8f" stroke-width="3"/>
+
+  <text x="96" y="1822" class="lbl">FAN BANK 1</text>
+  <rect x="96" y="1830" width="250" height="16" rx="4" fill="#12303c"/>
+  <rect x="96" y="1830" width="155" height="16" rx="4" fill="#5fd8ef"/>
+  <text x="362" y="1844" class="val">1240 RPM</text>
+  <text x="560" y="1822" class="lbl">FAN BANK 2</text>
+  <rect x="560" y="1830" width="250" height="16" rx="4" fill="#12303c"/>
+  <rect x="560" y="1830" width="51" height="16" rx="4" fill="#5fd8ef"/>
+  <text x="826" y="1844" class="val">612 RPM</text>
+
+  <!-- FOOTER -->
+  <text x="96" y="1900" class="lbl">LOAD 0.41 0.38 0.29 · UPTIME 41d 07:12:03 · PANIC COUNT 0</text>
+  <text x="992" y="1900" text-anchor="end" font-size="30" letter-spacing="6" fill="#f0b429">DON'T PANIC</text>
+
+  <rect width="1080" height="1920" fill="url(#glass)"/>
+</svg>

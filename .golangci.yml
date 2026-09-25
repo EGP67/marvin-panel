@@ -1,0 +1,30 @@
+# golangci-lint v2 configuration.
+# If `golangci-lint --version` reports 1.x, run `golangci-lint migrate` or delete the
+# version/formatters keys — v2 changed the config schema.
+version: "2"
+linters:
+  default: standard
+  enable:
+    - errcheck
+    - govet
+    - staticcheck
+    - gocritic
+    - revive
+    - nilerr
+    - noctx
+    - bodyclose
+    - contextcheck
+    - unconvert
+    - misspell
+    - exhaustive
+  settings:
+    errcheck:
+      check-blank: true
+    revive:
+      rules:
+        - name: package-comments
+          disabled: true
+formatters:
+  enable:
+    - gofmt
+    - goimports

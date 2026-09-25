@@ -1,0 +1,11 @@
+title = "marvin-panel gitleaks config"
+[extend]
+useDefault = true
+
+[allowlist]
+description = "generated and fixture content that legitimately looks secret-shaped"
+paths = [
+  '''docs/DISCOVERY\.md''',
+  '''fixtures/.*\.json''',
+  '''go\.sum''',
+]

@@ -1,0 +1,8 @@
+bin/
+dist/
+*.out
+*.test
+coverage.txt
+.DS_Store
+web/*.bak
+GOLANGCI_*
