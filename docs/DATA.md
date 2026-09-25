@@ -66,3 +66,21 @@ connector reported connected only because nothing is attached yet.
   adapter, not GPU0. Excluding it entirely is the default.
 - Acceptance test for T11: with the panel running, nvidia-smi utilization.gpu must read 0%
   on both cards. If it does not, something is rendering on the wrong device.
+
+## FAN WIRING — physical facts supplied by the owner (supersedes guesswork above)
+The box has EIGHT chassis fans: four daisy-chained to one motherboard fan header, four to a
+second header. So Marvin's two FAN BANK slots map 1:1 onto the two physical headers and are
+the correct abstraction, not a compromise.
+Consequences that must be designed for, not discovered later:
+- A single tach per header means only the FIRST fan in each chain reports RPM. That is fine
+  for speed, and it means a failed fan in positions 2-4 of a chain is INVISIBLE to RPM alone.
+- All four fans on a chain share one PWM/voltage domain, so commanded speed is shared: bank
+  RPM is a proxy for intent, not for the health of any individual fan.
+- Therefore add dead-fan inference rather than trusting RPM: track (bank RPM) against
+  (CPU temp, GPU temps) over minutes. High RPM with rising temperatures, or RPM pinned at
+  ceiling while the box cooks, means "BANK n RUNNING BUT NOT COOLING" — Marvin says the fan
+  is spinning and achieving nothing, which is both accurate telemetry and exactly his tone.
+- If the chains are Molex-powered rather than PWM/tach splitter cables, no tach reaches the
+  board at all and resolution order above falls to step 2 or 3. Confirm physically.
+- Per-fan health would need a hub with individual tachs (e.g. per-port tach PWM hub); note it
+  in docs/PANEL_BUYING.md as optional hardware, not a software problem.

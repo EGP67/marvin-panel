@@ -30,7 +30,7 @@ verify: lint test vuln secrets
 tools:
 	$(GO) install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
 	$(GO) install golang.org/x/vuln/cmd/govulncheck@latest
-	$(GO) install github.com/gitleaks/gitleaks/v8@latest
+	$(GO) install github.com/zricethezav/gitleaks/v8@latest
 
 # Blocks pushes that skipped the gate. Install once per clone.
 hooks:
