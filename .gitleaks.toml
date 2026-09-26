@@ -3,9 +3,25 @@ title = "marvin-panel gitleaks config"
 useDefault = true
 
 [allowlist]
-description = "generated and fixture content that legitimately looks secret-shaped"
+description = "discovery survey and checksum file that legitimately look secret-shaped"
 paths = [
   '''docs/DISCOVERY\.md''',
-  '''fixtures/.*\.json''',
   '''go\.sum''',
+]
+
+# Real NVIDIA UUIDs appear only in the generator and the fixtures it writes.
+# This rule exists so those occurrences are allowed by path, WITHOUT allowing the
+# whole fixtures/ tree: any other secret-shaped string in fixtures/ still fires the
+# default rules, and a GPU UUID pasted anywhere else (source, docs, web/) still fires
+# this one.
+[[rules]]
+id = "nvidia-gpu-uuid"
+description = "NVIDIA GPU UUID (real hardware identifier, not a secret)"
+regex = '''GPU-[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}'''
+tags = ["hardware-id"]
+[rules.allowlist]
+paths = [
+  '''cmd/genfixtures/main\.go''',
+  '''docs/SCHEMA\.md''',
+  '''fixtures/(calm|busy|hot|dying)\.json''',
 ]

@@ -33,21 +33,49 @@ Dot pitch p must satisfy BOTH divisibility constraints:
 Fill heights are integer multiples of p measured up from the region bottom
 (row A bottom 644, row B bottom 732). This is what guarantees whole unclipped dots.
 
-Columns are always 6. Row count and pitch:
-  threads <= 6   -> 1 row, p=14
-  threads <= 12  -> 2 rows, p=11   (current machine: 12 threads on a 6-core Ryzen 5 9600X)
-  threads <= 18  -> 3 rows, p=7
-  threads >  18  -> drop dots, render one thin horizontal bar per thread instead
+Columns are always 6. There is exactly ONE layout:
+  12 threads -> 2 rows x 6, p=11   (this ship: 12 threads on a 6-core Ryzen 5 9600X)
+Above 12 threads marvind refuses to start, with a visible message naming the thread count.
+The former threads<=6 / <=12 / <=18 / >18 tier table is DELETED as unbuildable (D-006):
+three 64px rows need 192px; the band is 152px and the PROCESSOR box closes at y=808.
+Headline/graph/matrix agreement tolerance: +/- 12 points, because p=11 in a 56px region
+quantises fills to 20% steps.
 Labels "C0 78%", font 18, centered at x = 155 + 154*i, baseline in the 24px gap below
 each row (665 row A, 752 row B).
 
 ## Colour rules (implemented once in internal/model, never inline in templates)
+ONE temperature function decides every temperature colour on the panel (D-005):
+band ok <60C / warn 60..90C / danger >=90C. 70C and 80C survive only as mood thresholds
+(docs/MARVIN.md); 70C is NOT a colour threshold any more.
 per-thread util: <40 cyan | 40..70 gold | >70 red
 big CPU number fill = CPU TEMP BAND, not utilisation:
   <60C cyan #5fd8ef | 60..90C gold #f0b429 | >=90C red #ff6a3d
-thermal bars: width = C/100 * bar width; tick marks the device limit; amber over 70C
-throughput bars MUST print their ceiling ("SCALE 200 MiB/s", "47% OF LINK").
+thermal bars: width = C/100 * bar width; tick marks the device limit; colour from the
+ONE temperature function above — no separate 70C amber rule.
+throughput bars MUST print their ceiling ("SCALE 200 MiB/s"). The network bar reads
+"% OF SCALE" against an explicitly labelled measured scale — never "% OF LINK"; this box
+has no link ceiling (docs/DATA.md NETWORK).
 Never render a normalised bar without its stated scale.
+
+## Footer budget
+37 characters maximum at 23px ls3 (16.85 px/char); must end before x=727 ("DON'T PANIC"
+occupies 751..992). Format: LOAD 0.41 0.38 0.29 - UP 41d 07:12.
+"PANIC COUNT" is removed from the panel: it was never defined and Marvin says doomed in
+words, which is the same information with better delivery. (Mockup edit P-003, pending.)
+
+## NETWORK cell
+Header text is "NET enp13s0" (14 chars, fits the half-width column). "NETWORK - eth0"
+overran the ESTAB/ERR text by 19 px and named a nonexistent interface (mockup edit
+P-002, pending). No link ceiling exists on this box: render "LINK SPEED UNKNOWN",
+suppress the bar, or draw it only against a labelled measured scale as "% OF SCALE".
+
+## Model-string shortening
+CPU: strip " Processor" (e.g. "AMD Ryzen 5 9600X 6-Core"). GPU: strip "NVIDIA GeForce "
+giving "GPU0 - RTX 3060". Real names are 30 chars and would overrun the right-hand value.
+
+## Phrase box budget
+<=100 characters, wrapped to 2 lines of <=52 at 30px (18.06 px/char). The phrase engine
+rejects an over-budget line; the browser never truncates.
 
 ## Reviewer checklist — every diff
 - tokens, coordinates, font sizes and lattice divisibility above still intact?

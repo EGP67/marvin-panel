@@ -7,6 +7,6 @@ Read docs/PANEL_BUYING.md before buying the display.
     make tools    # install golangci-lint, govulncheck, gitleaks
     make verify   # the mandatory gate: lint + test -race + vulncheck + gitleaks
     make build    # bin/marvind
-    go run ./cmd/marvind --oneshot
+    go run ./cmd/marvind --oneshot --fixture fixtures/busy.json
 
 Panel not yet purchased. Develop against fixtures; see TASKS.md T2.

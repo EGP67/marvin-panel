@@ -42,3 +42,18 @@ If nothing changes: BIOS "Initial Display Output" / "IGD Configuration" / "Multi
 must allow IGD alongside discrete GPUs. Fix and retest before buying. Do not paper over a
 dead port with a DisplayLink adapter — it would make the panel the most expensive process
 on the box in CPU terms.
+
+## T2 sync (2026-09-25) — facts that change install assumptions
+- Kiosk engine DECIDED (DECISIONS.md D-001): Brave Origin 154.1.96.59 from the Brave apt
+  repo (brave-keyring 1.20, fonts-liberation; 451 MB installed; no desktop packages; no
+  new listening sockets). The DisplayLink prohibition above still stands.
+- The port check above referenced 8080; superseded by DECISIONS.md D-002: marvind binds
+  127.0.0.1:8042. Never bind, proxy or poll the reserved ports in D-003.
+- xrdp on this host is disabled + masked (3350/3389, D-003). Nothing to turn off at install.
+- Display plumbing: the kiosk runs as X display :0 on tty1, with the screen pinned to
+  BusID "PCI:17:0:0", Driver "amdgpu".
+- The kiosk unit uses PrivateDevices=yes with BindPaths limited to /dev/dri/card0 and
+  /dev/dri/renderD128, so renderD129 and renderD130 - the two inference cards - do not
+  exist for it.
+- Optional hardware: a PWM fan hub with per-port tachs would turn the two 4-fan chains
+  into eight individually-visible fans (docs/DATA.md FAN WIRING); optional, not required.
