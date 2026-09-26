@@ -1,25 +1,28 @@
 # Geometry contract — mockup.svg is the source of truth
 Canvas 1080x1920. Content margins x=64..1016 (inner width 952).
+Changes to the picture, mockup.svg or this file require an owner-approved decision.
 
-## Colour tokens (these only)
+## Color tokens (these only)
 bg radial #0d2331 -> #04070b | panel fill #08131c | panel stroke #153a48
 inner panel #0b1a24 | bar track #12303c | dim dot #15323d
-cyan ok #5fd8ef | gold warn #f0b429 | red danger #ff6a3d
+cyan ok #5fd8ef | gold/amber warn #f0b429 | red danger #ff6a3d
+bar gradient #1c6f83 -> #5fd8ef | memory cache segment #1c6f83 (D-034)
 text primary #cdeef7 | text secondary #6b9dad | labels #4d7f8f
 phrase box fill #0c1620 stroke #3a2f14
 
-## Font scale (chosen to read across a room — never shrink)
+## Font scale (never shrink)
 wordmark 78 ls14 | headline 132 | gpu total 104 | fahrenheit 42 | body 28 | label 23 ls3
 dim 24 | small 19 | celsius 25 | core label 18
 family: ui-monospace,"DejaVu Sans Mono",monospace
 
 ## Vertical map (top -> bottom)
-title baseline 126 | rule y=170 | phrase 190-318 | process 338-808 | graphics 828-1178
+title baseline 126 | rule y=170 | phrase 190-318 | processor 338-808 | graphics 828-1178
 memory|network 1198-1368 | storage I/O|space 1388-1558 | thermals 1578-1856
 footer baseline 1900
 
 ## Processor box internals
-title baseline 382 | "LAST 120 s" right aligned baseline 386
+title "PROCESSOR: " + cpu.model_display (D-020), baseline 382 | "LAST 120 s" right
+aligned baseline 386
 big number baseline 500 at x=96 | "n GHZ | TEMP n°F / m°C" baseline 548
 graph plot area x=356..986, y=398 (=100%) .. 494 (=0%); axis labels anchor=end x=344
 core boxes: 6 columns, x = 88 + 154*i, w=134; row A y=584 h=64, row B y=672 h=64
@@ -35,52 +38,67 @@ Fill heights are integer multiples of p measured up from the region bottom
 
 Columns are always 6. There is exactly ONE layout:
   12 threads -> 2 rows x 6, p=11   (this ship: 12 threads on a 6-core Ryzen 5 9600X)
-Above 12 threads marvind refuses to start, with a visible message naming the thread count.
-The former threads<=6 / <=12 / <=18 / >18 tier table is DELETED as unbuildable (D-006):
-three 64px rows need 192px; the band is 152px and the PROCESSOR box closes at y=808.
-Headline/graph/matrix agreement tolerance: +/- 12 points, because p=11 in a 56px region
-quantises fills to 20% steps.
+Above 12 threads marvind refuses to start, with a visible message naming the thread
+count (D-006). Headline/graph/matrix agreement tolerance: +/- 12 points, because p=11 in
+a 56px region quantizes fills to 20% steps.
 Labels "C0 78%", font 18, centered at x = 155 + 154*i, baseline in the 24px gap below
 each row (665 row A, 752 row B).
 
-## Colour rules (implemented once in internal/model, never inline in templates)
-ONE temperature function decides every temperature colour on the panel (D-005):
-band ok <60C / warn 60..90C / danger >=90C. 70C and 80C survive only as mood thresholds
-(docs/MARVIN.md); 70C is NOT a colour threshold any more.
-per-thread util: <40 cyan | 40..70 gold | >70 red
-big CPU number fill = CPU TEMP BAND, not utilisation:
-  <60C cyan #5fd8ef | 60..90C gold #f0b429 | >=90C red #ff6a3d
-thermal bars: width = C/100 * bar width; tick marks the device limit; colour from the
-ONE temperature function above — no separate 70C amber rule.
-throughput bars MUST print their ceiling ("SCALE 200 MiB/s"). The network bar reads
-"% OF SCALE" against an explicitly labelled measured scale — never "% OF LINK"; this box
-has no link ceiling (docs/DATA.md NETWORK).
-Never render a normalised bar without its stated scale.
+## Color rules (implemented once in internal/model, never inline in templates)
+Two temperature functions (D-016):
+  CPU band — PROCESSOR big number fill only:
+    <60C cyan #5fd8ef | 60..<90C gold #f0b429 | >=90C red #ff6a3d
+  Thermal band — THERMALS values and bars:
+    <70C cyan #5fd8ef | 70..<90C amber #f0b429 | >=90C red #ff6a3d
+  The THERMALS header "| = LIMIT · AMBER OVER 70°C" stays as drawn.
+  The same temperature may color differently in PROCESSOR and THERMALS; this is accepted.
+per-thread utilization: <40 cyan | 40..70 gold | >70 red
+thermal bars: width = C/100 * bar width; the tick marks the device limit.
+Throughput bars always print their scale: STORAGE "SCALE 200 MiB/s" (D-021); NETWORK
+"<n>% OF <S> MiB/s" (D-018; S set from T5 measurements). Never "% OF LINK".
+Never render a normalized bar without its stated scale.
 
-## Footer budget
-37 characters maximum at 23px ls3 (16.85 px/char); must end before x=727 ("DON'T PANIC"
-occupies 751..992). Format: LOAD 0.41 0.38 0.29 - UP 41d 07:12.
-"PANIC COUNT" is removed from the panel: it was never defined and Marvin says doomed in
-words, which is the same information with better delivery. (Mockup edit P-003, pending.)
+## GRAPHICS box
+Big number = mean of the two cards' util_pct. "VRAM used / total GiB" and
+"POWER draw / limit W" sum both cards. "CLK n MHz AVG" = mean sm_clock_mhz.
+Card headers "GPU0 · RTX 3060" / "GPU1 · RTX 3060" from gpus[].display_name (D-020).
 
-## NETWORK cell
-Header text is "NET enp13s0" (14 chars, fits the half-width column). "NETWORK - eth0"
-overran the ESTAB/ERR text by 19 px and named a nonexistent interface (mockup edit
-P-002, pending). No link ceiling exists on this box: render "LINK SPEED UNKNOWN",
-suppress the bar, or draw it only against a labelled measured scale as "% OF SCALE".
+## MEMORY cell (D-034)
+Track x=96 y=1250 w=408 h=22 rx=11 fill #12303c.
+Cache segment (underneath): x=96, width = (used+cache)/total * 408, rx=11, fill #1c6f83.
+Used segment (on top): x=96, width = used/total * 408, rx=11, fill url(#bar).
+Percentage text (right, "34%") = used_pct only. Detail line format as drawn:
+"<used> / <total> GiB · CACHE <cache>". SWAP line as drawn.
 
-## Model-string shortening
-CPU: strip " Processor" (e.g. "AMD Ryzen 5 9600X 6-Core"). GPU: strip "NVIDIA GeForce "
-giving "GPU0 - RTX 3060". Real names are 30 chars and would overrun the right-hand value.
+## NETWORK cell (D-018)
+Header "NETWORK — WIFI" (same length as the drawn "NETWORK — eth0"). "ESTAB n · ERR n"
+as drawn. RX/TX right labels "<n>% OF <S> MiB/s". Label fit is confirmed in the T10
+Brave screenshot.
+
+## SPACE cell (D-019)
+Rows "/", "/srv/hogdata", "/boot" at baselines 1466, 1506, 1546; bars x=648 w=140 h=16;
+right text "<pct>% · <used>/<total> <unit>". "/srv/hogdata" is wider than the drawn
+labels; its fit is confirmed in the T10 screenshot and any collision goes to the owner.
+Header right text "IOWAIT n% · SMART <s>", where <s> is OK, FAIL or -- (unknown).
+
+## Footer budget (D-017)
+37 characters maximum at 23px ls3 (16.85 px/char); must end before x=727
+("DON'T PANIC" occupies 751..992).
+Format: "UPTIME 41d 07:12:03 · PANIC COUNT 0" (35 characters).
+panic_count null renders "--". A count above 99 renders "99+".
+
+## Model-string shortening (D-020)
+CPU: uppercase, strip the trailing " 6-Core Processor" -> "AMD RYZEN 5 9600X".
+GPU: strip "NVIDIA GeForce " -> "RTX 3060", shown as "GPU0 · RTX 3060".
 
 ## Phrase box budget
-<=100 characters, wrapped to 2 lines of <=52 at 30px (18.06 px/char). The phrase engine
-rejects an over-budget line; the browser never truncates.
+<=100 characters, wrapped to 2 lines of <=52 at 30px (18.06 px/char). The phrase
+engine rejects an over-budget line; the browser never truncates.
 
 ## Reviewer checklist — every diff
-- tokens, coordinates, font sizes and lattice divisibility above still intact?
-- does the headline number agree with the graph's "now" dot and the mean of the matrix?
-- same device reported with the same F/C pair everywhere it appears (GPU in two boxes)?
+- Tokens, coordinates, font sizes and lattice divisibility above still intact?
+- Does the headline number agree with the graph's "now" dot and the mean of the matrix?
+- Same device reported with the same F/C pair everywhere it appears (GPU in two boxes)?
 - Fahrenheit primary (larger), Celsius secondary, everywhere.
-- any invented value, zero-fill, or swallowed error? reject.
-- new box never resized to fit new content; the content changes instead.
+- Any invented value, zero-fill, or swallowed error? Reject.
+- A box is never resized to fit new content; the content changes instead.
