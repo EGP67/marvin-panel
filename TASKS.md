@@ -10,8 +10,7 @@ T1  SCAFFOLD (already complete in this repo) flags --addr --fixture --oneshot, /
 T2  FIXTURES   fixtures/{calm,busy,hot,dying}.json deterministic. --fixture serves them at
     1Hz round-robin; --oneshot prints one snapshot to stdout. Move HTTP plumbing to
     internal/server. Verify: go run ./cmd/marvind --oneshot --fixture fixtures/busy.json | jq .
-    Status 2026-09-25: implemented; architect requested changes R1-R6 (see HANDOFF.md
-    Status), NOT yet approved, NOT committed.
+    Status 2026-09-26: committed 39b0ea9 (owner-approved; R1-R6 addressed).
 T3  MODEL      internal/model Snapshot struct, ring buffers, temp band (<60/60-90/>=90C),
     severity ramp (<40/40-70/>70), F from C helper, agreement invariant test.
     Gate addition (D-013): forbidigo in .golangci.yml bans http.Get, http.Post, http.Client,

@@ -22,7 +22,7 @@ T4-T8 collectors replace them.
 | HANDOFF.md | project truth: status, architecture, constraints | NORMATIVE |
 | TASKS.md | ordered tasks + acceptance criteria | NORMATIVE |
 | docs/DECISIONS.md | decision register (D-001..D-013, P-001..P-003) | NORMATIVE; ADOPTED closed, PENDING OWNER = do not act |
-| docs/SCHEMA.md | snapshot.json wire contract "marvin/v1" | NORMATIVE (T2; R4 unconfirmed by architect) |
+| docs/SCHEMA.md | snapshot.json wire contract "marvin/v1" | NORMATIVE (T2; owner-approved) |
 | docs/GEOMETRY.md | coordinates, fonts, colour rules, budgets | NORMATIVE |
 | docs/DATA.md | metric -> source map + handling rules | NORMATIVE |
 | docs/MARVIN.md | voice, mood triggers, seed lines + speakability | NORMATIVE for voice only (D-004) |

@@ -12,9 +12,8 @@ nothing to look at: development proceeds against fixture data and browser screen
 It will connect to the MOTHERBOARD HDMI port, which on this CPU is the integrated graphics
 (amdgpu), NOT either Nvidia card; the panel must therefore never require or allocate
 Nvidia GPU work. Read docs/DISCOVERY.md and docs/PANEL_BUYING.md first.
-Tasks: T1 committed. T2 implemented, changes requested by the architect, NOT committed:
-R1 size report self-contradictory; R2 round-robin order not understood; R3 schema drift;
-R4 SCHEMA.md unconfirmed; R5 no command output pasted; R6 govulncheck not run.
+Tasks: T1 committed. T2 committed 39b0ea9 (owner-approved; R1-R6 addressed: R6 govulncheck
+still needs the owner's own terminal — coder sandbox refuses the proxy).
 T3 not started.
 Clock: NTP active and synchronised.
 Deployment: the service must run as a dedicated non-privileged account, NOT uid 1000,
@@ -55,7 +54,7 @@ HANDOFF.md                 this file
 TASKS.md                   ordered task list with acceptance criteria
 AGENTS.md                  agent entry map — read first
 docs/DECISIONS.md          decision register; ADOPTED entries are closed
-docs/SCHEMA.md             snapshot wire contract "marvin/v1" (T2; R4: unconfirmed)
+docs/SCHEMA.md             snapshot wire contract "marvin/v1" (T2; owner-approved)
 docs/GEOMETRY.md           coordinate + colour contract (normative)
 docs/DATA.md               metric -> source map and required handling rules
 docs/MARVIN.md             voice rules, mood triggers, seed lines
