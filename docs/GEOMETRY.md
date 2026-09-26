@@ -53,14 +53,16 @@ Two temperature functions (D-016):
   The THERMALS header "| = LIMIT · AMBER OVER 70°C" stays as drawn.
   The same temperature may color differently in PROCESSOR and THERMALS; this is accepted.
 per-thread utilization: <40 cyan | 40..70 gold | >70 red
-thermal bars: width = C/100 * bar width; the tick marks the device limit.
+thermal bars: width = C/100 * bar width; the tick marks the device limit
+(NVMe: temp1_max 83.85 C, x=947).
 Throughput bars always print their scale: STORAGE "SCALE 200 MiB/s" (D-021); NETWORK
 "<n>% OF <S> MiB/s" (D-018; S set from T5 measurements). Never "% OF LINK".
 Never render a normalized bar without its stated scale.
 
 ## GRAPHICS box
 Big number = mean of the two cards' util_pct. "VRAM used / total GiB" and
-"POWER draw / limit W" sum both cards. "CLK n MHz AVG" = mean sm_clock_mhz.
+"POWER draw / limit W" sum both cards. The third text line (x=340, y=994) is gpu_line:
+class quip at 28px (italic gold #f0b429), <= 38 characters (D-037).
 Card headers "GPU0 · RTX 3060" / "GPU1 · RTX 3060" from gpus[].display_name (D-020).
 
 ## MEMORY cell (D-034)
@@ -68,12 +70,13 @@ Track x=96 y=1250 w=408 h=22 rx=11 fill #12303c.
 Cache segment (underneath): x=96, width = (used+cache)/total * 408, rx=11, fill #1c6f83.
 Used segment (on top): x=96, width = used/total * 408, rx=11, fill url(#bar).
 Percentage text (right, "34%") = used_pct only. Detail line format as drawn:
-"<used> / <total> GiB · CACHE <cache>". SWAP line as drawn.
+"<used> / <total> GiB · CACHE <cache>", total as a whole number
+("42.0 / 123 GiB · CACHE 62.0", D-037). SWAP line as drawn.
 
 ## NETWORK cell (D-018)
 Header "NETWORK — WIFI" (same length as the drawn "NETWORK — eth0"). "ESTAB n · ERR n"
-as drawn. RX/TX right labels "<n>% OF <S> MiB/s". Label fit is confirmed in the T10
-Brave screenshot.
+as drawn. RX/TX right labels "<n>% OF <S> MiB/s". S = 40 MiB/s until T5 measurements
+(D-037). Label fit is confirmed in the T10 Brave screenshot.
 
 ## SPACE cell (D-019)
 Rows "/", "/srv/hogdata", "/boot" at baselines 1466, 1506, 1546; bars x=648 w=140 h=16;

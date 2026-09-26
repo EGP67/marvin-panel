@@ -22,9 +22,9 @@ O3  PANEL WAKE TEST (after purchase). PeakDo powered from the PSU 5 V rail: it m
     kiosk stop.
 
 ## Build
-T2b SCHEMA AMENDMENTS  Apply the docs/SCHEMA.md changes from doc step 3b (D-016 thermal
-    band, D-017 panic_count, D-018 network interface, D-019 mounts, D-027 fans) in
-    cmd/genfixtures and its tests; regenerate fixtures byte-deterministically.
+T2b SCHEMA AMENDMENTS  Apply every docs/SCHEMA.md amendment (D-016..D-019, D-027,
+    D-034, D-035, D-037) in cmd/genfixtures and its tests; regenerate fixtures
+    byte-deterministically.
     Also remove docs/SCHEMA.md from the .gitleaks.toml nvidia-gpu-uuid allowlist.
     Verify: go run ./cmd/marvind --oneshot --fixture fixtures/busy.json | jq .
 T3  MODEL       internal/model: Snapshot struct, ring buffers, two temperature color
@@ -53,8 +53,9 @@ T8  COLLECT-TEMPFAN hwmon matched by name first (k10temp Tctl -> CPU, nvme Compo
     Verify: print the chosen sensor path for CPU, GPU0, GPU1, NVMe.
 T9  MOOD        hysteresis 90 s, line cooldown 10 min, family cooldown 3 min, danger
     repeat 60 s; lifetime PANIC COUNT persisted in /var/lib/heartofgold/ with atomic
-    writes (D-017). Verify: table-driven tests over scripted timelines assert the mood
-    sequence and the persisted count across a simulated restart.
+    writes (D-017); the state-driven GPU line (D-037). Verify: table-driven tests over
+    scripted timelines assert the mood sequence and the persisted count across a
+    simulated restart.
 T10 VIEW        web/index.html = mockup.svg (after doc step 4) + binding JS; null ->
     "NO TELEMETRY" text. Served BY marvind at GET / from 127.0.0.1:8042 (D-002, D-011)
     with the path-traversal test. Verify: cycle all four fixtures in brave-origin

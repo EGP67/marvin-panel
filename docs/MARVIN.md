@@ -68,3 +68,17 @@ state, not a wire field.
 Examples that name quantities this ship cannot see — "nobody SSH'd in", "no backup ran",
 "RAID DEGRADED" (there is no RAID: one NVMe under LVM) — are UNSPEAKABLE. The doomed-tier
 equivalents here are free space, SMART state and temperature.
+
+## GPU line (D-037)
+One line of at most 38 characters in the GRAPHICS box (gold italic), chosen by marvind
+from GPU state. Voice rules 1-8 apply. An exact line cannot repeat within 10 min, and the
+GPU line never repeats the topic of the current phrase-box line.
+State, evaluated each tick, first match wins:
+stale     either card stale (temp/util null)            "THE BRAINS ARE NOT ANSWERING."
+hot       either card temp_c >= 80                       "THINKING THIS HARD RUNS AT <n> DEGREES."
+thinking  mean util_pct >= 20                            "SOMEONE ASKED IT SOMETHING. NOT ME."
+loaded    either card mem_used_mib >= 1024               "MODEL LOADED. NOBODY ASKS IT ANYTHING."
+empty     otherwise                                      "BOTH BRAINS EMPTY. RESTFUL, NOT HAPPY."
+Pacing: the line changes when a new state has held for 30 s, or every 5 min within a
+state. Extend to ~5 lines per state; each line is original writing in Marvin's voice,
+never a quotation from the books or films.

@@ -5,7 +5,7 @@ Every snapshot (fixture today, collector output from T4 on) is one JSON object s
 and are produced only by `go run ./cmd/genfixtures -out fixtures`; never edit them by
 hand. Regeneration must be byte-identical (fixed seeds, fixed `generated_at`).
 
-Amended 2026-09-26 by D-016..D-019, D-027, D-034 and D-035; T2b implements the
+Amended 2026-09-26 by D-016..D-019, D-027, D-034, D-035 and D-037; T2b implements the
 amendments in cmd/genfixtures. The version string stays "marvin/v1": nothing consumes the
 contract yet.
 
@@ -24,6 +24,7 @@ triggers come from `docs/MARVIN.md`. Colors and geometry are NOT in this contrac
 | `generated_at` | string | RFC 3339 UTC |
 | `host` | object | see below |
 | `phrase` | object | phrase box text |
+| `gpu_line` | string | GRAPHICS box Marvin line (D-037) |
 | `cpu` | object | PROCESSOR box |
 | `memory` | object | MEMORY cell |
 | `gpus` | array | GRAPHICS box; exactly 2 entries, real Nvidia cards only |
@@ -47,6 +48,10 @@ All snapshots have every key above. Nullability is per field below. null always 
 chooses and wraps the line (it owns phrase choice); the browser never wraps or truncates.
 The attribution line "— MARVIN, ON BOARD SINCE LAUNCH" is static in the SVG.
 
+## `gpu_line` (D-037)
+string, 1-38 characters, chosen by marvind from GPU state (docs/MARVIN.md "GPU
+line"). Always present: when the GPUs are stale it is a stale-state line.
+
 ## `cpu`
 `model` string (raw `/proc/cpuinfo` "model name"), `model_display` string (D-020, e.g.
 "AMD RYZEN 5 9600X"), `threads` int, `physical_cores` int, `total_pct` float|null,
@@ -66,8 +71,8 @@ stacked bar (D-034); the percentage shown is `used_pct` only.
 `name` string (raw), `display_name` string (D-020, e.g. "RTX 3060"), `uuid` string
 (`GPU-<8-4-4-4-12 hex>`), `mem_total_mib`/`mem_used_mib` int, `util_pct` float|null,
 `temp_c` float|null, `thermal_band` string, `power_w` float|null, `power_limit_w` float,
-`sm_clock_mhz` int|null, `hist_util_pct` float[30]. A stale GPU (T7) sets its temp, util,
-power and clock to null and keeps rendering.
+`hist_util_pct` float[30]. A stale GPU (T7) sets its temp, util and power to null and
+keeps rendering.
 
 ## `temps` — CPU and GPU temps live inside `cpu` / `gpus`; this holds the rest
 `nvme_c` float|null, `nvme_thermal_band` string, `nvme_sensor` string (hwmon label that
@@ -117,6 +122,7 @@ null when the state file is missing or unreadable.
 9. `memory.used_bytes + memory.cache_bytes <= memory.total_bytes`.
 10. `phrase.lines`: 1-2 lines, each <= 52 characters, total <= 100.
 11. `panic_count` is null or >= 0. Null is never replaced by 0 anywhere.
+12. `gpu_line` is 1-38 characters.
 
 ## Fixture matrix (mood per scenario, trigger per docs/MARVIN.md)
 

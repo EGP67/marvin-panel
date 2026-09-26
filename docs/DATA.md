@@ -36,8 +36,8 @@ Network          : /sys/class/net/wlp14s0/statistics/{rx_bytes,tx_bytes} deltas 
 Connections      : count entries with state 01 (ESTABLISHED) in /proc/net/tcp and
                    /proc/net/tcp6 (D-036).
 GPU              : nvidia-smi --query-gpu=index,name,uuid,pci.bus_id,memory.total,
-                   memory.used,temperature.gpu,utilization.gpu,power.draw,power.limit,
-                   clocks.sm --format=csv,noheader,nounits
+                   memory.used,temperature.gpu,utilization.gpu,power.draw,power.limit
+                   --format=csv,noheader,nounits
                    ONE subprocess per tick (measured 27 ms), 750 ms timeout, all fields
                    parsed from it (D-008, D-024). Bind by uuid; log pci.bus_id.
 Temps            : /sys/class/hwmon/hwmon*/ matched by NAME first, then label:
