@@ -84,9 +84,11 @@ tools/discover.sh.
 2. Snapshot before modify: before editing or deleting any existing file, copy it with
    cp -p to /srv/hogdata/marvin/archive/<name>.<YYYYmmdd-HHMMSS>. If a snapshot fails,
    change nothing and report BLOCKED. New files need no snapshot.
-3. Gate: make verify (golangci-lint, go test -race, govulncheck, gitleaks) must exit 0
-   before any commit. Code changes also run make build. Docs-only and external-tool-only
-   commits skip make build.
+3. Gate: stage the commit's files first (rule 5), then run make verify
+   (golangci-lint, go test -race, govulncheck, gitleaks over history AND the staged
+   changes, D-039). It must exit 0 before git commit; on failure fix, re-stage,
+   re-run. Code changes also run make build. Docs-only and external-tool-only commits
+   skip make build.
 4. Deploy (once the targets exist, D-031): commit-completing prompts end with
    make deploy; commits that change runtime behavior follow it with make restart.
    Docs-only and external-tool-only commits skip both. make install-service-prereqs and

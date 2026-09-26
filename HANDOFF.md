@@ -88,7 +88,8 @@ make verify runs:  golangci-lint run ./...
                    go test -race -count=1 ./...
                    govulncheck ./...
                    gitleaks detect --source . --redact --exit-code 1
-A task is not complete until make verify exits 0. govulncheck needs network; on failure
+                   gitleaks git --pre-commit --staged --redact --exit-code 1 .   (staged changes, D-039)
+Stage first, then verify, then commit (CLAUDE.md rule 3). A task is not complete until make verify exits 0. govulncheck needs network; on failure
 follow CLAUDE.md workflow rule 7.
 
 ## Definition of done

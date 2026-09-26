@@ -22,6 +22,7 @@ vuln:
 
 secrets:
 	gitleaks detect --source . --redact --exit-code 1
+	gitleaks git --pre-commit --staged --redact --exit-code 1 .
 
 # The mandated gate, in the order that fails fastest.
 verify: lint test vuln secrets
