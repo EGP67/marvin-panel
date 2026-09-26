@@ -1,42 +1,69 @@
 # Ordered tasks
-One fresh coder session per task. make verify must exit 0 and the architect must APPROVE
+One fresh Claude Code session per task. make verify must exit 0 and the owner approves
 before committing. Do not start a task whose dependencies are uncommitted.
+O-tasks are owner-run (sudo or physical access); Claude Web supplies their steps.
 
-T0  DISCOVERY (done by hand, read-only)   bash tools/discover.sh > docs/DISCOVERY.md
-    then read sections 5, 9, 11 aloud to yourself: display adapter ownership, fan RPM
-    existence, port availability. Answer the BIOS IGD question before any purchase.
-T1  SCAFFOLD (already complete in this repo) flags --addr --fixture --oneshot, /healthz,
-    graceful shutdown, go.mod, Makefile, .golangci.yml, .gitleaks.toml, make verify green.
-T2  FIXTURES   fixtures/{calm,busy,hot,dying}.json deterministic. --fixture serves them at
-    1Hz round-robin; --oneshot prints one snapshot to stdout. Move HTTP plumbing to
-    internal/server. Verify: go run ./cmd/marvind --oneshot --fixture fixtures/busy.json | jq .
-    Status 2026-09-26: committed 39b0ea9 (owner-approved; R1-R6 addressed).
-T3  MODEL      internal/model Snapshot struct, ring buffers, temp band (<60/60-90/>=90C),
-    severity ramp (<40/40-70/>70), F from C helper, agreement invariant test.
-    Gate addition (D-013): forbidigo in .golangci.yml bans http.Get, http.Post, http.Client,
-    http.DefaultClient and net.Dial outside internal/server, so "nothing phones home" is
-    enforced by make verify, not prose.
+## Done
+T0  DISCOVERY   docs/DISCOVERY.md (2026-09-25). Corrections verified 2026-09-26 are
+    recorded in HANDOFF.md, docs/DATA.md and docs/DECISIONS.md.
+T1  SCAFFOLD    flags --addr --fixture --oneshot, /healthz, graceful shutdown, go.mod,
+    Makefile, .golangci.yml, .gitleaks.toml, make verify green.
+T2  FIXTURES    fixtures/{calm,busy,hot,dying}.json deterministic; --fixture serves them
+    at 1 Hz round-robin; --oneshot prints one snapshot. Committed 39b0ea9.
+
+## Owner tasks
+O1  HDMI PROBE (before buying the panel; deferred, no spare monitor). Any HDMI monitor
+    on the motherboard port with tools/hdmi-probe.sh. Record: cold-boot seconds to first
+    image, whether BIOS/POST and the tty1 console appear on the iGPU, hotplug result.
+O2  FAN EXPERIMENT (D-027). Reversible nct6683 probe with snapshot and revert steps.
+    The result decides T8 fans.
+O3  PANEL WAKE TEST (after purchase). PeakDo powered from the PSU 5 V rail: it must
+    show the kiosk without a button press after a cold boot, a reboot, and a 10-minute
+    kiosk stop.
+
+## Build
+T2b SCHEMA AMENDMENTS  Apply the docs/SCHEMA.md changes from doc step 3b (D-016 thermal
+    band, D-017 panic_count, D-018 network interface, D-019 mounts, D-027 fans) in
+    cmd/genfixtures and its tests; regenerate fixtures byte-deterministically.
+    Verify: go run ./cmd/marvind --oneshot --fixture fixtures/busy.json | jq .
+T3  MODEL       internal/model: Snapshot struct, ring buffers, two temperature color
+    functions (D-016: CPU big number 60/90, THERMALS 70/90), severity ramp
+    (<40/40-70/>70), F from C helper, model-string display forms (D-020), agreement
+    invariant test. Gate addition (D-013): forbidigo bans http.Get, http.Post,
+    http.Client, http.DefaultClient and net.Dial outside internal/server.
     Verify: go test -race ./internal/model
-T4  COLLECT-CPU two-sample per-thread %, model string, thread+physical counts, freq, loadavg,
-    120-sample ring buffer. Verify: total % within 5 points of mpstat 1 2; unit tests pass.
-T5  COLLECT-MEMNET mem.go + net.go with wrap guards and link ceiling.
-    Verify: transfer ~500MB, confirm RX bar and "% OF LINK" track iftop/sar.
-T6  COLLECT-DISK space via Statfs, IO deltas from /proc/diskstats, IOPS, queue, iowait.
-    Verify: dd a 2GB file, watch WRITE track iostat 1.
-T7  COLLECT-GPU nvidia-smi once per tick, 750ms timeout, stale marking, binding by name/UUID
-    per docs/DATA.md. Must never treat the iGPU as GPU0/GPU1.
-    Verify: simulate a hung nvidia-smi; assert tick interval <1.2s and status STALE.
-T8  COLLECT-TEMPFAN hwmon label matching with logged winner; fan banks may legitimately be
-    absent -> "NO TELEMETRY". Verify: prints chosen sensor path for CPU, GPU0, GPU1, NVMe.
-T9  MOOD        hysteresis 90s, line cooldown 10min, family cooldown 3min, danger repeat 60s.
-    Verify: table-driven tests over scripted timelines assert the mood sequence.
-T10 VIEW        web/index.html = mockup.svg + binding JS. null -> "NO TELEMETRY" text.
-    Served BY marvind at GET / from 127.0.0.1:8042 (D-002, D-011) — same origin, not
-    file://; a path-traversal test must prove GET /../../etc/passwd cannot escape web/.
-    Kiosk engine is locked Brave Origin 154.1.96.59 (D-001) for these screenshots.
-    Verify: cycle all four fixtures in a browser, screenshot each.
-T11a DISPLAY    systemd units enabled, blanking disabled, kiosk autostart (X :0 on tty1,
-    BusID "PCI:17:0:0", Driver "amdgpu", PrivateDevices=yes, BindPaths card0+renderD128).
-    Verify: journalctl -u marvind clean; systemctl status shows no restarts; marvind never
-    opens /dev/nvidia* and never appears in nvidia-smi --query-compute-apps (D-009).
-T11b SOAK       24h soak with flat RSS (D-010). Verify: RSS growth over 24h within noise.
+T4  COLLECT-CPU two-sample per-thread %, model string, thread count from
+    /sys/devices/system/cpu/online, physical cores, frequency, loadavg (mood input only;
+    no longer displayed, D-017), 120-sample ring. Refuse to start above 12 threads
+    (D-006). Verify: total % within 5 points of mpstat 1 2; unit tests pass.
+T5  COLLECT-MEMNET mem.go + net.go on wlp14s0 (D-018) with counter-wrap guards and no
+    link ceiling. Verify: scp ~500 MB between the laptop and hog over Wi-Fi; RX/TX track
+    sar -n DEV 1; report peak rates so the owner can set the scale S.
+T6  COLLECT-DISK Statfs for /, /srv/hogdata, /boot (D-019); IO deltas from
+    /proc/diskstats (nvme0n1), IOPS, queue, iowait. Verify: dd a 2 GB file on
+    /srv/hogdata and watch WRITE track iostat 1; report peak read/write for the D-021
+    scale review.
+T7  COLLECT-GPU one nvidia-smi per tick, 750 ms timeout, stale marking, bound by UUID,
+    never by index, never the iGPU (D-008, D-024). Verify: simulate a hung nvidia-smi;
+    assert tick interval <1.2 s and status STALE.
+T8  COLLECT-TEMPFAN hwmon matched by name first (k10temp Tctl -> CPU, nvme Composite ->
+    NVMe; amdgpu and mt7921_phy0 excluded); log the winning sensor path. Fans follow the
+    O2 result; until then fans are null and render "NO TELEMETRY".
+    Verify: print the chosen sensor path for CPU, GPU0, GPU1, NVMe.
+T9  MOOD        hysteresis 90 s, line cooldown 10 min, family cooldown 3 min, danger
+    repeat 60 s; lifetime PANIC COUNT persisted in /var/lib/heartofgold/ with atomic
+    writes (D-017). Verify: table-driven tests over scripted timelines assert the mood
+    sequence and the persisted count across a simulated restart.
+T10 VIEW        web/index.html = mockup.svg (after doc step 4) + binding JS; null ->
+    "NO TELEMETRY" text. Served BY marvind at GET / from 127.0.0.1:8042 (D-002, D-011)
+    with the path-traversal test. Verify: cycle all four fixtures in brave-origin
+    (D-014) using a throwaway --user-data-dir under /tmp, screenshot each; the owner
+    reviews label fit for NETWORK — WIFI (D-018) and the SPACE rows (D-019).
+T10b DEPLOY     (D-031) Makefile targets deploy, restart, install-service-prereqs,
+    install-service. Rewrite deploy/: marvind.service (heartofgold, D-004 Description,
+    device policy per D-024, StateDirectory=heartofgold) and heartofgold-kiosk.service
+    (D-014, D-023, D-025, D-026); SMART units from deploy/ (doc step 5).
+    Verify: systemd-analyze verify on each unit; the owner runs the install targets.
+T11a DISPLAY    (panel installed) kiosk enabled, screen blanking and DPMS off, rotation
+    set, O3 passes. Verify: journalctl -u marvind clean; no restarts; D-024 acceptance.
+T11b SOAK       24 h soak with flat RSS (D-010). Verify: RSS growth within noise.
