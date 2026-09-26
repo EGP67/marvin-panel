@@ -22,7 +22,7 @@ behavior changes that contradict an ADOPTED row are a review rejection.
 | D-012 | 2026-09-25 | ADOPTED | SMART via root-owned file handoff, never from marvind directly. | marvind runs unprivileged; smartctl needs root. Handoff keeps root out of marvind. See docs/DATA.md SMART handoff. |
 | D-013 | 2026-09-25 | ADOPTED | Gate addition: forbidigo in .golangci.yml bans outbound HTTP client calls (http.Get, http.Post, http.Client, http.DefaultClient) and net.Dial outside internal/server. | "Nothing phones home" is enforced by make verify instead of asserted in prose. |
 
-## PENDING OWNER — mockup.svg edits (mockup.svg is NOT touched until each is approved)
+## Former PENDING OWNER items — mockup.svg edits (all resolved 2026-09-26)
 
 | id | date | status | decision | why |
 |----|------|--------|----------|-----|
@@ -56,3 +56,4 @@ behavior changes that contradict an ADOPTED row are a review rejection.
 | D-033 | 2026-09-26 | ADOPTED | American English spelling in all docs, code, identifiers and comments. | Owner ruling. |
 | D-034 | 2026-09-26 | ADOPTED | MEMORY bar is stacked: used segment (bar gradient) on top of a cache segment (#1c6f83) on the same track. used = MemTotal - MemAvailable; cache = Cached + SReclaimable - Shmem, clamped so used + cache <= total. The percentage text shows used only. Mockup edit applied in doc step 4. | Owner ruling: show cache visibly without counting reclaimable memory as used. |
 | D-035 | 2026-09-26 | ADOPTED | Schema amendments beyond the rulings: phrase.lines; top-level disk_io for nvme0n1 (replaces per-mount I/O fields); smart object (state ok\|failing\|unknown, never serial/wwn/uuid); cpu.model_display and gpus[].display_name; mood "content"; network link fields removed; gpus[].band and temps.nvme_band replaced by thermal_band. GEOMETRY text rules: SMART status OK/FAIL/--, PANIC COUNT "--" when unknown and "99+" above 99. | Owner approval 2026-09-26: the contract had no field for the phrase, SMART or the single-device I/O the mockup draws. |
+| D-036 | 2026-09-26 | ADOPTED | Source and voice corrections: CPU busy = total - idle - iowait (matches mpstat); established connections counted from /proc/net/tcp and tcp6 state 01 (no ss child); nvidia-smi query drops fan.speed and utilization.memory and adds pci.bus_id; NVML line removed (D-008); phrase text uppercase as drawn, with literal paths and interface names in real case; NVMe SMART seed line replaces "reallocated sectors"; mood triggers "service crashloop" and "GPU thermal slowdown" removed (no source); "content" speakability uses thermal_band and smart.state. FAN BANK 1/2 are system chassis fans only, never GPU fans. | Owner approval 2026-09-26. |

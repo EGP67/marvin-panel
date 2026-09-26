@@ -25,6 +25,7 @@ O3  PANEL WAKE TEST (after purchase). PeakDo powered from the PSU 5 V rail: it m
 T2b SCHEMA AMENDMENTS  Apply the docs/SCHEMA.md changes from doc step 3b (D-016 thermal
     band, D-017 panic_count, D-018 network interface, D-019 mounts, D-027 fans) in
     cmd/genfixtures and its tests; regenerate fixtures byte-deterministically.
+    Also remove docs/SCHEMA.md from the .gitleaks.toml nvidia-gpu-uuid allowlist.
     Verify: go run ./cmd/marvind --oneshot --fixture fixtures/busy.json | jq .
 T3  MODEL       internal/model: Snapshot struct, ring buffers, two temperature color
     functions (D-016: CPU big number 60/90, THERMALS 70/90), severity ramp

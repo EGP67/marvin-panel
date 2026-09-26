@@ -1,59 +1,54 @@
-# Panel acquisition constraints — nothing here is optional to reverse later
+# Panel acquisition and install constraints
+Candidate: PeakDo U3 SE 7-inch (manual V1.0). NOT yet purchased. Cheaper panels up to
+8 inches wide may be considered; every constraint below applies to any panel.
 
-## Display signal path (decides whether this project can be seen at all)
-1. The panel attaches to the MOTHERBOARD HDMI, i.e. the CPU's integrated graphics.
-   CHECK IN BIOS FIRST: "Initial Display Output" / "IGD Configuration" must allow IGD while
-   discrete GPUs are installed. Many boards default to PEG-only and the port is dead.
-2. Buy a plain HDMI (or DP) panel. AVOID DisplayLink/evdi USB displays: extra host CPU,
-   driver fragility, and it would make Marvin the most expensive thing on the box.
-3. Native 1080x1920 portrait is rare. Acceptable alternatives, in preference order:
-   a) panel whose OSD rotates firmware-side (free, no GPU cost, no compositor involvement)
-   b) any 1920x1080 panel rotated by xrandr --output ... --rotate left|right
-   c) custom modeline via edid-decode + kernel cmdline (last resort)
-4. Confirm the port's version and that it stays powered when the OS is idle. Check
-   /sys/class/drm/card*-*/status flips to connected when something is attached — test with
-   any spare monitor before buying, not after.
+## Candidate facts (PeakDo manual V1.0)
+- 7-inch; active area 155 x 87 mm; outline 172.6 x 97.7 x 9.5 mm; 152 g; CNC aluminum
+  case with a flat back.
+- 1920x1080 @ 60 Hz, native landscape. Mounted portrait and rotated by X (D-026); the
+  OSD has no rotation setting.
+- Inputs: mini-HDMI (HDMI 1.4) and a full-feature USB-C (DP 1.2). HDMI input needs
+  separate power.
+- Power: USB-C PD port, minimum 5 V 1 A (5 W); 3.5 W typical, 4 W maximum.
+- Panel type is listed as "IPS/TN": confirm the purchased unit is IPS.
+- Operating temperature 0-60 C; storage -20-60 C.
+- 10-point touch reports only over the USB-C data port (port 6), which stays
+  unconnected, so no touch input reaches the host (no-interaction constraint).
+- Powers on automatically when its power cable is energized. Auto-sleep after 1 minute
+  idle (no signal, no button, no touch), 5 minutes with "Delayed Sleep". The manual does
+  not say whether a returning HDMI signal wakes it: owner task O3.
+- Buttons and ports are on one long edge.
+
+## Planned signal and power path
+Video: motherboard HDMI (iGPU) -> 1 ft HDMI cable -> 24 in panel-mount HDMI to mini-HDMI
+extension in a PCI slot bracket (USBFirewire RR-5S-3FPM-24G) -> panel mini-HDMI.
+Power: PSU SATA power cable -> SATA-to-USB-A 5 V adapter (CRJ) -> USB-A to USB-C ->
+panel PD port. The panel powers down and up with the machine.
+Deferred to part arrival (owner): confirm the power-chain connectors mate end to end
+(the CRJ adapter output and the USB-C adapter input are both listed as female USB-A),
+and that the extension is HDMI type A female on the bracket and mini-HDMI male inside.
+
+## Display signal path
+1. The motherboard HDMI is the iGPU (amdgpu, boot_vga=1; D-023). Run owner task O1 (HDMI
+   probe with any monitor) before buying if a monitor becomes available.
+2. Plain HDMI or DP panels only. No DisplayLink/evdi USB displays: extra host CPU,
+   driver fragility.
+3. Rotation per D-026; direction set at install from the physical mounting.
 
 ## Physical / environmental
-5. IPS, not OLED or TN. A static 9:16 dashboard is the worst possible content for OLED;
-   burn-in is a when, not an if. If an OLED is chosen anyway, budget for pixel-shift and a
-   nightly blank schedule as a requirement, not an enhancement.
-6. Temperature rating: many small HDMI LCDs are rated 0-50C. Inside a case near exhaust you
-   can exceed that. Mount in intake airflow; measure with the side closed for 24h.
-7. Power: prefer a panel powered from inside the PSU (Molex/USB header) over a wall adapter
-   so it dies and boots with the machine. Confirm a spare connector exists.
-8. Clearance: measure case width + glass standoff before ordering thickness. Check the cable
-   has room to bend, and that an HDMI head is not blocked by the GPU or CPU cooler.
-9. Brightness/PWM: some panels dim by PWM at levels that flicker unpleasantly when filmed or
-   stared at. Prefer one with a decent brightness range for indoor viewing through glass.
-10. Mounting: VESA holes or a printed bracket behind the glass; the panel must be removable
-    without disassembling the case, because you will iterate on this.
+4. IPS, not OLED (burn-in on a static dashboard is a when, not an if) or TN (viewing
+   angle).
+5. Temperature: mount in intake airflow; measure with the side panel closed for 24 h.
+6. Clearance: measure case width and glass standoff; check cable bend room and that
+   connectors clear the GPUs and CPU cooler.
+7. Brightness: a usable indoor range through glass (PeakDo: 500 cd/m2).
+8. Mounting: double-sided tape on the flat back; removable without disassembling the
+   case. The panel sits behind a 6-inch Marvin figurine; the owner positions both for
+   his viewing angle.
+9. Text size: at 7 inches the mockup's smallest text (19 px) is about 1.5 mm tall —
+   readable at arm's length, not across a room. Accepted for v1; a larger display may
+   follow after v1.
 
-## Before buying — verify with discovery output
-- docs/DISCOVERY.md section 5 shows whether an amdgpu connector exists and is attachable
-- section 9 shows whether FAN BANK telemetry is real; if absent, tell no one and ship the
-  "NO TELEMETRY" line anyway
-- section 11 confirms port 8080 is free for marvind
-
-## Pre-purchase test (two minutes, do it before ordering)
-bash tools/hdmi-probe.sh, then plug any HDMI monitor into the motherboard port with the
-Nvidia cards installed. A connector must flip to connected and advertise 1920x1080.
-If nothing changes: BIOS "Initial Display Output" / "IGD Configuration" / "Multi-Monitor"
-must allow IGD alongside discrete GPUs. Fix and retest before buying. Do not paper over a
-dead port with a DisplayLink adapter — it would make the panel the most expensive process
-on the box in CPU terms.
-
-## T2 sync (2026-09-25) — facts that change install assumptions
-- Kiosk engine DECIDED (DECISIONS.md D-001): Brave Origin 154.1.96.59 from the Brave apt
-  repo (brave-keyring 1.20, fonts-liberation; 451 MB installed; no desktop packages; no
-  new listening sockets). The DisplayLink prohibition above still stands.
-- The port check above referenced 8080; superseded by DECISIONS.md D-002: marvind binds
-  127.0.0.1:8042. Never bind, proxy or poll the reserved ports in D-003.
-- xrdp on this host is disabled + masked (3350/3389, D-003). Nothing to turn off at install.
-- Display plumbing: the kiosk runs as X display :0 on tty1, with the screen pinned to
-  BusID "PCI:17:0:0", Driver "amdgpu".
-- The kiosk unit uses PrivateDevices=yes with BindPaths limited to /dev/dri/card0 and
-  /dev/dri/renderD128, so renderD129 and renderD130 - the two inference cards - do not
-  exist for it.
-- Optional hardware: a PWM fan hub with per-port tachs would turn the two 4-fan chains
-  into eight individually-visible fans (docs/DATA.md FAN WIRING); optional, not required.
+## Optional hardware
+- A PWM fan hub with per-port tachs would make the eight chassis fans individually
+  visible (docs/DATA.md Fans).
