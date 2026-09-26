@@ -1,7 +1,7 @@
 # HEART OF GOLD — Marvin telemetry panel
 Portrait 1080x1920 telemetry panel for hog.local, spoken by Marvin.
 
-Start here: HANDOFF.md, then docs/DISCOVERY.md, then TASKS.md.
+Start here: CLAUDE.md (agent rules), then HANDOFF.md, docs/DECISIONS.md, TASKS.md.
 Read docs/PANEL_BUYING.md before buying the display.
 
     make tools    # install golangci-lint, govulncheck, gitleaks
