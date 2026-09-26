@@ -18,6 +18,8 @@ Marvin's and stays attributed to him.
 - Docs: owner review 2026-09-26 recorded as D-014..D-033. CLAUDE.md is the agent entry
   point (D-030). Doc sync steps 3-5 in progress.
 - Gate: make verify passes under Claude Code, including govulncheck.
+- Remote: origin = git@github.com:EGP67/marvin-panel.git (private GitHub), branch
+  master; full history pushed 2026-09-26 (D-040).
 - Host facts verified 2026-09-26: Ubuntu 24.04.5, kernel 6.8.0-142, MSI BIOS 1.P5,
   go1.27.1, NTP synchronized, boots to multi-user.target, Xorg + amdgpu DDX + xinit
   installed, lightdm masked, no window manager.
@@ -89,8 +91,9 @@ make verify runs:  golangci-lint run ./...
                    govulncheck ./...
                    gitleaks detect --source . --redact --exit-code 1
                    gitleaks git --pre-commit --staged --redact --exit-code 1 .   (staged changes, D-039)
-Stage first, then verify, then commit (CLAUDE.md rule 3). A task is not complete until make verify exits 0. govulncheck needs network; on failure
-follow CLAUDE.md workflow rule 7.
+Stage first, then verify, then commit (CLAUDE.md rule 3). A task is not complete until
+make verify exits 0. govulncheck needs network; on failure follow CLAUDE.md workflow
+rule 7.
 
 ## Definition of done
 The panel shows mockup.svg with hog.local hardware (D-032):
