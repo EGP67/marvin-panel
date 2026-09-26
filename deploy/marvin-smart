@@ -1,0 +1,14 @@
+#!/bin/sh
+# Export NVMe SMART health for marvind (read-only handoff). Always writes a file:
+# a failing drive must still be reportable, and smartctl exits non-zero on flags.
+set -u
+out=/var/lib/marvin/smart.json; tmp="$out.tmp"; rc=0
+smartctl -x -j /dev/nvme0 >"$tmp" 2>/dev/null || rc=$?
+if [ -s "$tmp" ] && grep -q '"json_format_version"' "$tmp" 2>/dev/null; then
+  :
+else
+  printf '{"error":"smartctl_unavailable","smartctl_exit":%s}\n' "$rc" >"$tmp"
+fi
+umask 022; mv -f "$tmp" "$out"
+printf '%s\n' "$rc" >/var/lib/marvin/smart.rc
+exit 0

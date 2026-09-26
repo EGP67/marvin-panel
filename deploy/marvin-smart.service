@@ -1,0 +1,9 @@
+[Unit]
+Description=Marvin: export NVMe SMART health
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/marvin-smart
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ReadWritePaths=/var/lib/marvin
