@@ -1,4 +1,8 @@
 # Panel acquisition and install constraints
+Purchase deferred per D-044 (2026-09-29): the SunFounder 7" (1024x600, HDMI) is the
+interim production display. The PeakDo U3 SE stays a drop-in option if bought after the
+post-install cost/benefit decision.
+
 Candidate: PeakDo U3 SE 7-inch (manual V1.0). NOT yet purchased. Cheaper panels up to
 8 inches wide may be considered; every constraint below applies to any panel.
 

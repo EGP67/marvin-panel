@@ -7,8 +7,9 @@ nvidia-smi.
 GPU0 and GPU1 are the two NVIDIA GeForce RTX 3060 cards (PCI 0000:01:00.0 and
 0000:06:00.0). They come ONLY from nvidia-smi, matched by UUID, never by index order or
 /sys order. The motherboard HDMI is driven by the CPU's integrated graphics (amdgpu, PCI
-0000:11:00.0, card0), which also appears under /sys/class/drm and in hwmon ("amdgpu",
-label "edge"). It is NOT GPU0 or GPU1 and is excluded from telemetry.
+0000:11:00.0; its DRM card number is not stable, D-041), which also appears under
+/sys/class/drm and in hwmon ("amdgpu", label "edge"). It is NOT GPU0 or GPU1 and is
+excluded from telemetry.
 
 ## Map
 CPU model string : /proc/cpuinfo "model name" (first), trimmed. Display form per D-020.
@@ -60,10 +61,12 @@ Fans             : system chassis fans only; no source today (see Fans below).
 - Ring buffers: 120 samples at 1 s for the CPU graph, 30 for GPU sparklines.
 - No listening socket other than 127.0.0.1:8042. Nothing phones home from marvind (D-013).
 
-## Display adapter (confirmed 2026-09-26)
-card0 = amdgpu at PCI 0000:11:00.0, boot_vga=1, renderD128; HDMI-A-1 is the motherboard
-port. card1 and card2 are the RTX 3060s (renderD129, renderD130). The kiosk sees only
-card0 + renderD128 (D-023).
+## Display adapter (confirmed 2026-09-26; numbering rule 2026-09-29, D-041)
+The iGPU is amdgpu at PCI 0000:11:00.0, boot_vga=1; its connector HDMI-A-1 is the
+motherboard port. The RTX 3060s are PCI 0000:01:00.0 and 0000:06:00.0. DRM card, renderD
+and i2c-N numbers follow probe order and are not stable across boots: always resolve by
+PCI address (/sys/bus/pci/devices/0000:11:00.0/drm/). The kiosk sees only the iGPU's card
+and render nodes (D-023, D-041).
 
 ## Fans (D-027, D-036)
 FAN BANK 1/2 are the SYSTEM CHASSIS FANS, never GPU fans. The box has eight chassis

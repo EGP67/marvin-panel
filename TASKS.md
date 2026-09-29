@@ -27,6 +27,9 @@ T2b SCHEMA AMENDMENTS  Apply every docs/SCHEMA.md amendment (D-016..D-019, D-027
     byte-deterministically.
     Also remove docs/SCHEMA.md from the .gitleaks.toml nvidia-gpu-uuid allowlist.
     Verify: go run ./cmd/marvind --oneshot --fixture fixtures/busy.json | jq .
+    Also (D-046): ESTAB -> CONN and header "WIFI" in SCHEMA, GEOMETRY, genfixtures and
+    mockup.svg. Check mockup.svg's font-family against the fonts installed on hog and
+    resolve the P-004 collisions.
 T3  MODEL       internal/model: Snapshot struct, ring buffers, two temperature color
     functions (D-016: CPU big number 60/90, THERMALS 70/90), severity ramp
     (<40/40-70/>70), F from C helper, model-string display forms (D-020), agreement
@@ -68,4 +71,31 @@ T10b DEPLOY     (D-031) Makefile targets deploy, restart, install-service-prereq
     Verify: systemd-analyze verify on each unit; the owner runs the install targets.
 T11a DISPLAY    (panel installed) kiosk enabled, screen blanking and DPMS off, rotation
     set, O3 passes. Verify: journalctl -u marvind clean; no restarts; D-024 acceptance.
+    Findings from the 2026-09-29 test session:
+    - Proven start path: systemd unit, PAMName=login, TTYPath=/dev/ttyN,
+      StandardInput=tty, xinit … -- :N vtN -nolisten tcp -keeptty -nocursor, as a
+      non-root user. logind hands over DRM fds only while that session's VT is in the
+      foreground; a background VT gets paused fds and X exits "no screens found".
+    - X defaults blank after 600 s (screen saver + DPMS). Kiosk X must start with
+      -s 0 -dpms (or run xset s off -dpms in the session).
+    - Brave --kiosk without a window manager sized its window 20 px short (1004x580 on
+      1024x600); with --window-position=0,0 --window-size=W,H it was 1 px short
+      (599x1023). Decide between an oversized window or a fullscreen flag; verify on
+      the panel.
+    - Brave Origin showed a purchase/license prompt on a fresh profile despite
+      --no-first-run. The method to suppress it for an unattended kiosk is UNKNOWN; it
+      must be resolved (persisted profile answer or managed policy) before T11a is done.
+    - Brave does not resize when the X screen is rotated after launch; rotation and mode
+      must be set (Xorg config, D-045) before Brave starts.
+    - The kiosk unit uses Restart=always so a display drop or Brave exit recovers.
+    - Rotation "right" re-verified on the mounted panel at first boot (D-045).
 T11b SOAK       24 h soak with flat RSS (D-010). Verify: RSS growth within noise.
+
+## Phase 2 — rotating sections (future, not v1)
+Keep the HEART OF GOLD title and separator fixed; every 7.5 s fade the body out and the
+next view in, cycling: Dashboard, Marvin saying, Processor, Graphics, GPU0 & GPU1,
+Memory & Network, Storage & Space, Thermals. Browser-side only; marvind and the schema
+are unchanged.
+Open design questions: longer dwell for the Dashboard; whether red states (THERMALS
+>=90 °C, PANIC) pin the rotation to that view; seven new large-type GEOMETRY layouts;
+measure fade CPU cost under software raster (D-028).

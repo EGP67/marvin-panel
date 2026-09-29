@@ -67,7 +67,8 @@ tools/discover.sh.
   (D-023), never uid 1000. CPU/RAM capped; restart always.
 - An unavailable metric renders visible text ("NO TELEMETRY"). null is never replaced by 0.
 - marvind never opens /dev/nvidia*. Its only Nvidia access is one nvidia-smi child per
-  tick with a 750 ms timeout (D-008, D-024). The kiosk sees only card0 + renderD128.
+  tick with a 750 ms timeout (D-008, D-024). The kiosk sees only the iGPU
+  (PCI 0000:11:00.0) card + render nodes; DRM numbers are not stable (D-041).
 - marvind binds 127.0.0.1:8042 only (D-002). Never bind, proxy or poll a reserved port
   (D-015). Never talk to marvinweb (D-004).
 - No outbound network from marvind (D-013, enforced by lint).

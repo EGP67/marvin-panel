@@ -7,12 +7,16 @@ occasionally useful. The title is "HEART OF GOLD" (the ship); every spoken line 
 Marvin's and stays attributed to him.
 
 ## Status (as of 2026-09-26)
-- Panel: NOT yet purchased. Candidate: PeakDo U3 SE 7-inch (native 1920x1080 landscape,
-  mounted portrait and rotated by X per D-026; mini-HDMI 1.4 input; USB-C PD power from
-  the PSU through a SATA-to-USB 5 V adapter). Constraints: docs/PANEL_BUYING.md.
-  Pre-purchase HDMI probe (TASKS.md O1) is deferred: no spare monitor available yet.
+- Panel: SunFounder 7" 1024x600 HDMI is the interim production display (D-044); facts
+  below under "Development/interim display". PeakDo U3 SE 7-inch purchase deferred to a
+  cost/benefit decision after install; it remains a drop-in (docs/PANEL_BUYING.md).
+  O1 (HDMI probe): done for the SunFounder. O3 (PeakDo wake test): deferred with the
+  PeakDo purchase (D-044).
 - Display path: motherboard HDMI = CPU integrated graphics (amdgpu, PCI 0000:11:00.0,
-  boot_vga=1, /dev/dri/card0 + renderD128). The two RTX 3060s are never used by the panel.
+  boot_vga=1). DRM card, renderD and i2c-N numbers are not stable across boots (D-041):
+  the iGPU was card0 when the docs were written and card1 on 2026-09-29 boots. Always
+  address it by PCI address. The two RTX 3060s (0000:01:00.0, 0000:06:00.0) are never
+  used by the panel.
 - Code: T1 scaffold and T2 fixtures committed (39b0ea9). No collectors, model, mood
   engine or web page yet.
 - Docs: owner review 2026-09-26 recorded as D-014..D-033. CLAUDE.md is the agent entry
@@ -26,6 +30,20 @@ Marvin's and stays attributed to him.
 - Deployment: nothing is installed for the panel except the SMART exporter
   (marvin-smart.service + .timer, /usr/local/sbin/marvin-smart), which exists on the host
   but is not yet in deploy/ (doc step 5). Panel services will run as heartofgold (D-023).
+- Development/interim display (D-044), observed 2026-09-29: EDID mfg "TXD", model
+  "HDMI", EDID 1.3, native 1024x600, also accepts 1920x1080 / 1280x720 and lower.
+  DDC/CI: Novatek controller, capabilities model "FALCON", MCCS 2.0 (detect reports VCP
+  2.1), firmware 2.32, on "AMDGPU DM i2c hw bus 0". VCP 10 brightness: writes accepted
+  and read back, no visible change observed at 10 ft. VCP D6 off/on works; the
+  controller stays awake while off. The capabilities list looks like a generic template
+  (input source reads VGA-1; VGA/DVI only; audio advertised). No kernel backlight
+  device. USB carries power + touch only. Cold-start artifacts for ~20 min after
+  power-up from cold (not seen when warm). The panel survives reboot and power-off/on
+  (blanks, returns). DDC policy: D-043.
+- ddcutil 1.4.1 installed (owner, 2026-09-29). i2c-dev is built into the kernel.
+- Watch item: amdgpu logs "REG_WAIT timeout 1us * 100000 tries - optc1_wait_for_state
+  line:839" on each X start/stop/mode set; not seen during steady display. It becomes a
+  defect if it appears during steady operation.
 
 ## Hard constraints
 - Portrait 1080x1920. No keyboard, mouse or touch input, no interaction of any kind,
@@ -55,8 +73,9 @@ Marvin's and stays attributed to him.
 3. display    Brave Origin (package brave-origin, /usr/bin/brave-origin, D-014) in
               --kiosk mode, started by heartofgold-kiosk.service via xinit on display :0,
               vt1, tty1, as heartofgold (D-025). Screen pinned to BusID "PCI:17:0:0",
-              Driver "amdgpu"; rotation declared in /etc/X11/xorg.conf.d (D-026). The
-              kiosk sees only /dev/dri/card0 + renderD128 (D-023).
+              Driver "amdgpu", AutoAddGPU off (D-041); input ignored (D-042); mode
+              and rotation declared in /etc/X11/xorg.conf.d (D-026, D-045). The
+              kiosk sees only the iGPU's card + render nodes (D-023, D-041).
 4. rationale  Mutating attributes on an existing SVG is nearly free; regenerating whole
               frames is not. Collection and presentation stay independently testable,
               which is what makes fixture-driven development and CI checks possible.
