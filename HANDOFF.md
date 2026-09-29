@@ -6,7 +6,7 @@ homelab server (hog.local). Rendered as MARVIN: bleak, sardonic, self-pitying,
 occasionally useful. The title is "HEART OF GOLD" (the ship); every spoken line is
 Marvin's and stays attributed to him.
 
-## Status (as of 2026-09-26)
+## Status (as of 2026-09-29)
 - Panel: SunFounder 7" 1024x600 HDMI is the interim production display (D-044); facts
   below under "Development/interim display". PeakDo U3 SE 7-inch purchase deferred to a
   cost/benefit decision after install; it remains a drop-in (docs/PANEL_BUYING.md).
@@ -16,7 +16,9 @@ Marvin's and stays attributed to him.
   boot_vga=1). DRM card, renderD and i2c-N numbers are not stable across boots (D-041):
   the iGPU was card0 when the docs were written and card1 on 2026-09-29 boots. Always
   address it by PCI address. The two RTX 3060s (0000:01:00.0, 0000:06:00.0) are never
-  used by the panel.
+  used by the panel. Output names: kernel connector HDMI-A-1, X output HDMI-A-0 (D-045
+  note).
+- Phase 1 typography frozen (D-047); dashboard is at-a-glance.
 - Code: T1 scaffold and T2 fixtures committed (39b0ea9). No collectors, model, mood
   engine or web page yet.
 - Docs: owner review 2026-09-26 recorded as D-014..D-033. CLAUDE.md is the agent entry

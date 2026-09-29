@@ -12,7 +12,8 @@ T2  FIXTURES    fixtures/{calm,busy,hot,dying}.json deterministic; --fixture ser
     at 1 Hz round-robin; --oneshot prints one snapshot. Committed 39b0ea9.
 
 ## Owner tasks
-O1  HDMI PROBE (before buying the panel; deferred, no spare monitor). Any HDMI monitor
+O1  HDMI PROBE — DONE for the SunFounder 7" (2026-09-29; see HANDOFF.md, D-044, D-045).
+    Original procedure (before buying the panel): any HDMI monitor
     on the motherboard port with tools/hdmi-probe.sh. Record: cold-boot seconds to first
     image, whether BIOS/POST and the tty1 console appear on the iGPU, hotplug result.
 O2  FAN EXPERIMENT (D-027). Reversible nct6683 probe with snapshot and revert steps.
@@ -20,6 +21,7 @@ O2  FAN EXPERIMENT (D-027). Reversible nct6683 probe with snapshot and revert st
 O3  PANEL WAKE TEST (after purchase). PeakDo powered from the PSU 5 V rail: it must
     show the kiosk without a button press after a cold boot, a reboot, and a 10-minute
     kiosk stop.
+    DEFERRED with the PeakDo purchase (D-044); procedure kept for a future PeakDo.
 
 ## Build
 T2b SCHEMA AMENDMENTS  Apply every docs/SCHEMA.md amendment (D-016..D-019, D-027,
@@ -29,7 +31,7 @@ T2b SCHEMA AMENDMENTS  Apply every docs/SCHEMA.md amendment (D-016..D-019, D-027
     Verify: go run ./cmd/marvind --oneshot --fixture fixtures/busy.json | jq .
     Also (D-046): ESTAB -> CONN and header "WIFI" in SCHEMA, GEOMETRY, genfixtures and
     mockup.svg. Check mockup.svg's font-family against the fonts installed on hog and
-    resolve the P-004 collisions.
+    resolve the P-004 collisions. No font-size or bar changes in Phase 1 (D-047).
 T3  MODEL       internal/model: Snapshot struct, ring buffers, two temperature color
     functions (D-016: CPU big number 60/90, THERMALS 70/90), severity ramp
     (<40/40-70/>70), F from C helper, model-string display forms (D-020), agreement
@@ -63,14 +65,23 @@ T10 VIEW        web/index.html = mockup.svg (after doc step 4) + binding JS; nul
     "NO TELEMETRY" text. Served BY marvind at GET / from 127.0.0.1:8042 (D-002, D-011)
     with the path-traversal test. Verify: cycle all four fixtures in brave-origin
     (D-014) using a throwaway --user-data-dir under /tmp, screenshot each; the owner
-    reviews label fit for NETWORK — WIFI (D-018) and the SPACE rows (D-019).
+    reviews label fit for NETWORK — WIFI (D-018) and the SPACE rows (D-019). No
+    font-size or bar changes in Phase 1 (D-047).
 T10b DEPLOY     (D-031) Makefile targets deploy, restart, install-service-prereqs,
     install-service. Rewrite deploy/: marvind.service (heartofgold, D-004 Description,
     device policy per D-024, StateDirectory=heartofgold) and heartofgold-kiosk.service
     (D-014, D-023, D-025, D-026); SMART units from deploy/ (doc step 5).
     Verify: systemd-analyze verify on each unit; the owner runs the install targets.
 T11a DISPLAY    (panel installed) kiosk enabled, screen blanking and DPMS off, rotation
-    set, O3 passes. Verify: journalctl -u marvind clean; no restarts; D-024 acceptance.
+    set. Wake behavior verified on the installed display (SunFounder: reboot and
+    power-off/on verified 2026-09-29; re-check on the mounted panel).
+    Verify: journalctl -u marvind clean; no restarts; D-024 acceptance.
+    Acceptance also:
+    a. With the kiosk running, `nvidia-smi` lists no Xorg or brave process on either
+       RTX 3060, and the Xorg log shows no NVIDIA(GPU-n) screens (D-041). The 3060s are
+       dedicated to AI workloads; marvind's nvidia-smi query (D-024) is the only
+       permitted NVIDIA access.
+    b. Deploy proves DeviceAllow by-path resolution (D-023 note).
     Findings from the 2026-09-29 test session:
     - Proven start path: systemd unit, PAMName=login, TTYPath=/dev/ttyN,
       StandardInput=tty, xinit … -- :N vtN -nolisten tcp -keeptty -nocursor, as a
@@ -92,10 +103,19 @@ T11a DISPLAY    (panel installed) kiosk enabled, screen blanking and DPMS off, r
 T11b SOAK       24 h soak with flat RSS (D-010). Verify: RSS growth within noise.
 
 ## Phase 2 — rotating sections (future, not v1)
-Keep the HEART OF GOLD title and separator fixed; every 7.5 s fade the body out and the
-next view in, cycling: Dashboard, Marvin saying, Processor, Graphics, GPU0 & GPU1,
-Memory & Network, Storage & Space, Thermals. Browser-side only; marvind and the schema
-are unchanged.
-Open design questions: longer dwell for the Dashboard; whether red states (THERMALS
+Keep the HEART OF GOLD title and separator fixed; fade the body out and the next view
+in, cycling: Dashboard, Marvin saying, Processor, Graphics, GPU0 & GPU1, Memory &
+Network, Storage & Space, Thermals. Rotation is browser-side; the schema is unchanged,
+but see the quote rule below for marvind.
+- Timing: Dashboard 11 s; each other view 7 s (Marvin saying, Processor, Graphics,
+  GPU0 & GPU1, Memory & Network, Storage & Space, Thermals); cycle = 60 s.
+- Quotes: every appearance of the Marvin view shows a different quote — never the same
+  quote twice in a row; exhaust the pool before any repeat (shuffle-bag).
+- Readability goals (D-047 verdict): larger big numbers, fatter bars, larger section
+  headers, and legible row values, footer, and Marvin lines on dedicated views.
+Open design questions: Marvin lines currently come from marvind's snapshot
+(phrase.lines, docs/MARVIN.md); the quote rule needs either marvind supplying a fresh
+line at least once per 60 s cycle or the page choosing from a line pool, so Phase 2 is
+no longer strictly browser-side — decide in Phase 2. Whether red states (THERMALS
 >=90 °C, PANIC) pin the rotation to that view; seven new large-type GEOMETRY layouts;
 measure fade CPU cost under software raster (D-028).
