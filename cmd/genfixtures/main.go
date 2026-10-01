@@ -1,8 +1,9 @@
-// Command genfixtures writes the four deterministic fixture snapshots
-// (calm, busy, hot, dying) that drive panel development before T4 collectors exist.
-// Values mirror docs/DISCOVERY.md hardware facts and the D-037 totals; every derived
-// field (band, thermal_band, state, verdict, used_pct, display names, phrase and GPU
-// lines) is computed here, never hand-written. The wire contract is docs/SCHEMA.md.
+// Command genfixtures writes the five deterministic fixture snapshots
+// (calm, busy, hot, dying, startup) that drive panel development before T4 collectors
+// exist. Values mirror docs/DISCOVERY.md hardware facts and live statfs totals; every
+// derived field (band, thermal_band, severity, state, used_pct, display names) is
+// computed via internal/model, never hand-written; fan verdicts, phrase and GPU lines
+// are chosen here until T8/T9 own them. The wire contract is docs/SCHEMA.md (D-050).
 package main
 
 import (
@@ -81,25 +82,28 @@ type smartSpec struct {
 
 type spec struct {
 	name, mood, generatedAt string
-	seed                    int64
-	uptimeSec               int64
-	load1, load5, load15    float64
-	iowaitPct               float64
-	cpuTotalPct             float64
-	cpuFreqGHz              float64
-	cpuTempC                float64
-	nvmeTempC               float64
-	gpus                    [2]gpuSpec
-	memUsed                 int64
-	memCache                int64
-	swapUsed                int64
-	rootUsedPct             float64
-	dataUsedPct             float64
-	net                     netSpec
-	diskIO                  diskIOSpec
-	estab                   int
-	smart                   smartSpec
-	panicCount              int
+	// startup marks marvind's first tick: deltas, histories, temperatures and GPUs
+	// have no reading yet and are null (D-050).
+	startup              bool
+	seed                 int64
+	uptimeSec            int64
+	load1, load5, load15 float64
+	iowaitPct            float64
+	cpuTotalPct          float64
+	cpuFreqGHz           float64
+	cpuTempC             float64
+	nvmeTempC            float64
+	gpus                 [2]gpuSpec
+	memUsed              int64
+	memCache             int64
+	swapUsed             int64
+	rootUsedPct          float64
+	dataUsedPct          float64
+	net                  netSpec
+	diskIO               diskIOSpec
+	estab                int
+	smart                smartSpec
+	panicCount           int
 }
 
 func smartOK(age int) smartSpec {
@@ -163,20 +167,33 @@ var scenarios = []spec{
 		diskIO: diskIOSpec{readB: 390144000, writeB: 445440000, rIOPS: 2100, wIOPS: 2700, inFlight: 122, queueAvg: 8.7},
 		estab:  41, smart: smartOK(128), panicCount: 2,
 	},
+	{
+		// Instant reads as calm; everything that needs a second sample is null.
+		name: "startup", mood: "content", generatedAt: "2026-09-25T11:00:00Z", seed: 55,
+		startup:   true,
+		uptimeSec: 41, load1: 0.12, load5: 0.21, load15: 0.35, cpuFreqGHz: 1.38,
+		gpus:    [2]gpuSpec{{uuid: gpu0UUID}, {uuid: gpu1UUID}},
+		memUsed: 9545129984, memCache: 70089203712, swapUsed: 0,
+		rootUsedPct: 23, dataUsedPct: 22,
+		diskIO: diskIOSpec{inFlight: 0},
+		estab:  14, smart: smartSpec{state: "unknown"},
+	},
 }
 
 func ptr[T any](v T) *T { return &v }
 
 func r1(v float64) float64 { return math.Round(v*10) / 10 }
 
-// fanVerdict implements SCHEMA invariant 6; it keys on cpu.thermal_band.
-func fanVerdict(rpm, maxRPM *int, cpuThermalBand string) string {
+// fanVerdict implements SCHEMA invariant 6; it keys on cpu.thermal_band and never
+// reports not_cooling while that band is null.
+func fanVerdict(rpm, maxRPM *int, cpuThermalBand *model.Band) string {
 	switch {
 	case rpm == nil:
 		return "unknown"
 	case *rpm == 0:
 		return "stalled"
-	case maxRPM != nil && *maxRPM > 0 && float64(*rpm) >= 0.99*float64(*maxRPM) && cpuThermalBand != "ok":
+	case maxRPM != nil && *maxRPM > 0 && float64(*rpm) >= 0.99*float64(*maxRPM) &&
+		cpuThermalBand != nil && *cpuThermalBand != model.BandOK:
 		return "not_cooling"
 	default:
 		return "ok"
@@ -185,7 +202,7 @@ func fanVerdict(rpm, maxRPM *int, cpuThermalBand string) string {
 
 type gpuState struct {
 	tempC, utilPct *float64
-	memUsedMiB     int
+	memUsedMiB     *int
 }
 
 // gpuLine picks the GRAPHICS box line (D-037, docs/MARVIN.md "GPU line"); first match wins.
@@ -205,7 +222,7 @@ func gpuLine(gs []gpuState) string {
 		return "SOMEONE ASKED IT SOMETHING. NOT ME."
 	}
 	for _, g := range gs {
-		if g.memUsedMiB >= 1024 {
+		if g.memUsedMiB != nil && *g.memUsedMiB >= 1024 {
 			return "MODEL LOADED. NOBODY ASKS IT ANYTHING."
 		}
 	}
@@ -230,44 +247,61 @@ func phraseLines(scenario string, cpuTotalPct, cpuTempC, dataUsedPct float64) []
 			fmt.Sprintf("%d%% REMAINS ON /srv/hogdata. I'D TELL YOU WHAT THAT", int(math.Round(100-dataUsedPct))),
 			"MEANS BUT YOU'D ONLY CLEAN SOMETHING IMPORTANT.",
 		}
+	case "startup":
+		// docs/MARVIN.md fans seed line, wrapped to the 52-character line budget.
+		return []string{"FAN BANK 1: NO TELEMETRY.", "I'M COOLING BY FORCE OF WILL."}
 	}
 	panic("genfixtures: no phrase for scenario " + scenario)
 }
 
-func series(rnd *rand.Rand, n int, mean, spread float64) []float64 {
-	out := make([]float64, n)
+func series(rnd *rand.Rand, n int, mean, spread float64) []*float64 {
+	out := make([]*float64, n)
 	for i := range out {
 		v := mean + (rnd.Float64()-0.5)*spread
 		v = math.Max(0, math.Min(100, v))
-		out[i] = r1(v)
+		out[i] = ptr(r1(v))
 	}
 	return out
+}
+
+// sev is model.Severity lifted over null.
+func sev(pct *float64) *model.Band {
+	if pct == nil {
+		return nil
+	}
+	return ptr(model.Severity(*pct))
+}
+
+// recenter shifts the per-thread values so their mean equals total (D-050 agreement),
+// then clamps to 0-100 and rounds to one decimal.
+func recenter(vals []*float64, total float64) {
+	sum := 0.0
+	for _, v := range vals {
+		sum += *v
+	}
+	shift := total - sum/float64(len(vals))
+	for i, v := range vals {
+		vals[i] = ptr(r1(math.Max(0, math.Min(100, *v+shift))))
+	}
 }
 
 func mountEntry(mnt, dev, fs string, total int64, usedPct float64) model.Mount {
 	used := int64(math.Round(float64(total) * usedPct / 100))
 	return model.Mount{
 		Device: dev, Mount: mnt, FS: fs,
-		TotalBytes: total, UsedBytes: used, FreeBytes: total - used,
-		UsedPct: r1(usedPct), State: model.MountState(r1(usedPct)),
+		TotalBytes: ptr(total), UsedBytes: ptr(used), FreeBytes: ptr(total - used),
+		UsedPct: ptr(r1(usedPct)), State: ptr(model.MountState(r1(usedPct))),
 	}
 }
 
-func build(s spec) model.Snapshot {
-	rnd := rand.New(rand.NewSource(s.seed))
-	cpuTemp := r1(s.cpuTempC)
-	cpuThermal := model.ThermalBand(cpuTemp)
+// base returns the snapshot as marvind's first tick sees it: identity, constants and
+// instant reads filled, every delta, history, temperature and GPU reading null.
+func base(s spec) model.Snapshot {
 	gpus := make([]model.GPU, 0, len(s.gpus))
-	states := make([]gpuState, 0, len(s.gpus))
 	for _, g := range s.gpus {
-		temp, util := r1(g.tempC), r1(g.utilPct)
-		states = append(states, gpuState{tempC: ptr(temp), utilPct: ptr(util), memUsedMiB: g.memUsedMiB})
 		gpus = append(gpus, model.GPU{
 			Name: gpuName, DisplayName: model.GPUDisplayName(gpuName), UUID: g.uuid,
-			MemTotalMiB: gpuMemMiB, MemUsedMiB: g.memUsedMiB,
-			UtilPct: ptr(util), TempC: ptr(temp), ThermalBand: model.ThermalBand(temp),
-			PowerW: ptr(r1(g.powerW)), PowerLimitW: gpuLimitW,
-			HistUtilPct: series(rnd, gpuHistLen, g.utilPct, 18),
+			HistUtilPct: make([]*float64, gpuHistLen),
 		})
 	}
 	// Every fan is unobserved until O2 decides (D-027).
@@ -275,51 +309,32 @@ func build(s spec) model.Snapshot {
 	for i := 0; i < 2; i++ {
 		fans = append(fans, model.Fan{
 			Bank: i + 1, Label: fmt.Sprintf("FAN BANK %d", i+1),
-			Verdict: fanVerdict(nil, nil, string(cpuThermal)),
+			Verdict: fanVerdict(nil, nil, nil),
 		})
 	}
-	perThread := make([]*float64, threads)
-	for i := range perThread {
-		v := s.cpuTotalPct + (rnd.Float64()-0.5)*(s.cpuTotalPct+6)
-		perThread[i] = ptr(r1(math.Max(0, math.Min(100, v))))
-	}
-	nvmeTemp := r1(s.nvmeTempC)
 	return model.Snapshot{
 		Schema: model.SchemaVersion, Scenario: s.name, Mood: s.mood,
 		GeneratedAt: s.generatedAt,
-		Host:        model.Host{Hostname: hostName, Kernel: kernel, UptimeSeconds: s.uptimeSec},
-		Phrase:      model.Phrase{Lines: phraseLines(s.name, r1(s.cpuTotalPct), cpuTemp, r1(s.dataUsedPct))},
-		GPULine:     gpuLine(states),
+		Host:        model.Host{Hostname: hostName, Kernel: kernel, UptimeSeconds: ptr(s.uptimeSec)},
+		Phrase:      model.Phrase{Lines: phraseLines(s.name, r1(s.cpuTotalPct), r1(s.cpuTempC), r1(s.dataUsedPct))},
 		CPU: model.CPU{
 			Model: cpuModel, ModelDisplay: model.CPUModelDisplay(cpuModel),
 			Threads: threads, PhysicalCores: physCores,
-			TotalPct: ptr(r1(s.cpuTotalPct)), PerThreadPct: perThread,
-			FreqGHz: r1(s.cpuFreqGHz),
-			Load1:   r1(s.load1), Load5: r1(s.load5), Load15: r1(s.load15),
-			IowaitPct: ptr(r1(s.iowaitPct)),
-			TempC:     ptr(cpuTemp), Band: model.CPUBand(cpuTemp), ThermalBand: cpuThermal,
-			HistPct: series(rnd, cpuHistLen, s.cpuTotalPct, s.cpuTotalPct+18),
+			PerThreadPct: make([]*float64, threads), PerThreadSev: make([]*model.Band, threads),
+			FreqGHz: ptr(r1(s.cpuFreqGHz)),
+			Load1:   ptr(r1(s.load1)), Load5: ptr(r1(s.load5)), Load15: ptr(r1(s.load15)),
+			HistPct: make([]*float64, cpuHistLen),
 		},
 		Memory: model.Memory{
-			TotalBytes: memTotal, UsedBytes: s.memUsed,
-			CacheBytes: s.memCache, UsedPct: r1(float64(s.memUsed) / float64(memTotal) * 100),
-			SwapTotalBytes: swapTotal, SwapUsedBytes: s.swapUsed,
+			TotalBytes: ptr(int64(memTotal)), UsedBytes: ptr(s.memUsed),
+			CacheBytes: ptr(s.memCache), UsedPct: ptr(r1(float64(s.memUsed) / float64(memTotal) * 100)),
+			SwapTotalBytes: ptr(int64(swapTotal)), SwapUsedBytes: ptr(s.swapUsed),
 		},
-		GPUs: gpus,
-		Temps: model.Temps{
-			NvmeC: ptr(nvmeTemp), NvmeThermalBand: model.ThermalBand(nvmeTemp),
-			NvmeSensor: "Composite", NvmeMaxC: nvmeMaxC,
-		},
-		Fans: fans,
-		Network: []model.Net{{
-			If: netIf, RxBps: ptr(int64(s.net.rxBps)), TxBps: ptr(int64(s.net.txBps)),
-		}},
-		Connections: model.Connections{Established: s.estab},
-		DiskIO: model.DiskIO{
-			Device: diskDev, ReadBps: ptr(int64(s.diskIO.readB)), WriteBps: ptr(int64(s.diskIO.writeB)),
-			ReadIOPS: ptr(s.diskIO.rIOPS), WriteIOPS: ptr(s.diskIO.wIOPS),
-			QueueAvg: ptr(r1(s.diskIO.queueAvg)), InFlight: s.diskIO.inFlight,
-		},
+		GPUs:        gpus,
+		Fans:        fans,
+		Network:     []model.Net{{If: netIf, RxErr: ptr(0), TxErr: ptr(0)}},
+		Connections: model.Connections{Established: ptr(s.estab)},
+		DiskIO:      model.DiskIO{Device: diskDev, InFlight: ptr(s.diskIO.inFlight)},
 		Storage: []model.Mount{
 			mountEntry("/", rootDev, rootFS, rootTotal, s.rootUsedPct),
 			mountEntry("/srv/hogdata", dataDev, dataFS, dataTotal, s.dataUsedPct),
@@ -331,8 +346,74 @@ func build(s spec) model.Snapshot {
 			UnsafeShutdowns: s.smart.unsafeShutdowns,
 			AgeSeconds:      s.smart.ageSeconds,
 		},
-		PanicCount: ptr(s.panicCount),
 	}
+}
+
+func build(s spec) model.Snapshot {
+	snap := base(s)
+	states := make([]gpuState, 0, len(s.gpus))
+	if s.startup {
+		for _, g := range snap.GPUs {
+			states = append(states, gpuState{tempC: g.TempC, utilPct: g.UtilPct, memUsedMiB: g.MemUsedMiB})
+		}
+		snap.GPULine = gpuLine(states)
+		return snap
+	}
+
+	rnd := rand.New(rand.NewSource(s.seed))
+	for i, g := range s.gpus {
+		temp, util := r1(g.tempC), r1(g.utilPct)
+		states = append(states, gpuState{tempC: ptr(temp), utilPct: ptr(util), memUsedMiB: ptr(g.memUsedMiB)})
+		snap.GPUs[i] = model.GPU{
+			Name: gpuName, DisplayName: model.GPUDisplayName(gpuName), UUID: g.uuid,
+			MemTotalMiB: ptr(gpuMemMiB), MemUsedMiB: ptr(g.memUsedMiB),
+			UtilPct: ptr(util), UtilSev: sev(ptr(util)),
+			TempC: ptr(temp), ThermalBand: ptr(model.ThermalBand(temp)),
+			PowerW: ptr(r1(g.powerW)), PowerLimitW: ptr(gpuLimitW),
+			HistUtilPct: series(rnd, gpuHistLen, g.utilPct, 18),
+		}
+	}
+	snap.GPULine = gpuLine(states)
+
+	total := r1(s.cpuTotalPct)
+	cpuTemp := r1(s.cpuTempC)
+	cpu := &snap.CPU
+	for i := range cpu.PerThreadPct {
+		v := s.cpuTotalPct + (rnd.Float64()-0.5)*(s.cpuTotalPct+6)
+		cpu.PerThreadPct[i] = ptr(r1(math.Max(0, math.Min(100, v))))
+	}
+	recenter(cpu.PerThreadPct, total)
+	for i, v := range cpu.PerThreadPct {
+		cpu.PerThreadSev[i] = sev(v)
+	}
+	cpu.HistPct = series(rnd, cpuHistLen, s.cpuTotalPct, s.cpuTotalPct+18)
+	cpu.HistPct[cpuHistLen-1] = ptr(total)
+	cpu.TotalPct = ptr(total)
+	cpu.IowaitPct = ptr(r1(s.iowaitPct))
+	cpu.TempC = ptr(cpuTemp)
+	cpu.Band = ptr(model.CPUBand(cpuTemp))
+	cpu.ThermalBand = ptr(model.ThermalBand(cpuTemp))
+	for i := range snap.Fans {
+		f := &snap.Fans[i]
+		f.Verdict = fanVerdict(f.RPM, f.MaxRPM, cpu.ThermalBand)
+	}
+
+	nvmeTemp := r1(s.nvmeTempC)
+	snap.Temps = model.Temps{
+		NvmeC: ptr(nvmeTemp), NvmeThermalBand: ptr(model.ThermalBand(nvmeTemp)),
+		NvmeSensor: ptr("Composite"), NvmeMaxC: ptr(nvmeMaxC),
+	}
+	snap.Network[0].RxBps = ptr(int64(s.net.rxBps))
+	snap.Network[0].TxBps = ptr(int64(s.net.txBps))
+	d := &snap.DiskIO
+	d.ReadBps, d.WriteBps = ptr(int64(s.diskIO.readB)), ptr(int64(s.diskIO.writeB))
+	d.ReadIOPS, d.WriteIOPS = ptr(s.diskIO.rIOPS), ptr(s.diskIO.wIOPS)
+	d.QueueAvg = ptr(r1(s.diskIO.queueAvg))
+	snap.PanicCount = ptr(s.panicCount)
+	if err := model.CheckAgreement(&snap); err != nil {
+		panic(fmt.Sprintf("genfixtures: %s violates agreement: %v", s.name, err))
+	}
+	return snap
 }
 
 func main() {

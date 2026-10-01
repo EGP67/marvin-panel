@@ -55,8 +55,9 @@ tools/discover.sh.
 | cmd/marvind/ | daemon | code |
 | cmd/genfixtures/ | sole author of fixtures/*.json | code |
 | internal/server/ | HTTP handlers, fixture replay | code |
-| internal/collect/, internal/model/, internal/mood/ | T3-T9 | planned; do not create early |
-| fixtures/ | calm busy hot dying | generated; regenerate, never hand-edit |
+| internal/model/ | snapshot types, bands, severity, Ring, agreement (T3) | code |
+| internal/collect/, internal/mood/ | T4-T9 | planned; do not create early |
+| fixtures/ | calm busy hot dying startup | generated; regenerate, never hand-edit |
 | web/ | index.html arrives at T10 (D-011) | code |
 | deploy/ | systemd units | STALE until the deploy task (D-031) |
 | tools/ | discover.sh, discover-sudo.sh, hdmi-probe.sh | owner-run tooling |

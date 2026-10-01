@@ -20,7 +20,8 @@ Marvin's and stays attributed to him.
   note).
 - Phase 1 typography frozen (D-047); dashboard is at-a-glance.
 - Code: T1 scaffold and T2 fixtures committed (39b0ea9); T2b schema amendments
-  (155dabb, a4fac41, D-049 docs). No collectors, model, mood engine or web page yet.
+  (155dabb, a4fac41, D-049 docs); T3 model (a40a1e3, D-050). No collectors, mood engine
+  or web page yet.
 - Docs: owner review 2026-09-26 recorded as D-014..D-033. CLAUDE.md is the agent entry
   point (D-030). Doc sync steps 3-5 done (342dc42, 9a9f058, a031e8f, f02df6c).
 - Gate: make verify passes under Claude Code, including govulncheck.
@@ -104,10 +105,10 @@ docs/DISCOVERY.md          read-only system survey (2026-09-25)
 cmd/marvind/               daemon (T1 flags/healthz/shutdown; T2 fixture serve, --oneshot)
 cmd/genfixtures/           sole author of fixtures/*.json (seeded, byte-deterministic)
 internal/server/           HTTP handlers, fixture replay
-internal/model/            planned T3: Snapshot, ring buffers, color bands, severity
+internal/model/            Snapshot types, bands, severity, Ring, agreement (T3)
 internal/collect/          planned T4-T8: one file per source
 internal/mood/             planned T9: state machine, hysteresis, cooldowns, PANIC COUNT
-fixtures/                  deterministic snapshots: calm busy hot dying
+fixtures/                  deterministic snapshots: calm busy hot dying startup
 web/index.html             planned T10: SVG + value-binding JS
 deploy/                    systemd units — STALE until T10b (D-031)
 tools/                     discover.sh, discover-sudo.sh, hdmi-probe.sh (owner-run)

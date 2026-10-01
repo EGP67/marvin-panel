@@ -125,7 +125,7 @@
       100,
       68,
       100,
-      100
+      94.1
     ],
     "iowait_pct": 18.6,
     "load1": 13.8,
@@ -134,18 +134,32 @@
     "model": "AMD Ryzen 5 9600X 6-Core Processor",
     "model_display": "AMD RYZEN 5 9600X",
     "per_thread_pct": [
-      66.3,
+      79.8,
       100,
-      49.2,
+      62.7,
       100,
-      83.1,
+      96.6,
       100,
       100,
-      76.2,
-      65.2,
-      54.5,
+      89.7,
+      78.7,
+      68,
       100,
-      72.2
+      85.7
+    ],
+    "per_thread_sev": [
+      "danger",
+      "danger",
+      "warn",
+      "danger",
+      "danger",
+      "danger",
+      "danger",
+      "danger",
+      "danger",
+      "warn",
+      "danger",
+      "danger"
     ],
     "physical_cores": 6,
     "temp_c": 84.4,
@@ -223,6 +237,7 @@
       "temp_c": 79.4,
       "thermal_band": "warn",
       "util_pct": 88,
+      "util_sev": "danger",
       "uuid": "GPU-23f0baf7-c957-0754-f922-d20a294ec2a7"
     },
     {
@@ -267,6 +282,7 @@
       "temp_c": 82.1,
       "thermal_band": "warn",
       "util_pct": 94,
+      "util_sev": "danger",
       "uuid": "GPU-b4124ee5-ff18-3b39-facd-544010000b6a"
     }
   ],

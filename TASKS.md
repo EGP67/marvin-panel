@@ -13,6 +13,9 @@ T2  FIXTURES    fixtures/{calm,busy,hot,dying}.json deterministic; --fixture ser
 T2b SCHEMA AMENDMENTS  genfixtures and tests per D-016..D-019, D-027, D-034, D-035, D-037;
     fixtures regenerated (155dabb), live statfs totals (a4fac41); gitleaks allowlist narrowed;
     D-046/D-049 layout fixes in mockup.svg and GEOMETRY.md (docs commit).
+T3  MODEL       internal/model typed snapshot, bands, severity, CToF, display forms, Ring,
+    CheckAgreement; forbidigo gate (a40a1e3); D-050 nullability, severity fields, startup
+    fixture (T3b commit).
 
 ## Owner tasks
 O1  HDMI PROBE — DONE for the SunFounder 7" (2026-09-29; see HANDOFF.md, D-044, D-045).
@@ -27,12 +30,6 @@ O3  PANEL WAKE TEST (after purchase). PeakDo powered from the PSU 5 V rail: it m
     DEFERRED with the PeakDo purchase (D-044); procedure kept for a future PeakDo.
 
 ## Build
-T3  MODEL       internal/model: Snapshot struct, ring buffers, two temperature color
-    functions (D-016: CPU big number 60/90, THERMALS 70/90), severity ramp
-    (<40/40-70/>70), F from C helper, model-string display forms (D-020), agreement
-    invariant test. Gate addition (D-013): forbidigo bans http.Get, http.Post,
-    http.Client, http.DefaultClient and net.Dial outside internal/server.
-    Verify: go test -race ./internal/model
 T4  COLLECT-CPU two-sample per-thread %, model string, thread count from
     /sys/devices/system/cpu/online, physical cores, frequency, loadavg (mood input only;
     no longer displayed, D-017), 120-sample ring. Refuse to start above 12 threads
@@ -57,16 +54,17 @@ T9  MOOD        hysteresis 90 s, line cooldown 10 min, family cooldown 3 min, da
     scripted timelines assert the mood sequence and the persisted count across a
     simulated restart. Also: gpu_line stays <= 38 characters at any temperature,
     including 3-digit readings (the "hot" template is exactly 38 at 2 digits).
-T10 VIEW        web/index.html = mockup.svg (after doc step 4) + binding JS; null ->
-    "NO TELEMETRY" text. Served BY marvind at GET / from 127.0.0.1:8042 (D-002, D-011)
-    with the path-traversal test. Verify: cycle all four fixtures in brave-origin
-    (D-014) using a throwaway --user-data-dir under /tmp, screenshot each; the owner
+T10 VIEW        web/index.html = mockup.svg + binding JS; null -> "NO TELEMETRY" text.
+    Served BY marvind at GET / from 127.0.0.1:8042 (D-002, D-011) with the
+    path-traversal test. Verify: cycle all five fixtures (startup exercises null
+    rendering, D-050) in brave-origin (D-014) using a throwaway --user-data-dir under
+    /tmp, screenshot each; the owner
     reviews label fit for the WIFI header and CON/ERR counters (D-046, D-049) and the
     SPACE rows (D-049). No font-size or bar changes in Phase 1 (D-047).
 T10b DEPLOY     (D-031) Makefile targets deploy, restart, install-service-prereqs,
     install-service. Rewrite deploy/: marvind.service (heartofgold, D-004 Description,
     device policy per D-024, StateDirectory=heartofgold) and heartofgold-kiosk.service
-    (D-014, D-023, D-025, D-026); SMART units from deploy/ (doc step 5).
+    (D-014, D-023, D-025, D-026); SMART units from deploy/ (f02df6c).
     Verify: systemd-analyze verify on each unit; the owner runs the install targets.
 T11a DISPLAY    (panel installed) kiosk enabled, screen blanking and DPMS off, rotation
     set. Wake behavior verified on the installed display (SunFounder: reboot and

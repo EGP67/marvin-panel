@@ -14,7 +14,8 @@ phrase box fill #0c1620 stroke #3a2f14
 wordmark 78 ls14 | headline 132 | gpu total 104 | fahrenheit 42 | body 28 | label 23 ls3
 dim 24 | small 19 | celsius 25 | core label 18
 family: ui-monospace,"DejaVu Sans Mono",monospace
-Advance 0.602 em (DejaVu Sans Mono, resolved on hog). Every px/char budget in this file assumes it (D-049).
+Advance 0.602 em (DejaVu Sans Mono, resolved on hog). Every px/char budget in this file
+assumes it (D-049).
 
 ## Vertical map (top -> bottom)
 title baseline 126 | rule y=170 | phrase 190-318 | processor 338-808 | graphics 828-1178
@@ -53,7 +54,10 @@ Two temperature functions (D-016):
     <70C cyan #5fd8ef | 70..<90C amber #f0b429 | >=90C red #ff6a3d
   The THERMALS header "| = LIMIT · AMBER OVER 70°C" stays as drawn.
   The same temperature may color differently in PROCESSOR and THERMALS; this is accepted.
-per-thread utilization: <40 cyan | 40..70 gold | >70 red
+per-thread utilization: <40 cyan | 40..70 gold | >70 red. The colors come from
+cpu.per_thread_sev and the GPU card percentages from gpus[].util_sev (ok, warn, danger;
+D-050); the browser never computes severity.
+Processor graph: null hist_pct points are not drawn.
 thermal bars: width = C/100 * bar width; the tick marks the device limit
 (NVMe: temp1_max 83.85 C, x=947).
 Throughput bars always print their scale: STORAGE "SCALE 200 MiB/s" (D-021); NETWORK

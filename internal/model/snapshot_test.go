@@ -10,26 +10,45 @@ import (
 	"testing"
 )
 
+var fixtureNames = []string{"calm", "busy", "hot", "dying", "startup"}
+
+// loadFixture strictly decodes fixtures/<name>.json and returns its bytes and value.
+func loadFixture(t *testing.T, name string) ([]byte, Snapshot) {
+	t.Helper()
+	raw, err := os.ReadFile(filepath.Join("..", "..", "fixtures", name+".json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	dec := json.NewDecoder(bytes.NewReader(raw))
+	dec.DisallowUnknownFields()
+	var s Snapshot
+	if err := dec.Decode(&s); err != nil {
+		t.Fatalf("%s: decode: %v", name, err)
+	}
+	return raw, s
+}
+
 // TestFixtureRoundTrip proves the types are the wire contract: every committed
 // fixture decodes strictly and re-encodes to the identical bytes.
 func TestFixtureRoundTrip(t *testing.T) {
-	for _, name := range []string{"calm", "busy", "hot", "dying"} {
-		want, err := os.ReadFile(filepath.Join("..", "..", "fixtures", name+".json"))
-		if err != nil {
-			t.Fatal(err)
-		}
-		dec := json.NewDecoder(bytes.NewReader(want))
-		dec.DisallowUnknownFields()
-		var s Snapshot
-		if err := dec.Decode(&s); err != nil {
-			t.Fatalf("%s: decode: %v", name, err)
-		}
+	for _, name := range fixtureNames {
+		want, s := loadFixture(t, name)
 		got, err := json.MarshalIndent(s, "", "  ")
 		if err != nil {
 			t.Fatal(err)
 		}
 		if got = append(got, '\n'); !bytes.Equal(got, want) {
 			t.Errorf("%s: re-encoded bytes differ from fixture", name)
+		}
+	}
+}
+
+// TestFixtureAgreement checks the D-050 agreement invariant on every fixture.
+func TestFixtureAgreement(t *testing.T) {
+	for _, name := range fixtureNames {
+		_, s := loadFixture(t, name)
+		if err := CheckAgreement(&s); err != nil {
+			t.Errorf("%s: %v", name, err)
 		}
 	}
 }

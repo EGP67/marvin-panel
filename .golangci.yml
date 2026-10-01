@@ -38,6 +38,8 @@ linters:
       - path: ^internal/server/
         linters:
           - forbidigo
+issues:
+  uniq-by-line: false
 formatters:
   enable:
     - gofmt
