@@ -19,6 +19,9 @@ T3  MODEL       internal/model typed snapshot, bands, severity, CToF, display fo
 T10 VIEW        embedded web/ (index.html = mockup SVG + b-* ids, app.js bindings) served
     by marvind at GET / with CSP, traversal and drift tests, --fixture-every; committed
     (T10 commit); owner label review moves to T11a on the real panel.
+T10b DEPLOY     deploy/ units, Xorg config, polkit rule, kiosk session and Makefile
+    deploy/restart/install targets (D-031, D-052); files and targets committed (T10b
+    commit); installed under the owner exception, see report.
 
 ## Owner tasks
 O1  HDMI PROBE — DONE for the SunFounder 7" (2026-09-29; see HANDOFF.md, D-044, D-045).
@@ -58,12 +61,10 @@ T9  MOOD        hysteresis 90 s, line cooldown 10 min, family cooldown 3 min, da
     scripted timelines assert the mood sequence and the persisted count across a
     simulated restart. Also: gpu_line stays <= 38 characters at any temperature,
     including 3-digit readings (the "hot" template is exactly 38 at 2 digits).
-T10b DEPLOY     (D-031) Makefile targets deploy, restart, install-service-prereqs,
-    install-service. Rewrite deploy/: marvind.service (heartofgold, D-004 Description,
-    device policy per D-024, StateDirectory=heartofgold) and heartofgold-kiosk.service
-    (D-014, D-023, D-025, D-026); SMART units from deploy/ (f02df6c).
-    Verify: systemd-analyze verify on each unit; the owner runs the install targets.
-T11a DISPLAY    (panel installed) kiosk enabled, screen blanking and DPMS off, rotation
+T11a DISPLAY    Owner first (if Step 8 of T10b stopped): make install-service-prereqs,
+    make deploy, make install-service. Then answer Brave Origin onboarding once via
+    ssh -X into the kiosk profile.
+    (panel installed) kiosk enabled, screen blanking and DPMS off, rotation
     set. Wake behavior verified on the installed display (SunFounder: reboot and
     power-off/on verified 2026-09-29; re-check on the mounted panel).
     Verify: journalctl -u marvind clean; no restarts; D-024 acceptance.

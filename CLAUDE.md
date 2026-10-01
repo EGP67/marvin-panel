@@ -59,7 +59,7 @@ tools/discover.sh.
 | internal/collect/, internal/mood/ | T4-T9 | planned; do not create early |
 | fixtures/ | calm busy hot dying startup | generated; regenerate, never hand-edit |
 | web/ | index.html + app.js, embedded into marvind (T10, D-011) | code |
-| deploy/ | systemd units | STALE until the deploy task (D-031) |
+| deploy/ | systemd units, Xorg config, polkit rule, kiosk session (D-052) | code |
 | tools/ | discover.sh, discover-sudo.sh, hdmi-probe.sh | owner-run tooling |
 
 ## Hard constraints

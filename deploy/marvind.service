@@ -1,0 +1,39 @@
+[Unit]
+Description=HEART OF GOLD telemetry daemon (NOT marvinweb)
+[Service]
+User=heartofgold
+Group=heartofgold
+# Fixture replay until T4 (D-052).
+ExecStart=/opt/heartofgold/bin/marvind --fixture /opt/heartofgold/fixtures --fixture-every 10s
+Restart=always
+RestartSec=2
+StateDirectory=heartofgold
+StateDirectoryMode=0750
+UMask=0077
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+SystemCallArchitectures=native
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+IPAddressDeny=any
+IPAddressAllow=localhost
+# T7 adds read-only DeviceAllow for the nvidia-smi nodes (D-024).
+DevicePolicy=closed
+MemoryMax=64M
+CPUQuota=10%
+[Install]
+WantedBy=multi-user.target

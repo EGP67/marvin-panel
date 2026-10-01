@@ -1,0 +1,7 @@
+#!/bin/sh
+# Kiosk X session (D-014, D-025, D-028). The profile persists the Brave Origin onboarding answer (D-052).
+exec /usr/bin/brave-origin --kiosk --no-first-run --disable-gpu --password-store=basic \
+  --noerrdialogs --disable-session-crashed-bubble \
+  --user-data-dir=/var/lib/heartofgold-kiosk/profile \
+  --window-position=0,0 --window-size=1080,1920 \
+  http://127.0.0.1:8042/

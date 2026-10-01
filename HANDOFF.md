@@ -30,10 +30,12 @@ Marvin's and stays attributed to him.
 - Host facts verified 2026-09-26: Ubuntu 24.04.5, kernel 6.8.0-142, MSI BIOS 1.P5,
   go1.27.1, NTP synchronized, boots to multi-user.target, Xorg + amdgpu DDX + xinit
   installed, lightdm masked, no window manager.
-- Deployment: nothing is installed for the panel except the SMART exporter
-  (marvin-smart.service + .timer, /usr/local/sbin/marvin-smart), which exists on the host;
-  verbatim copies are in deploy/ (f02df6c). Panel services will run as heartofgold
-  (D-023).
+- Deployment: units and targets exist (D-052): deploy/ holds marvind.service,
+  heartofgold-kiosk.service, the Xorg config, the polkit rule and the kiosk session; the
+  Makefile has deploy, restart, restart-kiosk, install-service-prereqs and
+  install-service. Panel services run as heartofgold (D-023) from /opt/heartofgold. The
+  SMART exporter (marvin-smart.service + .timer, /usr/local/sbin/marvin-smart) exists on
+  the host; verbatim copies are in deploy/ (f02df6c).
 - Development/interim display (D-044), observed 2026-09-29: EDID mfg "TXD", model
   "HDMI", EDID 1.3, native 1024x600, also accepts 1920x1080 / 1280x720 and lower.
   DDC/CI: Novatek controller, capabilities model "FALCON", MCCS 2.0 (detect reports VCP
@@ -110,7 +112,7 @@ internal/collect/          planned T4-T8: one file per source
 internal/mood/             planned T9: state machine, hysteresis, cooldowns, PANIC COUNT
 fixtures/                  deterministic snapshots: calm busy hot dying startup
 web/                       index.html (mockup SVG + b-* ids) + app.js, embedded (T10)
-deploy/                    systemd units — STALE until T10b (D-031)
+deploy/                    units, Xorg config, polkit rule, kiosk session (D-052)
 tools/                     discover.sh, discover-sudo.sh, hdmi-probe.sh (owner-run)
 
 ## Quality gate — MANDATORY on every commit

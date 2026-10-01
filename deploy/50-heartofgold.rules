@@ -1,0 +1,11 @@
+// D-052: user marvin may start/stop/restart exactly the two panel units.
+polkit.addRule(function(action, subject) {
+    if (action.id == "org.freedesktop.systemd1.manage-units" && subject.user == "marvin") {
+        var unit = action.lookup("unit");
+        var verb = action.lookup("verb");
+        if ((unit == "marvind.service" || unit == "heartofgold-kiosk.service") &&
+            (verb == "start" || verb == "stop" || verb == "restart")) {
+            return polkit.Result.YES;
+        }
+    }
+});

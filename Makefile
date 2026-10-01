@@ -2,8 +2,11 @@
 GO      ?= go
 PKG     := ./...
 BIN     := bin/marvind
+PREFIX  := /opt/heartofgold
 
-.PHONY: all build test lint vuln secrets verify tools hooks clean shot
+# deploy must be phony: a deploy/ directory exists.
+.PHONY: all build test lint vuln secrets verify tools hooks clean shot \
+	deploy restart restart-kiosk install-service-prereqs install-service
 
 all: verify build
 
@@ -44,3 +47,45 @@ shot: build
 
 clean:
 	rm -rf bin *.out coverage.txt
+
+# D-052: no sudo. Atomic replace (install to .new, then rename) so a running marvind
+# keeps its old inode until restart.
+deploy: build
+	@test -w $(PREFIX)/bin -a -w $(PREFIX)/fixtures || { echo "$(PREFIX) not writable: run make install-service-prereqs first" >&2; exit 1; }
+	install -m 0755 $(BIN) $(PREFIX)/bin/marvind.new
+	mv -f $(PREFIX)/bin/marvind.new $(PREFIX)/bin/marvind
+	install -m 0755 deploy/heartofgold-kiosk-session $(PREFIX)/bin/heartofgold-kiosk-session.new
+	mv -f $(PREFIX)/bin/heartofgold-kiosk-session.new $(PREFIX)/bin/heartofgold-kiosk-session
+	install -m 0644 fixtures/*.json $(PREFIX)/fixtures/
+
+# Allowed without sudo by deploy/50-heartofgold.rules (polkit, D-052).
+restart:
+	systemctl restart marvind.service
+
+restart-kiosk:
+	systemctl restart heartofgold-kiosk.service
+
+# Owner-run (sudo); Claude Code only under an explicit per-prompt owner exception.
+# Idempotent: account (D-023), /opt/heartofgold owned by marvin, polkit rule.
+install-service-prereqs:
+	getent passwd heartofgold >/dev/null || sudo useradd --system --no-create-home \
+		--shell /usr/sbin/nologin --user-group --groups video,render heartofgold
+	sudo install -d -o marvin -g marvin -m 0755 $(PREFIX) $(PREFIX)/bin $(PREFIX)/fixtures
+	sudo install -m 0644 deploy/50-heartofgold.rules /etc/polkit-1/rules.d/50-heartofgold.rules
+
+# Owner-run (sudo); Claude Code only under an explicit per-prompt owner exception.
+# Archives any installed copy first, installs units and Xorg config, enables only.
+install-service:
+	@TS=$$(date +%Y%m%d-%H%M%S); \
+	for f in /etc/systemd/system/marvind.service /etc/systemd/system/heartofgold-kiosk.service \
+		/etc/X11/xorg.conf.d/10-heartofgold.conf; do \
+		if [ -e "$$f" ]; then sudo cp -p "$$f" "/srv/hogdata/marvin/archive/$$(basename "$$f").$$TS" && echo "archived $$f"; fi; \
+	done
+	sudo install -m 0644 deploy/marvind.service deploy/heartofgold-kiosk.service /etc/systemd/system/
+	sudo install -d -m 0755 /etc/X11/xorg.conf.d
+	sudo install -m 0644 deploy/10-heartofgold.conf /etc/X11/xorg.conf.d/10-heartofgold.conf
+	@grep -q '^allowed_users=console' /etc/X11/Xwrapper.config || { echo "Xwrapper.config: allowed_users=console missing (D-025); not edited"; exit 1; }
+	sudo systemctl daemon-reload
+	sudo systemctl disable getty@tty1.service
+	sudo systemctl enable marvind.service heartofgold-kiosk.service
+	@echo "install-service: units enabled; nothing started"
