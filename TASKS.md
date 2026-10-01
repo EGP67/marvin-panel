@@ -10,6 +10,9 @@ T1  SCAFFOLD    flags --addr --fixture --oneshot, /healthz, graceful shutdown, g
     Makefile, .golangci.yml, .gitleaks.toml, make verify green.
 T2  FIXTURES    fixtures/{calm,busy,hot,dying}.json deterministic; --fixture serves them
     at 1 Hz round-robin; --oneshot prints one snapshot. Committed 39b0ea9.
+T2b SCHEMA AMENDMENTS  genfixtures and tests per D-016..D-019, D-027, D-034, D-035, D-037;
+    fixtures regenerated (155dabb), live statfs totals (a4fac41); gitleaks allowlist narrowed;
+    D-046/D-049 layout fixes in mockup.svg and GEOMETRY.md (docs commit).
 
 ## Owner tasks
 O1  HDMI PROBE — DONE for the SunFounder 7" (2026-09-29; see HANDOFF.md, D-044, D-045).
@@ -24,14 +27,6 @@ O3  PANEL WAKE TEST (after purchase). PeakDo powered from the PSU 5 V rail: it m
     DEFERRED with the PeakDo purchase (D-044); procedure kept for a future PeakDo.
 
 ## Build
-T2b SCHEMA AMENDMENTS  Apply every docs/SCHEMA.md amendment (D-016..D-019, D-027,
-    D-034, D-035, D-037) in cmd/genfixtures and its tests; regenerate fixtures
-    byte-deterministically.
-    Also remove docs/SCHEMA.md from the .gitleaks.toml nvidia-gpu-uuid allowlist.
-    Verify: go run ./cmd/marvind --oneshot --fixture fixtures/busy.json | jq .
-    Also (D-046): ESTAB -> CONN and header "WIFI" in SCHEMA, GEOMETRY, genfixtures and
-    mockup.svg. Check mockup.svg's font-family against the fonts installed on hog and
-    resolve the P-004 collisions. No font-size or bar changes in Phase 1 (D-047).
 T3  MODEL       internal/model: Snapshot struct, ring buffers, two temperature color
     functions (D-016: CPU big number 60/90, THERMALS 70/90), severity ramp
     (<40/40-70/>70), F from C helper, model-string display forms (D-020), agreement
@@ -60,13 +55,14 @@ T9  MOOD        hysteresis 90 s, line cooldown 10 min, family cooldown 3 min, da
     repeat 60 s; lifetime PANIC COUNT persisted in /var/lib/heartofgold/ with atomic
     writes (D-017); the state-driven GPU line (D-037). Verify: table-driven tests over
     scripted timelines assert the mood sequence and the persisted count across a
-    simulated restart.
+    simulated restart. Also: gpu_line stays <= 38 characters at any temperature,
+    including 3-digit readings (the "hot" template is exactly 38 at 2 digits).
 T10 VIEW        web/index.html = mockup.svg (after doc step 4) + binding JS; null ->
     "NO TELEMETRY" text. Served BY marvind at GET / from 127.0.0.1:8042 (D-002, D-011)
     with the path-traversal test. Verify: cycle all four fixtures in brave-origin
     (D-014) using a throwaway --user-data-dir under /tmp, screenshot each; the owner
-    reviews label fit for NETWORK — WIFI (D-018) and the SPACE rows (D-019). No
-    font-size or bar changes in Phase 1 (D-047).
+    reviews label fit for the WIFI header and CON/ERR counters (D-046, D-049) and the
+    SPACE rows (D-049). No font-size or bar changes in Phase 1 (D-047).
 T10b DEPLOY     (D-031) Makefile targets deploy, restart, install-service-prereqs,
     install-service. Rewrite deploy/: marvind.service (heartofgold, D-004 Description,
     device policy per D-024, StateDirectory=heartofgold) and heartofgold-kiosk.service

@@ -6,7 +6,7 @@ homelab server (hog.local). Rendered as MARVIN: bleak, sardonic, self-pitying,
 occasionally useful. The title is "HEART OF GOLD" (the ship); every spoken line is
 Marvin's and stays attributed to him.
 
-## Status (as of 2026-09-29)
+## Status (as of 2026-10-01)
 - Panel: SunFounder 7" 1024x600 HDMI is the interim production display (D-044); facts
   below under "Development/interim display". PeakDo U3 SE 7-inch purchase deferred to a
   cost/benefit decision after install; it remains a drop-in (docs/PANEL_BUYING.md).
@@ -19,10 +19,10 @@ Marvin's and stays attributed to him.
   used by the panel. Output names: kernel connector HDMI-A-1, X output HDMI-A-0 (D-045
   note).
 - Phase 1 typography frozen (D-047); dashboard is at-a-glance.
-- Code: T1 scaffold and T2 fixtures committed (39b0ea9). No collectors, model, mood
-  engine or web page yet.
+- Code: T1 scaffold and T2 fixtures committed (39b0ea9); T2b schema amendments
+  (155dabb, a4fac41, D-049 docs). No collectors, model, mood engine or web page yet.
 - Docs: owner review 2026-09-26 recorded as D-014..D-033. CLAUDE.md is the agent entry
-  point (D-030). Doc sync steps 3-5 in progress.
+  point (D-030). Doc sync steps 3-5 done (342dc42, 9a9f058, a031e8f, f02df6c).
 - Gate: make verify passes under Claude Code, including govulncheck.
 - Remote: origin = git@github.com:EGP67/marvin-panel.git (private GitHub), branch
   master; full history pushed 2026-09-26 (D-040).
@@ -30,8 +30,9 @@ Marvin's and stays attributed to him.
   go1.27.1, NTP synchronized, boots to multi-user.target, Xorg + amdgpu DDX + xinit
   installed, lightdm masked, no window manager.
 - Deployment: nothing is installed for the panel except the SMART exporter
-  (marvin-smart.service + .timer, /usr/local/sbin/marvin-smart), which exists on the host
-  but is not yet in deploy/ (doc step 5). Panel services will run as heartofgold (D-023).
+  (marvin-smart.service + .timer, /usr/local/sbin/marvin-smart), which exists on the host;
+  verbatim copies are in deploy/ (f02df6c). Panel services will run as heartofgold
+  (D-023).
 - Development/interim display (D-044), observed 2026-09-29: EDID mfg "TXD", model
   "HDMI", EDID 1.3, native 1024x600, also accepts 1920x1080 / 1280x720 and lower.
   DDC/CI: Novatek controller, capabilities model "FALCON", MCCS 2.0 (detect reports VCP
@@ -129,8 +130,9 @@ The panel shows mockup.svg with hog.local hardware (D-032):
 title | phrase box | PROCESSOR ("AMD RYZEN 5 9600X" per D-020; total util % colored by
 the CPU temperature band 60/90 per D-016; "n GHZ | TEMP n°F / m°C"; 120 s utilization
 graph; 12 per-thread dot matrices) | GRAPHICS (total + GPU0/GPU1 RTX 3060, VRAM, F/C,
-sparklines) | MEMORY | NETWORK — WIFI (wlp14s0, bars against a stated scale, D-018) |
-STORAGE · I/O | SPACE (/, /srv/hogdata, /boot, D-019) | THERMALS (CPU, GPU0, GPU1,
+sparklines) | MEMORY | NETWORK (header WIFI, CON/ERR counters; wlp14s0, bars against a
+stated scale; D-018, D-046, D-049) | STORAGE · I/O | SPACE (/, /srv/hogdata, /boot as
+percent bars; D-019, D-049) | THERMALS (CPU, GPU0, GPU1,
 NVME M.2 in F and C; amber >=70 °C, red >=90 °C per D-016; FAN BANK 1/2 per D-027) |
 footer "UPTIME … · PANIC COUNT n" (D-017) and DON'T PANIC.
 Runs at boot. Survives 24 h with flat RSS. Under 2% of one core idle. make verify clean.

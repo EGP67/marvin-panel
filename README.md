@@ -9,4 +9,5 @@ Read docs/PANEL_BUYING.md before buying the display.
     make build    # bin/marvind
     go run ./cmd/marvind --oneshot --fixture fixtures/busy.json
 
-Panel not yet purchased. Develop against fixtures; see TASKS.md T2.
+Interim display: SunFounder 7" HDMI panel (D-044). Until the collectors exist (T4-T8),
+develop against fixtures; see TASKS.md T2 and T2b.

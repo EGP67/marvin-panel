@@ -5,9 +5,9 @@ Every snapshot (fixture today, collector output from T4 on) is one JSON object s
 and are produced only by `go run ./cmd/genfixtures -out fixtures`; never edit them by
 hand. Regeneration must be byte-identical (fixed seeds, fixed `generated_at`).
 
-Amended 2026-09-26 by D-016..D-019, D-027, D-034, D-035 and D-037; T2b implements the
-amendments in cmd/genfixtures. The version string stays "marvin/v1": nothing consumes the
-contract yet.
+Amended 2026-09-26 by D-016..D-019, D-027, D-034, D-035 and D-037. Implemented in
+cmd/genfixtures by T2b (155dabb; disk totals a4fac41). The version string stays
+"marvin/v1": nothing consumes the contract yet.
 
 Hardware values (CPU model, GPU UUIDs, devices, interface names, totals) come from
 `docs/DISCOVERY.md` and the 2026-09-26 verification in HANDOFF.md. Mood names and
@@ -31,7 +31,7 @@ triggers come from `docs/MARVIN.md`. Colors and geometry are NOT in this contrac
 | `temps` | object | THERMALS entries not owned by cpu/gpus |
 | `fans` | array | FAN BANK 1/2; exactly 2 entries |
 | `network` | array | NETWORK cell; exactly 1 entry |
-| `connections` | object | `{established: int}` from `ss -s` |
+| `connections` | object | `{established: int}`: TCP state 01 (ESTABLISHED) in /proc/net/tcp and tcp6 (D-036); displayed as "CON n" (D-049) |
 | `disk_io` | object | STORAGE · I/O cell (physical NVMe) |
 | `storage` | array | SPACE cell; exactly 3 entries |
 | `smart` | object | SPACE header SMART status |

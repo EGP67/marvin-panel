@@ -14,6 +14,7 @@ phrase box fill #0c1620 stroke #3a2f14
 wordmark 78 ls14 | headline 132 | gpu total 104 | fahrenheit 42 | body 28 | label 23 ls3
 dim 24 | small 19 | celsius 25 | core label 18
 family: ui-monospace,"DejaVu Sans Mono",monospace
+Advance 0.602 em (DejaVu Sans Mono, resolved on hog). Every px/char budget in this file assumes it (D-049).
 
 ## Vertical map (top -> bottom)
 title baseline 126 | rule y=170 | phrase 190-318 | processor 338-808 | graphics 828-1178
@@ -73,16 +74,21 @@ Percentage text (right, "34%") = used_pct only. Detail line format as drawn:
 "<used> / <total> GiB · CACHE <cache>", total as a whole number
 ("42.0 / 123 GiB · CACHE 62.0", D-037). SWAP line as drawn.
 
-## NETWORK cell (D-018)
-Header "NETWORK — WIFI" (same length as the drawn "NETWORK — eth0"). "ESTAB n · ERR n"
-as drawn. RX/TX right labels "<n>% OF <S> MiB/s". S = 40 MiB/s until T5 measurements
-(D-037). Label fit is confirmed in the T10 Brave screenshot.
+## NETWORK cell (D-018, D-046, D-049)
+Header "WIFI". Counters "CON n · ERR n", right-aligned at x=976 (wire field
+connections.established). RX/TX right labels "<n>% OF <S> MiB/s". S = 40 MiB/s until T5
+measurements (D-037). Label fit is confirmed in the T10 Brave screenshot.
 
-## SPACE cell (D-019)
-Rows "/", "/srv/hogdata", "/boot" at baselines 1466, 1506, 1546; bars x=648 w=140 h=16;
-right text "<pct>% · <used>/<total> <unit>". "/srv/hogdata" is wider than the drawn
-labels; its fit is confirmed in the T10 screenshot and any collision goes to the owner.
-Header right text "IOWAIT n% · SMART <s>", where <s> is OK, FAIL or -- (unknown).
+## STORAGE · I/O cell (D-021, D-049)
+Header "STORAGE · I/O" and "SCALE 200 MiB/s" as drawn; their ~2 px clearance is accepted by
+the owner (D-049).
+
+## SPACE cell (D-019, D-049)
+Rows "/", "/srv/hogdata", "/boot" at baselines 1466, 1506, 1546; bars (track and fill)
+x=732 w=180 h=16 rx=8; right text "<pct>%" only, right-aligned at x=976. Fit at 22px:
+"/srv/hogdata" ends at x≈719, 13 px before the bar; "100%" starts at x≈926. Used/total sizes
+are not shown (Phase 2 Storage view). Header right text "IOWAIT n% · SMART <s>", where <s> is
+OK, FAIL or -- (unknown).
 
 ## Footer budget (D-017)
 37 characters maximum at 23px ls3 (16.85 px/char); must end before x=727
