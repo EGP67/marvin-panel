@@ -102,6 +102,8 @@ tools/discover.sh.
 8. Report: write the report file the prompt names. Its last lines are
    "OUTPUT: c2c <report path>" (the owner runs it) and then READY or BLOCKED alone on the
    final line. READY only if every command passed.
+9. Commit messages contain no Co-Authored-By or 'Generated with Claude Code' lines;
+   never use --no-verify (D-048). New clones run git config core.hooksPath .githooks.
 
 ## Escalation — stop and report BLOCKED rather than attempt a 4th time
 1. The same step fails 3 times.

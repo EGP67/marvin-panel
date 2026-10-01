@@ -42,6 +42,11 @@ Marvin's and stays attributed to him.
   device. USB carries power + touch only. Cold-start artifacts for ~20 min after
   power-up from cold (not seen when warm). The panel survives reboot and power-off/on
   (blanks, returns). DDC policy: D-043.
+- Observation 2026-09-29..10-01: on USB power only, no cold-start artifacts on three
+  consecutive mornings (previously ~20 min of artifacts on the barrel supply). Cause not
+  established: either the barrel adapter caused them, or the panel no longer truly
+  cold-starts because hog's USB port powers it continuously and it only sleeps when it
+  has no signal.
 - ddcutil 1.4.1 installed (owner, 2026-09-29). i2c-dev is built into the kernel.
 - Watch item: amdgpu logs "REG_WAIT timeout 1us * 100000 tries - optc1_wait_for_state
   line:839" on each X start/stop/mode set; not seen during steady display. It becomes a
@@ -115,6 +120,9 @@ make verify runs:  golangci-lint run ./...
 Stage first, then verify, then commit (CLAUDE.md rule 3). A task is not complete until
 make verify exits 0. govulncheck needs network; on failure follow CLAUDE.md workflow
 rule 7.
+Clone setup: git config core.hooksPath .githooks (D-048); git config user.email
+<GitHub noreply address> in this repo only — GitHub email privacy rejects pushes that
+expose the private address (GH007).
 
 ## Definition of done
 The panel shows mockup.svg with hog.local hardware (D-032):

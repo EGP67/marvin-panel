@@ -74,8 +74,14 @@ behavior changes that contradict an ADOPTED row are a review rejection.
 | D-046 | 2026-09-29 | ADOPTED | Network header wording (supersedes D-018's header wording). Header "WIFI"; counters "CONN n · ERR n" (CONN replaces ESTAB; same source per D-036, /proc/net/tcp state 01). SCHEMA/GEOMETRY/mockup changes are T2b work. | "NETWORK — WIFI" overran "ESTAB n · ERR n" on the real panel (rendered as "WIFESTAB"). |
 | D-047 | 2026-09-29 | ADOPTED | Phase 1 typography frozen; the dashboard is an at-a-glance display. No font-size or bar-thickness changes in Phase 1; the canonical 1080x1920 layout ships as drawn (with D-046 and T2b collision fixes only). Readable detail at distance is Phase 2's job (rotating sections). | Owner 10-ft verdict on the SunFounder 7" (D-044/D-045), 2026-09-29 — big numbers: readable; bar colors: readable; section headers: mostly; row labels/values: not really; footer: no; Marvin's lines: color visible, text not readable. Resolves P-004. |
 
-## Open owner items — 2026-09-29
+## Owner items — 2026-09-29
 
 | id | date | status | decision | why |
 |----|------|--------|----------|-----|
 | P-004 | 2026-09-29 | CLOSED | Layout on the SunFounder 7". Letterboxing resolved by D-045. Open only for the owner's 10-ft readability verdict. Close-range: all text sharp at both tested modes. Known collisions seen on the panel: NETWORK header vs ESTAB (resolved by D-046), "/srv/hogdata" label under its bar, "I/O" crowding "SCALE 200 MiB/s" — possibly font fallback (SVG-as-image cannot load web fonts; fallback DejaVu Sans Mono); T2b checks mockup.svg's font-family. | Observed on the real panel in the 2026-09-29 test session. **Note:** Closed 2026-09-29 by owner 10-ft verdict (see D-047). |
+
+## Owner rulings — 2026-10-01
+
+| id | date | status | decision | why |
+|----|------|--------|----------|-----|
+| D-048 | 2026-10-01 | ADOPTED | Commit attribution policy. Commit messages contain no Co-Authored-By line and no "Generated with Claude Code" line; PR text likewise. Enforced in three layers: project .claude/settings.json "attribution": {"commit": "", "pr": ""}; CLAUDE.md rule; tracked .githooks/commit-msg that rejects such messages (activated per clone with git config core.hooksPath .githooks). --no-verify is never used. | Owner ruling 2026-10-01. Upstream bug reports show the attribution setting is not always honored when Claude Code writes commit messages itself, so the hook is the enforcing layer. Commits before 2026-10-01 keep their trailers (pushed history is not rewritten). |

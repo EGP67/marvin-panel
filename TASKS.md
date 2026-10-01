@@ -109,6 +109,8 @@ Network, Storage & Space, Thermals. Rotation is browser-side; the schema is unch
 but see the quote rule below for marvind.
 - Timing: Dashboard 11 s; each other view 7 s (Marvin saying, Processor, Graphics,
   GPU0 & GPU1, Memory & Network, Storage & Space, Thermals); cycle = 60 s.
+- Transitions are cross-fades: the outgoing view fades out while the incoming view fades
+  in simultaneously, with no fade to black.
 - Quotes: every appearance of the Marvin view shows a different quote — never the same
   quote twice in a row; exhaust the pool before any repeat (shuffle-bag).
 - Readability goals (D-047 verdict): larger big numbers, fatter bars, larger section
@@ -119,3 +121,17 @@ line at least once per 60 s cycle or the page choosing from a line pool, so Phas
 no longer strictly browser-side — decide in Phase 2. Whether red states (THERMALS
 >=90 °C, PANIC) pin the rotation to that view; seven new large-type GEOMETRY layouts;
 measure fade CPU cost under software raster (D-028).
+
+## Phase 3 — GPU-active view (future; depends on Phase 2)
+- Trigger: enter when either RTX 3060 is >=10% utilization for 10 s; exit when both are
+  <10% for 30 s (hysteresis prevents flapping).
+- While active, the Phase 2 rotation pauses and this view is shown; on exit, cross-fade
+  back to the rotation starting at the Dashboard.
+- Layout: HEART OF GOLD title and separator fixed. Row 1: CPU and RAM utilization side by
+  side. Row 2: Thermals as drawn on the Dashboard. Rows 3-4: one large row per GPU (GPU0,
+  then GPU1), each an enlarged Dashboard GPU card: utilization %, model, VRAM,
+  temperature, power, history line.
+- Data: all fields already exist in the snapshot; no new collection. Browser-side,
+  subject to the Phase 2 quote question.
+- Open: GEOMETRY for this view; whether per-GPU power is already a per-device schema
+  field (confirm against SCHEMA.md; if not, it becomes a schema change).

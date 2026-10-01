@@ -1,0 +1,7 @@
+#!/bin/sh
+# Reject AI attribution lines in commit messages (D-048).
+if grep -qiE 'co-authored-by:.*(claude|anthropic)|generated with \[?claude code' "$1"; then
+  echo "commit-msg: AI attribution lines are not allowed (D-048, CLAUDE.md)" >&2
+  exit 1
+fi
+exit 0
