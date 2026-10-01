@@ -27,6 +27,12 @@ T11a DISPLAY    kiosk on the SunFounder, native 1024x600 rotated right (D-054), 
     acceptance b PASS (slice device policy: iGPU open, NVIDIA refused); unattended reboot
     PASS; idle 1.38% of one core; Brave Origin onboarding persisted in the kiosk profile
     (repeat via ssh -X as heartofgold if the profile is ever deleted). Closed 2026-10-01.
+    Acceptance c: owner reviewed the native layout on the panel 2026-10-01: orientation
+    correct, labels fit; title spacing rebalanced (TOP_TRIM 24); side margins accepted for
+    Phase 1 (F8).
+T4  COLLECT-CPU  LIVE-1, D-055.
+T5  COLLECT-MEMNET  LIVE-1, D-055 (memory, Wi-Fi, connections).
+T6  COLLECT-DISK  LIVE-1, D-055; SMART read lands here.
 
 ## Owner tasks
 O1  HDMI PROBE — DONE for the SunFounder 7" (2026-09-29; see HANDOFF.md, D-044, D-045).
@@ -42,18 +48,7 @@ O3  PANEL WAKE TEST (after purchase). PeakDo powered from the PSU 5 V rail: it m
 
 ## Build
 Order (owner, 2026-10-01): T10b, T11a, then T4-T9 (display first).
-Next: T4-T9 collectors (live data replaces fixtures), then T11b soak.
-T4  COLLECT-CPU two-sample per-thread %, model string, thread count from
-    /sys/devices/system/cpu/online, physical cores, frequency, loadavg (mood input only;
-    no longer displayed, D-017), 120-sample ring. Refuse to start above 12 threads
-    (D-006). Verify: total % within 5 points of mpstat 1 2; unit tests pass.
-T5  COLLECT-MEMNET mem.go + net.go on wlp14s0 (D-018) with counter-wrap guards and no
-    link ceiling. Verify: scp ~500 MB between the laptop and hog over Wi-Fi; RX/TX track
-    sar -n DEV 1; report peak rates so the owner can set the scale S.
-T6  COLLECT-DISK Statfs for /, /srv/hogdata, /boot (D-019); IO deltas from
-    /proc/diskstats (nvme0n1), IOPS, queue, iowait. Verify: dd a 2 GB file on
-    /srv/hogdata and watch WRITE track iostat 1; report peak read/write for the D-021
-    scale review.
+Next: T7 GPU + T8 temps/fans (O2 result), then T9 mood, T11b soak.
 T7  COLLECT-GPU one nvidia-smi per tick, 750 ms timeout, stale marking, bound by UUID,
     never by index, never the iGPU (D-008, D-024). Verify: simulate a hung nvidia-smi;
     assert tick interval <1.2 s and status STALE.
@@ -71,13 +66,18 @@ T11b SOAK       24 h soak with flat RSS (D-010). Verify: RSS growth within noise
 
 ## Follow-ups (Phase 1, non-blocking)
 F1 Brave window 601x1025 on a 600x1024 screen (1 px overhang, invisible); try 600,1024 once.
+   IN PROGRESS: --window-size=600,1024 tried in LIVE-1; result in the LIVE-1 report.
 F2 PEAK label inside the plot at 100% peaks: low contrast over the line; owner review.
 F3 heartofgold-kiosk.service Requires=marvind.service bounces the kiosk on every marvind
    restart; proposed Wants= (the page covers short outages, MARVIN.md rule 7 exception).
+   RESOLVED: Wants=marvind.service (D-055, LIVE-1); takes effect after make install-service.
 F4 Push anomaly 2026-10-01: GitHub "cannot lock ref" with the ref already updated during a
    slow pre-push hook; watch.
 F5 Docs lines over 90 columns (GEOMETRY, TASKS, HANDOFF): rewrap pass.
 F6 Network "% OF S" unbounded (D-051 (5)); decide with T5.
+F7 Kiosk slice hits MemoryHigh (reclaim of page cache, no OOM): watch memory.events high and
+   CPU during T11b; raise MemoryHigh only on real cost.
+F8 Phase 2: narrower side margins (owner 2026-10-01; layout change, GEOMETRY).
 
 ## Phase 2 — rotating sections (future, not v1)
 Keep the HEART OF GOLD title and separator fixed; fade the body out and the next view

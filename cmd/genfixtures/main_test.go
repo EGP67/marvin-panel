@@ -238,29 +238,6 @@ func optStr(p *int) any {
 	return *p
 }
 
-func TestGPULine(t *testing.T) {
-	g := func(temp, util float64, mem int) gpuState {
-		return gpuState{tempC: ptr(temp), utilPct: ptr(util), memUsedMiB: ptr(mem)}
-	}
-	cases := []struct {
-		name string
-		gs   []gpuState
-		want string
-	}{
-		{"stale", []gpuState{{tempC: nil, utilPct: ptr(50.0)}, g(40, 0, 0)}, "THE BRAINS ARE NOT ANSWERING."},
-		{"all null", []gpuState{{}, {}}, "THE BRAINS ARE NOT ANSWERING."},
-		{"hot", []gpuState{g(79.4, 88, 10112), g(82.1, 94, 11904)}, "THINKING THIS HARD RUNS AT 82 DEGREES."},
-		{"thinking", []gpuState{g(58, 62, 9420), g(61.5, 71, 11800)}, "SOMEONE ASKED IT SOMETHING. NOT ME."},
-		{"loaded", []gpuState{g(44, 0, 8099), g(36, 0, 11243)}, "MODEL LOADED. NOBODY ASKS IT ANYTHING."},
-		{"empty", []gpuState{g(35, 0, 5), g(33, 1, 5)}, "BOTH BRAINS EMPTY. RESTFUL, NOT HAPPY."},
-	}
-	for _, tc := range cases {
-		if got := gpuLine(tc.gs); got != tc.want {
-			t.Errorf("%s: gpuLine = %q, want %q", tc.name, got, tc.want)
-		}
-	}
-}
-
 func TestInvariants(t *testing.T) {
 	docs := decodeAll(t)
 	if len(docs) != 5 {
@@ -305,7 +282,7 @@ func TestInvariants(t *testing.T) {
 		if len(gpus) != 2 {
 			t.Errorf("%s: %d gpus, want 2", name, len(gpus))
 		}
-		states := make([]gpuState, 0, len(gpus))
+		states := make([]model.GPUState, 0, len(gpus))
 		for _, e := range gpus {
 			g := e.(map[string]any)
 			checkKeys(t, name, "gpus[]", g, wantGPUKeys)
@@ -324,8 +301,8 @@ func TestInvariants(t *testing.T) {
 			if h := arr[any](t, g, "hist_util_pct"); len(h) != gpuHistLen {
 				t.Errorf("%s: hist_util_pct length = %d, want %d", name, len(h), gpuHistLen)
 			}
-			states = append(states, gpuState{
-				tempC: optF(g, "temp_c"), utilPct: optF(g, "util_pct"), memUsedMiB: optInt(g, "mem_used_mib"),
+			states = append(states, model.GPUState{
+				TempC: optF(g, "temp_c"), UtilPct: optF(g, "util_pct"), MemUsedMiB: optInt(g, "mem_used_mib"),
 			})
 		}
 
@@ -333,7 +310,7 @@ func TestInvariants(t *testing.T) {
 		if n := utf8.RuneCountInString(gl); n < 1 || n > 38 {
 			t.Errorf("%s: gpu_line %q is %d runes, want 1-38", name, gl, n)
 		}
-		if want := gpuLine(states); gl != want {
+		if want := model.GPULine(states); gl != want {
 			t.Errorf("%s: gpu_line = %q, want %q", name, gl, want)
 		}
 

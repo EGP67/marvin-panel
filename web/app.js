@@ -15,7 +15,7 @@
   var NULL_COLOR = '#6b9dad';
   var THERMAL_OK_TEXT = '#cdeef7';
   var DASH = '--';
-  var TOP_TRIM = 50; // D-054: empty design px cropped above the title
+  var TOP_TRIM = 24; // D-054: empty design px cropped above the title
 
   function $(id) { return document.getElementById(id); }
 

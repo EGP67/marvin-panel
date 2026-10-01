@@ -3,8 +3,8 @@ Description=HEART OF GOLD telemetry daemon (NOT marvinweb)
 [Service]
 User=heartofgold
 Group=heartofgold
-# Fixture replay until T4 (D-052).
-ExecStart=/opt/heartofgold/bin/marvind --fixture /opt/heartofgold/fixtures --fixture-every 10s
+# Live collection (D-055).
+ExecStart=/opt/heartofgold/bin/marvind
 Restart=always
 RestartSec=2
 StateDirectory=heartofgold

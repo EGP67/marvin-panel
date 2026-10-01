@@ -195,35 +195,6 @@ func fanVerdict(rpm, maxRPM *int, cpuThermalBand *model.Band) string {
 	}
 }
 
-type gpuState struct {
-	tempC, utilPct *float64
-	memUsedMiB     *int
-}
-
-// gpuLine picks the GRAPHICS box line (D-037, docs/MARVIN.md "GPU line"); first match wins.
-func gpuLine(gs []gpuState) string {
-	maxTemp, sumUtil := math.Inf(-1), 0.0
-	for _, g := range gs {
-		if g.tempC == nil || g.utilPct == nil {
-			return "THE BRAINS ARE NOT ANSWERING."
-		}
-		maxTemp = math.Max(maxTemp, *g.tempC)
-		sumUtil += *g.utilPct
-	}
-	if maxTemp >= 80 {
-		return fmt.Sprintf("THINKING THIS HARD RUNS AT %d DEGREES.", int(math.Round(maxTemp)))
-	}
-	if len(gs) > 0 && sumUtil/float64(len(gs)) >= 20 {
-		return "SOMEONE ASKED IT SOMETHING. NOT ME."
-	}
-	for _, g := range gs {
-		if g.memUsedMiB != nil && *g.memUsedMiB >= 1024 {
-			return "MODEL LOADED. NOBODY ASKS IT ANYTHING."
-		}
-	}
-	return "BOTH BRAINS EMPTY. RESTFUL, NOT HAPPY."
-}
-
 // phraseLines returns the scenario's seed line (docs/MARVIN.md), numbers taken from
 // the fixture's own wire values.
 func phraseLines(scenario string, cpuTotalPct, cpuTempC, dataUsedPct float64) []string {
@@ -346,19 +317,19 @@ func base(s spec) model.Snapshot {
 
 func build(s spec) model.Snapshot {
 	snap := base(s)
-	states := make([]gpuState, 0, len(s.gpus))
+	states := make([]model.GPUState, 0, len(s.gpus))
 	if s.startup {
 		for _, g := range snap.GPUs {
-			states = append(states, gpuState{tempC: g.TempC, utilPct: g.UtilPct, memUsedMiB: g.MemUsedMiB})
+			states = append(states, model.GPUState{TempC: g.TempC, UtilPct: g.UtilPct, MemUsedMiB: g.MemUsedMiB})
 		}
-		snap.GPULine = gpuLine(states)
+		snap.GPULine = model.GPULine(states)
 		return snap
 	}
 
 	rnd := rand.New(rand.NewSource(s.seed))
 	for i, g := range s.gpus {
 		temp, util := r1(g.tempC), r1(g.utilPct)
-		states = append(states, gpuState{tempC: ptr(temp), utilPct: ptr(util), memUsedMiB: ptr(g.memUsedMiB)})
+		states = append(states, model.GPUState{TempC: ptr(temp), UtilPct: ptr(util), MemUsedMiB: ptr(g.memUsedMiB)})
 		snap.GPUs[i] = model.GPU{
 			Name: gpuName, DisplayName: model.GPUDisplayName(gpuName), UUID: g.uuid,
 			MemTotalMiB: ptr(gpuMemMiB), MemUsedMiB: ptr(g.memUsedMiB),
@@ -368,7 +339,7 @@ func build(s spec) model.Snapshot {
 			HistUtilPct: series(rnd, gpuHistLen, g.utilPct, 18),
 		}
 	}
-	snap.GPULine = gpuLine(states)
+	snap.GPULine = model.GPULine(states)
 
 	total := r1(s.cpuTotalPct)
 	cpuTemp := r1(s.cpuTempC)

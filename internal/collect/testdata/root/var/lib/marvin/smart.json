@@ -1,0 +1,32 @@
+{
+  "json_format_version": [
+    1,
+    0
+  ],
+  "serial_number": "FAKESERIAL0000TEST",
+  "wwn": {
+    "naa": 5,
+    "oui": 1,
+    "id": 99
+  },
+  "nvme_namespaces": [
+    {
+      "id": 1,
+      "eui64": {
+        "oui": 1,
+        "ext_id": 2
+      }
+    }
+  ],
+  "smart_status": {
+    "passed": true,
+    "nvme": {
+      "value": 0
+    }
+  },
+  "nvme_smart_health_information_log": {
+    "percentage_used": 1,
+    "unsafe_shutdowns": 24,
+    "temperature": 40
+  }
+}

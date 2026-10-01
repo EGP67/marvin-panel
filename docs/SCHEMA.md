@@ -19,7 +19,7 @@ triggers come from `docs/MARVIN.md`. Colors and geometry are NOT in this contrac
 | key | type | notes |
 |---|---|---|
 | `schema` | string | always exactly `"marvin/v1"` |
-| `scenario` | string | `calm` \| `busy` \| `hot` \| `dying` \| `startup` (collectors emit `live`) |
+| `scenario` | string | fixtures: `calm` \| `busy` \| `hot` \| `dying` \| `startup`; the live collector emits `live` (D-055) |
 | `mood` | string | `bored` \| `content` \| `melancholic` \| `aggrieved` \| `doomed` |
 | `generated_at` | string | RFC 3339 UTC |
 | `host` | object | see below |
@@ -112,7 +112,9 @@ volumes double-counts against the physical disk.
 
 ## `storage[]` — exactly three entries, in this order: "/", "/srv/hogdata", "/boot" (D-019)
 `device`, `mount`, `fs` strings; `total_bytes`/`used_bytes`/`free_bytes` int|null;
-`used_pct` float|null; `state` string|null.
+`used_pct` float|null; `state` string|null. df semantics (D-055): `used_bytes` =
+(blocks - bfree) x bsize, `free_bytes` = bavail x bsize, `used_pct` = used / (used + free);
+used + free may be below total by the filesystem's reserved blocks.
 
 ## `smart` — from the root-owned handoff /var/lib/marvin/smart.json (D-012)
 `state` string: `ok` | `failing` | `unknown`. `unknown` when the file is missing,

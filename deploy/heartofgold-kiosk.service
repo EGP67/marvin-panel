@@ -1,6 +1,6 @@
 [Unit]
 Description=HEART OF GOLD kiosk (Brave Origin on the iGPU)
-Requires=marvind.service
+Wants=marvind.service
 After=marvind.service systemd-user-sessions.service getty@tty1.service
 Conflicts=getty@tty1.service
 [Service]

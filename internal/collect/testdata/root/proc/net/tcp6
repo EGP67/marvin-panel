@@ -1,0 +1,3 @@
+  sl  local_address rem_address   st tx_queue rx_queue tr tm->when retrnsmt   uid  timeout inode
+   0: 0100007F:1F92 0100007F:C350 0A 00000000:00000000 00:00000000 00000000  1000        0 10 1 0 20 4 30 10 -1
+   1: 0100007F:1F92 0100007F:C350 01 00000000:00000000 00:00000000 00000000  1000        0 11 1 0 20 4 30 10 -1

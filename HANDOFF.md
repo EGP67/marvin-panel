@@ -19,11 +19,14 @@ Marvin's and stays attributed to him.
   used by the panel. Output names: kernel connector HDMI-A-1, X output HDMI-A-0 (D-045
   note).
 - Phase 1 typography frozen (D-047); dashboard is at-a-glance.
-- Kiosk live on the SunFounder since 2026-10-01: fixture replay (D-052), native 1024x600
-  with page fit (D-054), sandbox on the user slice (D-053); T11a closed.
+- Kiosk live on the SunFounder since 2026-10-01: native 1024x600 with page fit (D-054),
+  sandbox on the user slice (D-053); T11a closed.
+- Panel live since LIVE-1 (D-055): CPU, memory, network, disk, space, SMART, uptime; GPUs,
+  temperatures and fans show -- until T7/T8.
 - Code: T1 scaffold and T2 fixtures committed (39b0ea9); T2b schema amendments
   (155dabb, a4fac41, D-049 docs); T3 model (a40a1e3, D-050); T10 page (embedded web/);
-  T11a (6e9f4ec + close-out). No collectors or mood engine yet.
+  T11a (6e9f4ec + close-out); LIVE-1 collectors T4-T6 (internal/collect, D-055). No
+  GPU/temperature collectors or mood engine yet.
 - Docs: owner review 2026-09-26 recorded as D-014..D-033. CLAUDE.md is the agent entry
   point (D-030). Doc sync steps 3-5 done (342dc42, 9a9f058, a031e8f, f02df6c).
 - Gate: make verify passes under Claude Code, including govulncheck.
@@ -111,7 +114,7 @@ cmd/marvind/               daemon (T1 flags/healthz/shutdown; T2 fixture serve, 
 cmd/genfixtures/           sole author of fixtures/*.json (seeded, byte-deterministic)
 internal/server/           HTTP handlers, fixture replay
 internal/model/            Snapshot types, bands, severity, Ring, agreement (T3)
-internal/collect/          planned T4-T8: one file per source
+internal/collect/          live collectors, one file per source (T4-T6, D-055)
 internal/mood/             planned T9: state machine, hysteresis, cooldowns, PANIC COUNT
 fixtures/                  deterministic snapshots: calm busy hot dying startup
 web/                       index.html (mockup SVG + b-* ids) + app.js, embedded (T10)

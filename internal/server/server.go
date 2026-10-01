@@ -1,6 +1,6 @@
-// Package server exposes snapshot JSON over HTTP. Before T4 the only snapshot
-// sources are fixtures; the store replays their bytes verbatim and never decodes
-// a payload into Go types, so the wire contract stays owned by genfixtures/T4.
+// Package server exposes snapshot JSON over HTTP. A Source supplies the bytes: the
+// fixture Store replays files verbatim, Latest holds the live collector's most recent
+// snapshot (D-055). Neither decodes a payload; the contract is owned by internal/model.
 package server
 
 import (
@@ -15,6 +15,28 @@ import (
 	"time"
 )
 
+// Source supplies the snapshot bytes served at /snapshot.json.
+type Source interface {
+	Current() []byte
+}
+
+// Latest is a Source holding the most recently published live snapshot.
+type Latest struct {
+	p atomic.Pointer[[]byte]
+}
+
+// Set publishes b; readers see it on their next Current call.
+func (l *Latest) Set(b []byte) { l.p.Store(&b) }
+
+// Current returns the latest bytes, or nil before the first Set.
+func (l *Latest) Current() []byte {
+	if b := l.p.Load(); b != nil {
+		return *b
+	}
+	return nil
+}
+
+// Store is the fixture Source: a fixed rotation of snapshot files.
 type Store struct {
 	raw [][]byte
 	idx atomic.Uint64
@@ -71,10 +93,15 @@ func (s *Store) Loop(ctx context.Context, d time.Duration) {
 }
 
 // Register wires GET /snapshot.json; ServeMux answers 405 for other methods.
-func Register(mux *http.ServeMux, s *Store, log *slog.Logger) {
+func Register(mux *http.ServeMux, src Source, log *slog.Logger) {
 	mux.HandleFunc("GET /snapshot.json", func(w http.ResponseWriter, _ *http.Request) {
+		b := src.Current()
+		if b == nil {
+			http.Error(w, "no snapshot yet", http.StatusServiceUnavailable)
+			return
+		}
 		w.Header().Set("Content-Type", "application/json")
-		if _, err := w.Write(s.Current()); err != nil {
+		if _, err := w.Write(b); err != nil {
 			log.Error("write snapshot", "err", err)
 		}
 	})

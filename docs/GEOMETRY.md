@@ -20,7 +20,7 @@ A fill attribute always wins over the stylesheet (D-051).
 
 ## Display mapping (D-054)
 Native 1024x600 rotated right (screen 600x1024). The page fits the design uniformly
-through the SVG viewBox: the top 50 design px are cropped, the height fills, and the
+through the SVG viewBox: the top 24 design px are cropped (D-054 note), the height fills, and the
 background and glass rects widen to the window (no black bars, never stretched). All
 coordinates in this file stay design units.
 

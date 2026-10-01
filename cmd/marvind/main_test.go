@@ -7,14 +7,32 @@ import (
 	"path/filepath"
 	"testing"
 	"time"
+
+	"hog.local/marvin-panel/internal/model"
 )
 
-func TestOneshotWithoutFixtureFails(t *testing.T) {
-	for _, args := range [][]string{{"--oneshot"}, {}} {
-		err := run(args, os.Stdout)
-		if err == nil || err.Error() != "no collector before T4; --fixture required" {
-			t.Fatalf("run(%v) err = %v, want fixture-required message", args, err)
-		}
+// TestLiveOneshot runs --oneshot without --fixture against captured collector text
+// (D-055): one strict marvin/v1 document with scenario "live".
+func TestLiveOneshot(t *testing.T) {
+	root, gap := liveRoot, oneshotGap
+	liveRoot, oneshotGap = filepath.Join("..", "..", "internal", "collect", "testdata", "root"), time.Millisecond
+	defer func() { liveRoot, oneshotGap = root, gap }()
+
+	var buf bytes.Buffer
+	if err := run([]string{"--oneshot"}, &buf); err != nil {
+		t.Fatal(err)
+	}
+	dec := json.NewDecoder(&buf)
+	dec.DisallowUnknownFields()
+	var s model.Snapshot
+	if err := dec.Decode(&s); err != nil {
+		t.Fatalf("live oneshot is not a marvin/v1 snapshot: %v", err)
+	}
+	if s.Scenario != "live" || s.Schema != model.SchemaVersion || s.CPU.Threads != 12 {
+		t.Fatalf("unexpected live snapshot: %q %q threads %d", s.Schema, s.Scenario, s.CPU.Threads)
+	}
+	if err := model.CheckAgreement(&s); err != nil {
+		t.Fatal(err)
 	}
 }
 

@@ -1,0 +1,5 @@
+25 31 0:23 / /sys rw,nosuid,nodev,noexec,relatime shared:7 - sysfs sysfs rw
+31 1 252:0 / / rw,relatime shared:1 - ext4 /dev/mapper/ubuntu--vg-ubuntu--lv rw
+47 31 259:2 / /boot rw,relatime shared:54 - ext4 /dev/nvme0n1p2 rw
+50 31 252:1 / /srv/hogdata rw,relatime shared:75 - ext4 /dev/mapper/ubuntu--vg-hogdata rw
+53 47 259:1 / /boot/efi rw,relatime shared:78 - vfat /dev/nvme0n1p1 rw,fmask=0022

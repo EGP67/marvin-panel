@@ -16,7 +16,8 @@ CPU model string : /proc/cpuinfo "model name" (first), trimmed. Display form per
 Threads          : /sys/devices/system/cpu/online (NOT runtime.NumCPU(), which is
                    affinity-derived and would let a capped unit hide cores). Refuse to
                    start above 12 (D-006).
-Physical cores   : lscpu -p=CPU,CORE, deduplicated on CORE (once at startup).
+Physical cores   : sysfs topology, unique (physical_package_id, core_id) over online
+                   CPUs (once at startup, D-055); no lscpu child.
 Per-thread %     : TWO /proc/stat samples >= 500 ms apart. One sample is always wrong.
                    total = user+nice+system+idle+iowait+irq+softirq+steal (guest and
                    guest_nice are already counted inside user).
@@ -27,7 +28,9 @@ Load             : /proc/loadavg. Mood input only; not displayed (D-017).
 Memory           : /proc/meminfo. used = MemTotal - MemAvailable (NOT MemFree).
                    cache = Cached + SReclaimable - Shmem, clamped to [0, total - used]
                    (D-034). swap used = SwapTotal - SwapFree.
-Disk space       : syscall.Statfs on /, /srv/hogdata, /boot (D-019).
+Disk space       : syscall.Statfs on /, /srv/hogdata, /boot (D-019), df semantics (D-055):
+                   used = (blocks - bfree) x bsize, free = bavail x bsize,
+                   used_pct = used / (used + free).
 Disk I/O         : /proc/diskstats line for nvme0n1 (D-035), fields counted with
                    major=1, minor=2, name=3: sectors read (6) and written (10) x 512 per
                    second. No IOPS, in_flight or queue (D-056).
