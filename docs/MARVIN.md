@@ -15,6 +15,8 @@
 7. Never break character in the phrase box to show an error: "THE FAN SENSOR IS NOT
    ANSWERING.", not "N/A". Numeric fields elsewhere on the panel render "--" or
    "NO TELEMETRY" per docs/GEOMETRY.md.
+   Exception: when /snapshot.json is unreachable the page shows "THE SHIP IS NOT
+   ANSWERING. I KNOW HOW IT FEELS." — marvind cannot choose a line it cannot serve.
 8. Every line fits the phrase budget in docs/GEOMETRY.md: <= 100 characters, wrapped to
    2 lines of <= 52.
 

@@ -57,7 +57,11 @@ Two temperature functions (D-016):
 per-thread utilization: <40 cyan | 40..70 gold | >70 red. The colors come from
 cpu.per_thread_sev and the GPU card percentages from gpus[].util_sev (ok, warn, danger;
 D-050); the browser never computes severity.
-Processor graph: null hist_pct points are not drawn.
+Processor graph: null hist_pct points are not drawn; the line, area, PEAK and "now"
+markers draw the most recent contiguous non-null run only (hidden when there is none).
+Fans: rpm null renders the label "FAN BANK n: NO TELEMETRY" and "--" in the RPM slot,
+bar width 0 (a 28px "NO TELEMETRY" in the RPM slot would overlap bank 2 and pass the box
+edge).
 thermal bars: width = C/100 * bar width; the tick marks the device limit
 (NVMe: temp1_max 83.85 C, x=947).
 Throughput bars always print their scale: STORAGE "SCALE 200 MiB/s" (D-021); NETWORK
@@ -76,7 +80,8 @@ Cache segment (underneath): x=96, width = (used+cache)/total * 408, rx=11, fill 
 Used segment (on top): x=96, width = used/total * 408, rx=11, fill url(#bar).
 Percentage text (right, "34%") = used_pct only. Detail line format as drawn:
 "<used> / <total> GiB · CACHE <cache>", total as a whole number
-("42.0 / 123 GiB · CACHE 62.0", D-037). SWAP line as drawn.
+("42.0 / 123 GiB · CACHE 62.0", D-037). SWAP line as drawn; the quip
+" — SPARE, UNLIKE ME" appears only at 0%.
 
 ## NETWORK cell (D-018, D-046, D-049)
 Header "WIFI". Counters "CON n · ERR n", right-aligned at x=976 (wire field

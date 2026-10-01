@@ -1,6 +1,7 @@
 // Command marvind collects host telemetry and serves it to the HEART OF GOLD panel.
-// T2 scope: fixture-driven /snapshot.json round-robin, --oneshot, healthz, shutdown.
-// Collection arrives in T4-T8; until then --fixture is required.
+// T10 scope: fixture-driven /snapshot.json rotation, the embedded panel page at /
+// (D-011), --oneshot, healthz, shutdown. Collection arrives in T4-T8; until then
+// --fixture is required.
 package main
 
 import (
@@ -19,17 +20,22 @@ import (
 	"time"
 
 	"hog.local/marvin-panel/internal/server"
+	"hog.local/marvin-panel/web"
 )
 
-const version = "0.2.0-t2"
+const version = "0.3.0-t10"
 
 // D-002: the one loopback port marvind binds; never auto-increment (see D-003).
 const defaultAddr = "127.0.0.1:8042"
 
+// minFixtureEvery bounds --fixture-every so a typo cannot spin the rotation.
+const minFixtureEvery = 100 * time.Millisecond
+
 type options struct {
-	addr    string
-	fixture string
-	oneshot bool
+	addr         string
+	fixture      string
+	fixtureEvery time.Duration
+	oneshot      bool
 }
 
 func parseFlags(args []string) (options, error) {
@@ -37,9 +43,13 @@ func parseFlags(args []string) (options, error) {
 	fs := flag.NewFlagSet("marvind", flag.ContinueOnError)
 	fs.StringVar(&o.addr, "addr", defaultAddr, "loopback address to serve on")
 	fs.StringVar(&o.fixture, "fixture", "", "fixture file or dir served until T4 collectors exist")
+	fs.DurationVar(&o.fixtureEvery, "fixture-every", time.Second, "fixture rotation interval (>= 100ms)")
 	fs.BoolVar(&o.oneshot, "oneshot", false, "print one snapshot as JSON and exit")
 	if err := fs.Parse(args); err != nil {
 		return o, fmt.Errorf("parse flags: %w", err)
+	}
+	if o.fixtureEvery < minFixtureEvery {
+		return o, fmt.Errorf("--fixture-every %s is below the %s minimum", o.fixtureEvery, minFixtureEvery)
 	}
 	return o, nil
 }
@@ -90,6 +100,7 @@ func run(args []string, stdout io.Writer) error {
 
 	mux := http.NewServeMux()
 	server.Register(mux, store, log)
+	server.RegisterWeb(mux, web.FS)
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		if err := json.NewEncoder(w).Encode(snap()); err != nil {
@@ -105,9 +116,9 @@ func run(args []string, stdout io.Writer) error {
 	if err != nil {
 		return fmt.Errorf("listen %s: %w", opts.addr, err)
 	}
-	srv := &http.Server{Handler: mux, ReadHeaderTimeout: 5 * time.Second}
+	srv := &http.Server{Handler: server.SecurityHeaders(mux), ReadHeaderTimeout: 5 * time.Second}
 
-	go store.Loop(ctx, time.Second)
+	go store.Loop(ctx, opts.fixtureEvery)
 
 	errCh := make(chan error, 1)
 	go func() {

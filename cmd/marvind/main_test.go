@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 )
 
 func TestOneshotWithoutFixtureFails(t *testing.T) {
@@ -49,5 +50,18 @@ func TestParseFlagsDefaults(t *testing.T) {
 	}
 	if o.addr != defaultAddr || o.fixture != "" || o.oneshot {
 		t.Fatalf("defaults wrong: %+v", o)
+	}
+	if o.fixtureEvery != time.Second {
+		t.Fatalf("--fixture-every default = %s, want 1s", o.fixtureEvery)
+	}
+}
+
+func TestFixtureEveryBounds(t *testing.T) {
+	if _, err := parseFlags([]string{"--fixture-every", "50ms"}); err == nil {
+		t.Fatal("--fixture-every 50ms accepted, want an error")
+	}
+	o, err := parseFlags([]string{"--fixture-every", "100ms"})
+	if err != nil || o.fixtureEvery != 100*time.Millisecond {
+		t.Fatalf("--fixture-every 100ms: %v, %s", err, o.fixtureEvery)
 	}
 }

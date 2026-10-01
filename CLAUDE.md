@@ -58,7 +58,7 @@ tools/discover.sh.
 | internal/model/ | snapshot types, bands, severity, Ring, agreement (T3) | code |
 | internal/collect/, internal/mood/ | T4-T9 | planned; do not create early |
 | fixtures/ | calm busy hot dying startup | generated; regenerate, never hand-edit |
-| web/ | index.html arrives at T10 (D-011) | code |
+| web/ | index.html + app.js, embedded into marvind (T10, D-011) | code |
 | deploy/ | systemd units | STALE until the deploy task (D-031) |
 | tools/ | discover.sh, discover-sudo.sh, hdmi-probe.sh | owner-run tooling |
 

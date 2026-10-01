@@ -16,6 +16,9 @@ T2b SCHEMA AMENDMENTS  genfixtures and tests per D-016..D-019, D-027, D-034, D-0
 T3  MODEL       internal/model typed snapshot, bands, severity, CToF, display forms, Ring,
     CheckAgreement; forbidigo gate (a40a1e3); D-050 nullability, severity fields, startup
     fixture (T3b commit).
+T10 VIEW        embedded web/ (index.html = mockup SVG + b-* ids, app.js bindings) served
+    by marvind at GET / with CSP, traversal and drift tests, --fixture-every; committed
+    (T10 commit); owner label review moves to T11a on the real panel.
 
 ## Owner tasks
 O1  HDMI PROBE — DONE for the SunFounder 7" (2026-09-29; see HANDOFF.md, D-044, D-045).
@@ -30,6 +33,7 @@ O3  PANEL WAKE TEST (after purchase). PeakDo powered from the PSU 5 V rail: it m
     DEFERRED with the PeakDo purchase (D-044); procedure kept for a future PeakDo.
 
 ## Build
+Order (owner, 2026-10-01): T10b, T11a, then T4-T9 (display first).
 T4  COLLECT-CPU two-sample per-thread %, model string, thread count from
     /sys/devices/system/cpu/online, physical cores, frequency, loadavg (mood input only;
     no longer displayed, D-017), 120-sample ring. Refuse to start above 12 threads
@@ -54,13 +58,6 @@ T9  MOOD        hysteresis 90 s, line cooldown 10 min, family cooldown 3 min, da
     scripted timelines assert the mood sequence and the persisted count across a
     simulated restart. Also: gpu_line stays <= 38 characters at any temperature,
     including 3-digit readings (the "hot" template is exactly 38 at 2 digits).
-T10 VIEW        web/index.html = mockup.svg + binding JS; null -> "NO TELEMETRY" text.
-    Served BY marvind at GET / from 127.0.0.1:8042 (D-002, D-011) with the
-    path-traversal test. Verify: cycle all five fixtures (startup exercises null
-    rendering, D-050) in brave-origin (D-014) using a throwaway --user-data-dir under
-    /tmp, screenshot each; the owner
-    reviews label fit for the WIFI header and CON/ERR counters (D-046, D-049) and the
-    SPACE rows (D-049). No font-size or bar changes in Phase 1 (D-047).
 T10b DEPLOY     (D-031) Makefile targets deploy, restart, install-service-prereqs,
     install-service. Rewrite deploy/: marvind.service (heartofgold, D-004 Description,
     device policy per D-024, StateDirectory=heartofgold) and heartofgold-kiosk.service
@@ -76,6 +73,9 @@ T11a DISPLAY    (panel installed) kiosk enabled, screen blanking and DPMS off, r
        dedicated to AI workloads; marvind's nvidia-smi query (D-024) is the only
        permitted NVIDIA access.
     b. Deploy proves DeviceAllow by-path resolution (D-023 note).
+    c. The owner reviews label fit for all five fixtures (from T10): WIFI header and
+       CON/ERR counters (D-046, D-049), SPACE rows (D-049). No font-size or bar changes
+       in Phase 1 (D-047).
     Findings from the 2026-09-29 test session:
     - Proven start path: systemd unit, PAMName=login, TTYPath=/dev/ttyN,
       StandardInput=tty, xinit … -- :N vtN -nolisten tcp -keeptty -nocursor, as a
