@@ -13,11 +13,11 @@ import (
 	"math/rand"
 	"os"
 	"path/filepath"
-	"strings"
+
+	"hog.local/marvin-panel/internal/model"
 )
 
 const (
-	schema    = "marvin/v1"
 	cpuModel  = "AMD Ryzen 5 9600X 6-Core Processor"
 	threads   = 12
 	physCores = 6
@@ -169,41 +169,6 @@ func ptr[T any](v T) *T { return &v }
 
 func r1(v float64) float64 { return math.Round(v*10) / 10 }
 
-// cpuBand is the PROCESSOR big-number band (D-016, SCHEMA invariant 3).
-func cpuBand(c float64) string {
-	switch {
-	case c >= 90:
-		return "danger"
-	case c >= 60:
-		return "warn"
-	default:
-		return "ok"
-	}
-}
-
-// thermalBand is the THERMALS band for every thermal reading (D-016, SCHEMA invariant 4).
-func thermalBand(c float64) string {
-	switch {
-	case c >= 90:
-		return "danger"
-	case c >= 70:
-		return "warn"
-	default:
-		return "ok"
-	}
-}
-
-func mountState(usedPct float64) string {
-	switch {
-	case usedPct >= 90:
-		return "danger"
-	case usedPct >= 80:
-		return "warn"
-	default:
-		return "ok"
-	}
-}
-
 // fanVerdict implements SCHEMA invariant 6; it keys on cpu.thermal_band.
 func fanVerdict(rpm, maxRPM *int, cpuThermalBand string) string {
 	switch {
@@ -216,14 +181,6 @@ func fanVerdict(rpm, maxRPM *int, cpuThermalBand string) string {
 	default:
 		return "ok"
 	}
-}
-
-func modelDisplay(raw string) string {
-	return strings.ToUpper(strings.TrimSuffix(raw, " 6-Core Processor"))
-}
-
-func gpuDisplay(raw string) string {
-	return strings.TrimPrefix(raw, "NVIDIA GeForce ")
 }
 
 type gpuState struct {
@@ -287,103 +244,94 @@ func series(rnd *rand.Rand, n int, mean, spread float64) []float64 {
 	return out
 }
 
-func mountEntry(mnt, dev, fs string, total int64, usedPct float64) map[string]any {
+func mountEntry(mnt, dev, fs string, total int64, usedPct float64) model.Mount {
 	used := int64(math.Round(float64(total) * usedPct / 100))
-	return map[string]any{
-		"device": dev, "mount": mnt, "fs": fs,
-		"total_bytes": total, "used_bytes": used, "free_bytes": total - used,
-		"used_pct": r1(usedPct), "state": mountState(r1(usedPct)),
+	return model.Mount{
+		Device: dev, Mount: mnt, FS: fs,
+		TotalBytes: total, UsedBytes: used, FreeBytes: total - used,
+		UsedPct: r1(usedPct), State: model.MountState(r1(usedPct)),
 	}
 }
 
-func intOrNull(p *int) any {
-	if p == nil {
-		return nil
-	}
-	return *p
-}
-
-func build(s spec) map[string]any {
+func build(s spec) model.Snapshot {
 	rnd := rand.New(rand.NewSource(s.seed))
 	cpuTemp := r1(s.cpuTempC)
-	cpuThermal := thermalBand(cpuTemp)
-	gpus := make([]any, 0, len(s.gpus))
+	cpuThermal := model.ThermalBand(cpuTemp)
+	gpus := make([]model.GPU, 0, len(s.gpus))
 	states := make([]gpuState, 0, len(s.gpus))
 	for _, g := range s.gpus {
 		temp, util := r1(g.tempC), r1(g.utilPct)
 		states = append(states, gpuState{tempC: ptr(temp), utilPct: ptr(util), memUsedMiB: g.memUsedMiB})
-		gpus = append(gpus, map[string]any{
-			"name": gpuName, "display_name": gpuDisplay(gpuName), "uuid": g.uuid,
-			"mem_total_mib": gpuMemMiB, "mem_used_mib": g.memUsedMiB,
-			"util_pct": util, "temp_c": temp, "thermal_band": thermalBand(temp),
-			"power_w": r1(g.powerW), "power_limit_w": gpuLimitW,
-			"hist_util_pct": series(rnd, gpuHistLen, g.utilPct, 18),
+		gpus = append(gpus, model.GPU{
+			Name: gpuName, DisplayName: model.GPUDisplayName(gpuName), UUID: g.uuid,
+			MemTotalMiB: gpuMemMiB, MemUsedMiB: g.memUsedMiB,
+			UtilPct: ptr(util), TempC: ptr(temp), ThermalBand: model.ThermalBand(temp),
+			PowerW: ptr(r1(g.powerW)), PowerLimitW: gpuLimitW,
+			HistUtilPct: series(rnd, gpuHistLen, g.utilPct, 18),
 		})
 	}
 	// Every fan is unobserved until O2 decides (D-027).
-	fans := make([]any, 0, 2)
+	fans := make([]model.Fan, 0, 2)
 	for i := 0; i < 2; i++ {
-		fans = append(fans, map[string]any{
-			"bank": i + 1, "label": fmt.Sprintf("FAN BANK %d", i+1),
-			"rpm": nil, "max_rpm": nil,
-			"verdict": fanVerdict(nil, nil, cpuThermal),
+		fans = append(fans, model.Fan{
+			Bank: i + 1, Label: fmt.Sprintf("FAN BANK %d", i+1),
+			Verdict: fanVerdict(nil, nil, string(cpuThermal)),
 		})
 	}
-	perThread := make([]float64, threads)
+	perThread := make([]*float64, threads)
 	for i := range perThread {
 		v := s.cpuTotalPct + (rnd.Float64()-0.5)*(s.cpuTotalPct+6)
-		perThread[i] = r1(math.Max(0, math.Min(100, v)))
+		perThread[i] = ptr(r1(math.Max(0, math.Min(100, v))))
 	}
 	nvmeTemp := r1(s.nvmeTempC)
-	return map[string]any{
-		"schema": schema, "scenario": s.name, "mood": s.mood,
-		"generated_at": s.generatedAt,
-		"host":         map[string]any{"hostname": hostName, "kernel": kernel, "uptime_seconds": s.uptimeSec},
-		"phrase":       map[string]any{"lines": phraseLines(s.name, r1(s.cpuTotalPct), cpuTemp, r1(s.dataUsedPct))},
-		"gpu_line":     gpuLine(states),
-		"cpu": map[string]any{
-			"model": cpuModel, "model_display": modelDisplay(cpuModel),
-			"threads": threads, "physical_cores": physCores,
-			"total_pct": r1(s.cpuTotalPct), "per_thread_pct": perThread,
-			"freq_ghz": r1(s.cpuFreqGHz),
-			"load1":    r1(s.load1), "load5": r1(s.load5), "load15": r1(s.load15),
-			"iowait_pct": r1(s.iowaitPct),
-			"temp_c":     cpuTemp, "band": cpuBand(cpuTemp), "thermal_band": cpuThermal,
-			"hist_pct": series(rnd, cpuHistLen, s.cpuTotalPct, s.cpuTotalPct+18),
+	return model.Snapshot{
+		Schema: model.SchemaVersion, Scenario: s.name, Mood: s.mood,
+		GeneratedAt: s.generatedAt,
+		Host:        model.Host{Hostname: hostName, Kernel: kernel, UptimeSeconds: s.uptimeSec},
+		Phrase:      model.Phrase{Lines: phraseLines(s.name, r1(s.cpuTotalPct), cpuTemp, r1(s.dataUsedPct))},
+		GPULine:     gpuLine(states),
+		CPU: model.CPU{
+			Model: cpuModel, ModelDisplay: model.CPUModelDisplay(cpuModel),
+			Threads: threads, PhysicalCores: physCores,
+			TotalPct: ptr(r1(s.cpuTotalPct)), PerThreadPct: perThread,
+			FreqGHz: r1(s.cpuFreqGHz),
+			Load1:   r1(s.load1), Load5: r1(s.load5), Load15: r1(s.load15),
+			IowaitPct: ptr(r1(s.iowaitPct)),
+			TempC:     ptr(cpuTemp), Band: model.CPUBand(cpuTemp), ThermalBand: cpuThermal,
+			HistPct: series(rnd, cpuHistLen, s.cpuTotalPct, s.cpuTotalPct+18),
 		},
-		"memory": map[string]any{
-			"total_bytes": int64(memTotal), "used_bytes": s.memUsed,
-			"cache_bytes": s.memCache, "used_pct": r1(float64(s.memUsed) / float64(memTotal) * 100),
-			"swap_total_bytes": int64(swapTotal), "swap_used_bytes": s.swapUsed,
+		Memory: model.Memory{
+			TotalBytes: memTotal, UsedBytes: s.memUsed,
+			CacheBytes: s.memCache, UsedPct: r1(float64(s.memUsed) / float64(memTotal) * 100),
+			SwapTotalBytes: swapTotal, SwapUsedBytes: s.swapUsed,
 		},
-		"gpus": gpus,
-		"temps": map[string]any{
-			"nvme_c": nvmeTemp, "nvme_thermal_band": thermalBand(nvmeTemp),
-			"nvme_sensor": "Composite", "nvme_max_c": nvmeMaxC,
+		GPUs: gpus,
+		Temps: model.Temps{
+			NvmeC: ptr(nvmeTemp), NvmeThermalBand: model.ThermalBand(nvmeTemp),
+			NvmeSensor: "Composite", NvmeMaxC: nvmeMaxC,
 		},
-		"fans": fans,
-		"network": []any{map[string]any{
-			"if": netIf, "rx_bps": int64(s.net.rxBps), "tx_bps": int64(s.net.txBps),
-			"rx_err": 0, "tx_err": 0,
+		Fans: fans,
+		Network: []model.Net{{
+			If: netIf, RxBps: ptr(int64(s.net.rxBps)), TxBps: ptr(int64(s.net.txBps)),
 		}},
-		"connections": map[string]any{"established": s.estab},
-		"disk_io": map[string]any{
-			"device": diskDev, "read_bps": int64(s.diskIO.readB), "write_bps": int64(s.diskIO.writeB),
-			"read_iops": s.diskIO.rIOPS, "write_iops": s.diskIO.wIOPS,
-			"queue_avg": r1(s.diskIO.queueAvg), "in_flight": s.diskIO.inFlight,
+		Connections: model.Connections{Established: s.estab},
+		DiskIO: model.DiskIO{
+			Device: diskDev, ReadBps: ptr(int64(s.diskIO.readB)), WriteBps: ptr(int64(s.diskIO.writeB)),
+			ReadIOPS: ptr(s.diskIO.rIOPS), WriteIOPS: ptr(s.diskIO.wIOPS),
+			QueueAvg: ptr(r1(s.diskIO.queueAvg)), InFlight: s.diskIO.inFlight,
 		},
-		"storage": []any{
+		Storage: []model.Mount{
 			mountEntry("/", rootDev, rootFS, rootTotal, s.rootUsedPct),
 			mountEntry("/srv/hogdata", dataDev, dataFS, dataTotal, s.dataUsedPct),
 			mountEntry("/boot", bootDev, bootFS, bootTotal, bootUsed),
 		},
-		"smart": map[string]any{
-			"state":            s.smart.state,
-			"percentage_used":  intOrNull(s.smart.percentageUsed),
-			"unsafe_shutdowns": intOrNull(s.smart.unsafeShutdowns),
-			"age_seconds":      intOrNull(s.smart.ageSeconds),
+		Smart: model.Smart{
+			State:           s.smart.state,
+			PercentageUsed:  s.smart.percentageUsed,
+			UnsafeShutdowns: s.smart.unsafeShutdowns,
+			AgeSeconds:      s.smart.ageSeconds,
 		},
-		"panic_count": s.panicCount,
+		PanicCount: ptr(s.panicCount),
 	}
 }
 

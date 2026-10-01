@@ -17,6 +17,7 @@ linters:
     - unconvert
     - misspell
     - exhaustive
+    - forbidigo
   settings:
     errcheck:
       check-blank: true
@@ -24,6 +25,19 @@ linters:
       rules:
         - name: package-comments
           disabled: true
+    forbidigo:
+      forbid:
+        - pattern: ^http\.(Get|Head|Post|PostForm)$
+          msg: "D-013: no outbound HTTP outside internal/server"
+        - pattern: ^http\.(Client|DefaultClient)$
+          msg: "D-013: no outbound HTTP outside internal/server"
+        - pattern: ^net\.(Dial|DialTimeout|Dialer)$
+          msg: "D-013: no outbound network outside internal/server"
+  exclusions:
+    rules:
+      - path: ^internal/server/
+        linters:
+          - forbidigo
 formatters:
   enable:
     - gofmt

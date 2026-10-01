@@ -9,6 +9,8 @@ import (
 	"strings"
 	"testing"
 	"unicode/utf8"
+
+	"hog.local/marvin-panel/internal/model"
 )
 
 // Key sets per docs/SCHEMA.md.
@@ -160,28 +162,6 @@ func walkKeys(v any, visit func(string)) {
 	}
 }
 
-func TestBands(t *testing.T) {
-	cases := []struct {
-		c            float64
-		cpu, thermal string
-	}{
-		{59.9, "ok", "ok"},
-		{60, "warn", "ok"},
-		{69.9, "warn", "ok"},
-		{70, "warn", "warn"},
-		{89.9, "warn", "warn"},
-		{90, "danger", "danger"},
-	}
-	for _, tc := range cases {
-		if got := cpuBand(tc.c); got != tc.cpu {
-			t.Errorf("cpuBand(%v) = %s, want %s", tc.c, got, tc.cpu)
-		}
-		if got := thermalBand(tc.c); got != tc.thermal {
-			t.Errorf("thermalBand(%v) = %s, want %s", tc.c, got, tc.thermal)
-		}
-	}
-}
-
 func TestFanVerdict(t *testing.T) {
 	cases := []struct {
 		rpm, max *int
@@ -230,29 +210,20 @@ func TestGPULine(t *testing.T) {
 	}
 }
 
-func TestDisplayNames(t *testing.T) {
-	if got := modelDisplay(cpuModel); got != "AMD RYZEN 5 9600X" {
-		t.Errorf("modelDisplay = %q", got)
-	}
-	if got := gpuDisplay(gpuName); got != "RTX 3060" {
-		t.Errorf("gpuDisplay = %q", got)
-	}
-}
-
 func TestInvariants(t *testing.T) {
 	docs := decodeAll(t)
 	for name, doc := range docs {
-		if doc["schema"] != schema {
+		if doc["schema"] != model.SchemaVersion {
 			t.Errorf("%s: schema = %v", name, doc["schema"])
 		}
 		checkKeys(t, name, "top-level", doc, wantTopKeys)
 
 		cpu := sub(t, doc, "cpu")
 		cpuTemp := num(t, cpu, "temp_c")
-		if cpu["band"] != cpuBand(cpuTemp) {
+		if cpu["band"] != string(model.CPUBand(cpuTemp)) {
 			t.Errorf("%s: cpu.band %v inconsistent with temp %v", name, cpu["band"], cpuTemp)
 		}
-		if cpu["thermal_band"] != thermalBand(cpuTemp) {
+		if cpu["thermal_band"] != string(model.ThermalBand(cpuTemp)) {
 			t.Errorf("%s: cpu.thermal_band %v inconsistent with temp %v", name, cpu["thermal_band"], cpuTemp)
 		}
 		if cpu["model_display"] != "AMD RYZEN 5 9600X" {
@@ -273,7 +244,7 @@ func TestInvariants(t *testing.T) {
 		for _, e := range gpus {
 			g := e.(map[string]any)
 			checkKeys(t, name, "gpus[]", g, wantGPUKeys)
-			if g["thermal_band"] != thermalBand(num(t, g, "temp_c")) {
+			if g["thermal_band"] != string(model.ThermalBand(num(t, g, "temp_c"))) {
 				t.Errorf("%s: gpu thermal_band inconsistent for %v", name, g["uuid"])
 			}
 			if g["display_name"] != "RTX 3060" {
@@ -297,7 +268,7 @@ func TestInvariants(t *testing.T) {
 		}
 
 		temps := sub(t, doc, "temps")
-		if temps["nvme_thermal_band"] != thermalBand(num(t, temps, "nvme_c")) {
+		if temps["nvme_thermal_band"] != string(model.ThermalBand(num(t, temps, "nvme_c"))) {
 			t.Errorf("%s: nvme_thermal_band inconsistent", name)
 		}
 		if num(t, temps, "nvme_max_c") != 83.85 {
@@ -333,7 +304,7 @@ func TestInvariants(t *testing.T) {
 			if used+free != total {
 				t.Errorf("%s: %v used+free != total", name, m["mount"])
 			}
-			if want := mountState(num(t, m, "used_pct")); m["state"] != want {
+			if want := string(model.MountState(num(t, m, "used_pct"))); m["state"] != want {
 				t.Errorf("%s: %v state %v != %v at %v%%", name, m["mount"], m["state"], want, m["used_pct"])
 			}
 		}
