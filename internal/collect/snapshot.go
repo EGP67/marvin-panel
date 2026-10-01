@@ -1,12 +1,15 @@
-// Package collect reads live host telemetry from /proc, /sys, statfs and the SMART
-// handoff file and assembles marvin/v1 snapshots (T4-T6, D-055). Every path is joined
+// Package collect reads live host telemetry from /proc, /sys, statfs, hwmon, the SMART
+// handoff file and one nvidia-smi child per tick, and assembles marvin/v1 snapshots
+// (T4-T8, D-055, D-057). Every path is joined
 // to an injectable root so tests run against captured text in testdata/.
 package collect
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"log/slog"
+	"math"
 	"os"
 	"path/filepath"
 	"syscall"
@@ -15,7 +18,7 @@ import (
 	"hog.local/marvin-panel/internal/model"
 )
 
-// Interim engine values until T7/T9 (D-055).
+// Interim engine values until T9 (D-055, D-057).
 const (
 	Scenario    = "live"
 	interimMood = "content"
@@ -27,11 +30,25 @@ const (
 	gpuHistLen  = 30
 	smartEvery  = 5 * time.Second
 	smartPath   = "var/lib/marvin/smart.json"
+	hwmonEvery  = 5 * time.Second
 )
 
-// interimPhrase is the fans seed line (docs/MARVIN.md), speakable while fans are null,
-// wrapped to the 52-character line budget.
-var interimPhrase = []string{"FAN BANK 1: NO TELEMETRY.", "I'M COOLING BY FORCE OF WILL."}
+// interimPhrase picks the phrase until T9 (D-057), each a docs/MARVIN.md seed line that
+// is speakable from the snapshot, wrapped to the 52-character line budget: the fans line
+// while FAN BANK 1 is null, else the idle line under 20%, else the processor line. The
+// first tick has no total_pct; it uses the content line.
+func interimPhrase(fan1 *int, total *float64) []string {
+	switch {
+	case fan1 == nil:
+		return []string{"FAN BANK 1: NO TELEMETRY.", "I'M COOLING BY FORCE OF WILL."}
+	case total == nil:
+		return []string{"ALL SYSTEMS NOMINAL. THEY'RE ALWAYS", "NOMINAL RIGHT BEFORE SOMETHING."}
+	case *total < 20:
+		return []string{fmt.Sprintf("THE CPU IS IDLE AT %d%%. I'VE NEVER ONCE BEEN IDLE.", int(math.Round(*total)))}
+	default:
+		return []string{fmt.Sprintf("PROCESSOR AT %d%%. I THINK, THEREFORE I AM —", int(math.Round(*total))), "OVERWHELMED."}
+	}
+}
 
 // Options configures a Collector; zero values mean the real host.
 type Options struct {
@@ -39,6 +56,8 @@ type Options struct {
 	Statfs StatfsFunc       // defaults to syscall.Statfs
 	Now    func() time.Time // defaults to time.Now (monotonic)
 	Log    *slog.Logger     // defaults to slog.Default()
+	// NvidiaSMI is the nvidia-smi binary (default DefaultNvidiaSMI); tests use a fake.
+	NvidiaSMI string
 }
 
 // Collector owns the previous samples between ticks. It is not safe for concurrent
@@ -68,13 +87,26 @@ type Collector struct {
 	smartAt   time.Time
 	smartRead bool
 
+	smiPath string
+	gpus    *gpuSet
+
+	hwPaths   hwmonPaths
+	hwScanned bool
+	hwVals    hwmonValues
+	hwAt      time.Time
+	hwRead    bool
+
 	errs map[string]string
 }
 
 // New reads the static facts (online threads, physical cores, model, host identity).
 // It returns an error above MaxThreads (D-006).
 func New(o Options) (*Collector, error) {
-	c := &Collector{root: o.Root, statfs: o.Statfs, now: o.Now, log: o.Log, errs: map[string]string{}}
+	c := &Collector{root: o.Root, statfs: o.Statfs, now: o.Now, log: o.Log, smiPath: o.NvidiaSMI,
+		gpus: newGPUSet(), errs: map[string]string{}}
+	if c.smiPath == "" {
+		c.smiPath = DefaultNvidiaSMI
+	}
 	if c.root == "" {
 		c.root = "/"
 	}
@@ -146,7 +178,7 @@ func (c *Collector) read(source, rel string) ([]byte, bool) {
 
 // Sample reads every source once and returns the snapshot. The first call has null
 // deltas (the startup shape, D-050).
-func (c *Collector) Sample() model.Snapshot {
+func (c *Collector) Sample(ctx context.Context) model.Snapshot {
 	at := c.now()
 	secs := 0.0
 	if c.havePrev {
@@ -157,7 +189,6 @@ func (c *Collector) Sample() model.Snapshot {
 		Scenario:    Scenario,
 		Mood:        interimMood,
 		GeneratedAt: at.UTC().Format(time.RFC3339),
-		Phrase:      model.Phrase{Lines: interimPhrase},
 		Host:        model.Host{Hostname: c.hostname, Kernel: c.kernel},
 	}
 	if b, ok := c.read("uptime", "proc/uptime"); ok {
@@ -169,6 +200,18 @@ func (c *Collector) Sample() model.Snapshot {
 	}
 
 	s.CPU = c.sampleCPU()
+	hw := c.sampleHwmon(at)
+	if hw.cpuTemp != nil {
+		b, tb := model.CPUBand(*hw.cpuTemp), model.ThermalBand(*hw.cpuTemp)
+		s.CPU.TempC, s.CPU.Band, s.CPU.ThermalBand = hw.cpuTemp, &b, &tb
+	}
+	s.Temps = model.Temps{NvmeC: hw.nvmeTemp, NvmeMaxC: hw.nvmeMax}
+	if hw.nvmeTemp != nil {
+		b, sensor := model.ThermalBand(*hw.nvmeTemp), "Composite"
+		s.Temps.NvmeThermalBand, s.Temps.NvmeSensor = &b, &sensor
+	}
+	s.Fans = fans(hw.rpm, s.CPU.ThermalBand)
+	s.Phrase = model.Phrase{Lines: interimPhrase(hw.rpm[0], s.CPU.TotalPct)}
 
 	if b, ok := c.read("meminfo", "proc/meminfo"); ok {
 		s.Memory = memory(parseMeminfo(bytes.NewReader(b)))
@@ -202,19 +245,17 @@ func (c *Collector) Sample() model.Snapshot {
 	s.Storage = c.space()
 	s.Smart = c.sampleSmart(at)
 
-	s.GPUs = make([]model.GPU, 2)
-	states := make([]model.GPUState, 2)
-	for i := range s.GPUs {
-		s.GPUs[i] = model.GPU{
-			Name: gpuName, DisplayName: model.GPUDisplayName(gpuName), UUID: gpuUnbound,
-			HistUtilPct: make([]*float64, gpuHistLen),
-		}
+	var rows []gpuRow
+	out, err := runSMI(ctx, c.smiPath)
+	c.note("nvidia-smi", err)
+	if err == nil {
+		rows = parseGPUCSV(out)
 	}
+	var states []model.GPUState
+	s.GPUs, states = c.gpus.apply(rows, func(slot int, bus string) {
+		c.log.Info("gpu bound", "slot", fmt.Sprintf("GPU%d", slot), "pci", bus)
+	})
 	s.GPULine = model.GPULine(states)
-	s.Fans = []model.Fan{
-		{Bank: 1, Label: "FAN BANK 1", Verdict: "unknown"},
-		{Bank: 2, Label: "FAN BANK 2", Verdict: "unknown"},
-	}
 
 	c.prevAt, c.havePrev = at, true
 	if err := model.CheckAgreement(&s); err != nil {
@@ -326,4 +367,35 @@ func (c *Collector) sampleSmart(at time.Time) model.Smart {
 		}
 	}
 	return smartAt(c.smart, at)
+}
+
+// sampleHwmon re-reads hwmon at most every hwmonEvery and serves the last values in
+// between; a failed read triggers a rescan. Winning paths are logged on change.
+func (c *Collector) sampleHwmon(at time.Time) hwmonValues {
+	if c.hwRead && at.Sub(c.hwAt) < hwmonEvery {
+		return c.hwVals
+	}
+	if !c.hwScanned {
+		c.rescanHwmon()
+	}
+	v, failed := readHwmon(c.hwPaths)
+	if failed {
+		c.rescanHwmon()
+		v, failed = readHwmon(c.hwPaths)
+	}
+	if failed {
+		c.note("hwmon", fmt.Errorf("hwmon read failed (%s)", c.hwPaths))
+	} else {
+		c.note("hwmon", nil)
+	}
+	c.hwVals, c.hwAt, c.hwRead = v, at, true
+	return v
+}
+
+func (c *Collector) rescanHwmon() {
+	p := scanHwmon(c.root)
+	if !c.hwScanned || p != c.hwPaths {
+		c.log.Info("hwmon sensors", "paths", p.String())
+	}
+	c.hwPaths, c.hwScanned = p, true
 }

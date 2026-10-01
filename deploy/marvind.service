@@ -31,9 +31,12 @@ SystemCallArchitectures=native
 RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
 IPAddressDeny=any
 IPAddressAllow=localhost
-# T7 adds read-only DeviceAllow for the nvidia-smi nodes (D-024).
+# nvidia-smi child only; never /dev/nvidia-uvm (D-008, D-024, D-057)
 DevicePolicy=closed
-MemoryMax=64M
+DeviceAllow=/dev/nvidiactl rw
+DeviceAllow=/dev/nvidia0 rw
+DeviceAllow=/dev/nvidia1 rw
+MemoryMax=128M
 CPUQuota=10%
 [Install]
 WantedBy=multi-user.target

@@ -67,6 +67,12 @@ install-service-prereqs:
 		--shell /usr/sbin/nologin --user-group --groups video,render heartofgold
 	sudo install -d -o marvin -g marvin -m 0755 $(PREFIX) $(PREFIX)/bin $(PREFIX)/fixtures
 	sudo install -m 0644 deploy/50-heartofgold.rules /etc/polkit-1/rules.d/50-heartofgold.rules
+	@TS=$$(date +%Y%m%d-%H%M%S); \
+	for f in /etc/modules-load.d/heartofgold-nct6683.conf /etc/modprobe.d/heartofgold-nct6683.conf; do \
+		if [ -e "$$f" ]; then sudo cp -p "$$f" "/srv/hogdata/marvin/archive/$$(basename "$$f").$$TS" && echo "archived $$f"; fi; \
+	done
+	sudo install -m 0644 deploy/heartofgold-nct6683-load.conf /etc/modules-load.d/heartofgold-nct6683.conf
+	sudo install -m 0644 deploy/heartofgold-nct6683-options.conf /etc/modprobe.d/heartofgold-nct6683.conf
 
 # Owner-run (sudo); Claude Code only under an explicit per-prompt owner exception.
 # Archives any installed copy first, installs units and Xorg config, enables only.

@@ -2,6 +2,7 @@ package collect
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
@@ -316,11 +317,12 @@ func TestFullSnapshot(t *testing.T) {
 	root := copyRoot(t)
 	clock := time.Date(2026, 10, 1, 12, 0, 0, 0, time.UTC)
 	st := syscall.Statfs_t{Blocks: 1000, Bfree: 300, Bavail: 250, Frsize: 4096}
-	c, err := New(Options{Root: root, Now: func() time.Time { return clock }, Statfs: fakeStatfs(st, nil), Log: quiet()})
+	c, err := New(Options{Root: root, Now: func() time.Time { return clock }, Statfs: fakeStatfs(st, nil), Log: quiet(),
+		NvidiaSMI: filepath.Join("testdata", "nvidia-smi-ok")})
 	if err != nil {
 		t.Fatal(err)
 	}
-	first := c.Sample()
+	first := c.Sample(context.Background())
 	if first.CPU.TotalPct != nil || first.Network[0].RxBps != nil || first.DiskIO.ReadBps != nil || first.CPU.IowaitPct != nil {
 		t.Error("first sample: deltas must be null")
 	}
@@ -340,7 +342,7 @@ func TestFullSnapshot(t *testing.T) {
 		write(t, root, "sys/class/net/wlp14s0/statistics/"+k, itoa(v)+"\n")
 	}
 	clock = clock.Add(time.Second)
-	s := c.Sample()
+	s := c.Sample(context.Background())
 
 	if err := model.CheckAgreement(&s); err != nil {
 		t.Errorf("agreement: %v", err)
@@ -364,26 +366,32 @@ func TestFullSnapshot(t *testing.T) {
 		t.Errorf("cpu identity %d/%d %q %v", s.CPU.PhysicalCores, s.CPU.Threads, s.CPU.ModelDisplay, f64(s.CPU.FreqGHz))
 	}
 
-	// D-050 / D-055 nullability and interim values.
+	// D-050 / D-055 / D-057 values from the testdata root.
 	if s.Scenario != "live" || s.Mood != "content" || s.PanicCount != nil || s.GeneratedAt != "2026-10-01T12:00:01Z" {
 		t.Errorf("top: %q %q %v %q", s.Scenario, s.Mood, s.PanicCount, s.GeneratedAt)
 	}
-	if strings.Join(s.Phrase.Lines, " ") != "FAN BANK 1: NO TELEMETRY. I'M COOLING BY FORCE OF WILL." {
+	if strings.Join(s.Phrase.Lines, " ") != "PROCESSOR AT 35%. I THINK, THEREFORE I AM — OVERWHELMED." {
 		t.Errorf("phrase %q", s.Phrase.Lines)
 	}
-	if s.GPULine != "THE BRAINS ARE NOT ANSWERING." {
+	if s.GPULine != "MODEL LOADED. NOBODY ASKS IT ANYTHING." {
 		t.Errorf("gpu_line %q", s.GPULine)
 	}
-	if s.CPU.TempC != nil || s.CPU.Band != nil || s.CPU.ThermalBand != nil || s.Temps.NvmeC != nil || s.Temps.NvmeSensor != nil {
-		t.Error("temperatures must be null until T8")
+	if *s.CPU.TempC != 42.3 || *s.CPU.Band != model.BandOK || *s.CPU.ThermalBand != model.BandOK {
+		t.Errorf("cpu temp %v", f64(s.CPU.TempC))
 	}
-	for _, g := range s.GPUs {
-		if g.UUID != "unbound" || g.DisplayName != "RTX 3060" || g.UtilPct != nil || g.MemTotalMiB != nil || len(g.HistUtilPct) != 30 {
-			t.Errorf("gpu %+v", g)
-		}
+	if *s.Temps.NvmeC != 35.9 || *s.Temps.NvmeMaxC != 83.85 || *s.Temps.NvmeSensor != "Composite" || *s.Temps.NvmeThermalBand != model.BandOK {
+		t.Errorf("temps %+v", s.Temps)
 	}
-	for i, f := range s.Fans {
-		if f.RPM != nil || f.Verdict != "unknown" || f.Bank != i+1 {
+	g0, g1 := s.GPUs[0], s.GPUs[1]
+	if g0.UUID != "GPU-fake-card-a" || g1.UUID != "GPU-fake-card-b" || *g0.MemUsedMiB != 8099 || *g1.TempC != 36 {
+		t.Errorf("gpus bound by PCI despite swapped rows: %+v / %+v", g0, g1)
+	}
+	if g0.PowerW != nil || *g1.PowerW != 9.8 || *g0.UtilSev != model.BandOK || len(g0.HistUtilPct) != 30 || *g0.HistUtilPct[29] != 3 {
+		t.Errorf("gpu fields: %+v", g0)
+	}
+	for i, want := range []int{977, 1088} {
+		f := s.Fans[i]
+		if *f.RPM != want || *f.MaxRPM != 2000 || f.Verdict != "ok" || f.Bank != i+1 {
 			t.Errorf("fan %+v", f)
 		}
 	}

@@ -1,0 +1,3 @@
+#!/bin/sh
+# Fake hung nvidia-smi for the D-008 timeout test.
+sleep 5

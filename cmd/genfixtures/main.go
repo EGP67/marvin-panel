@@ -1,9 +1,9 @@
 // Command genfixtures writes the five deterministic fixture snapshots
-// (calm, busy, hot, dying, startup) that drive panel development before T4 collectors
-// exist. Values mirror docs/DISCOVERY.md hardware facts and live statfs totals; every
+// (calm, busy, hot, dying, startup) that serve development and tests; live collectors
+// exist since LIVE-1 (D-055). Values mirror docs/DISCOVERY.md hardware facts and live statfs totals; every
 // derived field (band, thermal_band, severity, state, used_pct, display names) is
-// computed via internal/model, never hand-written; fan verdicts, phrase and GPU lines
-// are chosen here until T8/T9 own them. The wire contract is docs/SCHEMA.md (D-050).
+// computed via internal/model (bands, fan verdicts, GPU lines), never hand-written; the
+// phrase is chosen here until T9 owns it. The wire contract is docs/SCHEMA.md (D-050).
 package main
 
 import (
@@ -179,22 +179,6 @@ func ptr[T any](v T) *T { return &v }
 
 func r1(v float64) float64 { return math.Round(v*10) / 10 }
 
-// fanVerdict implements SCHEMA invariant 6; it keys on cpu.thermal_band and never
-// reports not_cooling while that band is null.
-func fanVerdict(rpm, maxRPM *int, cpuThermalBand *model.Band) string {
-	switch {
-	case rpm == nil:
-		return "unknown"
-	case *rpm == 0:
-		return "stalled"
-	case maxRPM != nil && *maxRPM > 0 && float64(*rpm) >= 0.99*float64(*maxRPM) &&
-		cpuThermalBand != nil && *cpuThermalBand != model.BandOK:
-		return "not_cooling"
-	default:
-		return "ok"
-	}
-}
-
 // phraseLines returns the scenario's seed line (docs/MARVIN.md), numbers taken from
 // the fixture's own wire values.
 func phraseLines(scenario string, cpuTotalPct, cpuTempC, dataUsedPct float64) []string {
@@ -275,7 +259,7 @@ func base(s spec) model.Snapshot {
 	for i := 0; i < 2; i++ {
 		fans = append(fans, model.Fan{
 			Bank: i + 1, Label: fmt.Sprintf("FAN BANK %d", i+1),
-			Verdict: fanVerdict(nil, nil, nil),
+			Verdict: model.FanVerdict(nil, nil, nil),
 		})
 	}
 	return model.Snapshot{
@@ -361,7 +345,7 @@ func build(s spec) model.Snapshot {
 	cpu.ThermalBand = ptr(model.ThermalBand(cpuTemp))
 	for i := range snap.Fans {
 		f := &snap.Fans[i]
-		f.Verdict = fanVerdict(f.RPM, f.MaxRPM, cpu.ThermalBand)
+		f.Verdict = model.FanVerdict(f.RPM, f.MaxRPM, cpu.ThermalBand)
 	}
 
 	nvmeTemp := r1(s.nvmeTempC)

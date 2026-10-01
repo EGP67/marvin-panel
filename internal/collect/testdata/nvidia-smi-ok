@@ -1,0 +1,6 @@
+#!/bin/sh
+# Fake nvidia-smi for tests: GPU1 (06:00.0) listed first; UUIDs are placeholders.
+cat <<'EOF'
+1, NVIDIA GeForce RTX 3060, GPU-fake-card-b, 00000000:06:00.0, 12288, 11243, 36, 0, 9.83, 170.00
+0, NVIDIA GeForce RTX 3060, GPU-fake-card-a, 00000000:01:00.0, 12288, 8099, 44, 3, [N/A], 170.00
+EOF

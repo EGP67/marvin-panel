@@ -21,8 +21,8 @@ Marvin's and stays attributed to him.
 - Phase 1 typography frozen (D-047); dashboard is at-a-glance.
 - Kiosk live on the SunFounder since 2026-10-01: native 1024x600 with page fit (D-054),
   sandbox on the user slice (D-053); T11a closed.
-- Panel live since LIVE-1 (D-055): CPU, memory, network, disk, space, SMART, uptime; GPUs,
-  temperatures and fans show -- until T7/T8.
+- Panel live since LIVE-1 (D-055): CPU, memory, network, disk, space, SMART, uptime;
+  GPUs, temperatures and fans live after the owner installs the T7+T8 unit (D-057).
 - Code: T1 scaffold and T2 fixtures committed (39b0ea9); T2b schema amendments
   (155dabb, a4fac41, D-049 docs); T3 model (a40a1e3, D-050); T10 page (embedded web/);
   T11a (6e9f4ec + close-out); LIVE-1 collectors T4-T6 (internal/collect, D-055). No

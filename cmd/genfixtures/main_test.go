@@ -115,14 +115,6 @@ func optF(m map[string]any, key string) *float64 {
 	return nil
 }
 
-// bandOf is the wire form of a nullable band: nil for null.
-func bandOf(b *model.Band) any {
-	if b == nil {
-		return nil
-	}
-	return string(*b)
-}
-
 // lift applies a band function to a nullable input (null in -> null out).
 func lift(f func(float64) model.Band, v *float64) any {
 	if v == nil {
@@ -207,35 +199,6 @@ func walkKeys(v any, visit func(string)) {
 			walkKeys(child, visit)
 		}
 	}
-}
-
-func TestFanVerdict(t *testing.T) {
-	ok, warn := ptr(model.BandOK), ptr(model.BandWarn)
-	cases := []struct {
-		rpm, max *int
-		band     *model.Band
-		want     string
-	}{
-		{nil, nil, ok, "unknown"},
-		{nil, nil, nil, "unknown"},
-		{ptr(0), ptr(2900), ok, "stalled"},
-		{ptr(2900), ptr(2900), warn, "not_cooling"},
-		{ptr(2900), ptr(2900), nil, "ok"},
-		{ptr(2900), ptr(2900), ok, "ok"},
-		{ptr(1500), ptr(2900), warn, "ok"},
-	}
-	for _, tc := range cases {
-		if got := fanVerdict(tc.rpm, tc.max, tc.band); got != tc.want {
-			t.Errorf("fanVerdict(%v, %v, %v) = %s, want %s", optStr(tc.rpm), optStr(tc.max), bandOf(tc.band), got, tc.want)
-		}
-	}
-}
-
-func optStr(p *int) any {
-	if p == nil {
-		return "nil"
-	}
-	return *p
 }
 
 func TestInvariants(t *testing.T) {
@@ -377,7 +340,7 @@ func TestInvariants(t *testing.T) {
 		for _, e := range fans {
 			f := e.(map[string]any)
 			rpm, maxRPM := optInt(f, "rpm"), optInt(f, "max_rpm")
-			if want := fanVerdict(rpm, maxRPM, cpuThermal); f["verdict"] != want {
+			if want := model.FanVerdict(rpm, maxRPM, cpuThermal); f["verdict"] != want {
 				t.Errorf("%s: fan %v verdict %v != %v", name, f["bank"], f["verdict"], want)
 			}
 			if rpm != nil || maxRPM != nil || f["verdict"] != "unknown" {

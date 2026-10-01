@@ -33,14 +33,18 @@ T11a DISPLAY    kiosk on the SunFounder, native 1024x600 rotated right (D-054), 
 T4  COLLECT-CPU  LIVE-1, D-055.
 T5  COLLECT-MEMNET  LIVE-1, D-055 (memory, Wi-Fi, connections).
 T6  COLLECT-DISK  LIVE-1, D-055; SMART read lands here.
+O2  FAN EXPERIMENT  succeeded 2026-10-01: nct6683 force=1 -> nct6687; banks = fan3/fan6
+    (D-027, D-057).
+T7  COLLECT-GPU  one nvidia-smi per tick, 750 ms timeout, PCI-then-UUID binding, stale
+    marking (T7 commit, D-057).
+T8  COLLECT-TEMPFAN  hwmon k10temp Tctl, nvme Composite, nct6687 fan banks (T8 commit,
+    D-057).
 
 ## Owner tasks
 O1  HDMI PROBE — DONE for the SunFounder 7" (2026-09-29; see HANDOFF.md, D-044, D-045).
     Original procedure (before buying the panel): any HDMI monitor
     on the motherboard port with tools/hdmi-probe.sh. Record: cold-boot seconds to first
     image, whether BIOS/POST and the tty1 console appear on the iGPU, hotplug result.
-O2  FAN EXPERIMENT (D-027). Reversible nct6683 probe with snapshot and revert steps.
-    The result decides T8 fans.
 O3  PANEL WAKE TEST (after purchase). PeakDo powered from the PSU 5 V rail: it must
     show the kiosk without a button press after a cold boot, a reboot, and a 10-minute
     kiosk stop.
@@ -48,14 +52,7 @@ O3  PANEL WAKE TEST (after purchase). PeakDo powered from the PSU 5 V rail: it m
 
 ## Build
 Order (owner, 2026-10-01): T10b, T11a, then T4-T9 (display first).
-Next: T7 GPU + T8 temps/fans (O2 result), then T9 mood, T11b soak.
-T7  COLLECT-GPU one nvidia-smi per tick, 750 ms timeout, stale marking, bound by UUID,
-    never by index, never the iGPU (D-008, D-024). Verify: simulate a hung nvidia-smi;
-    assert tick interval <1.2 s and status STALE.
-T8  COLLECT-TEMPFAN hwmon matched by name first (k10temp Tctl -> CPU, nvme Composite ->
-    NVMe; amdgpu and mt7921_phy0 excluded); log the winning sensor path. Fans follow the
-    O2 result; until then fans are null and render "NO TELEMETRY".
-    Verify: print the chosen sensor path for CPU, GPU0, GPU1, NVMe.
+Next: T9 mood, then the owed T5/T6 load measurements (F6, D-021), then T11b soak.
 T9  MOOD        hysteresis 90 s, line cooldown 10 min, family cooldown 3 min, danger
     repeat 60 s; lifetime PANIC COUNT persisted in /var/lib/heartofgold/ with atomic
     writes (D-017); the state-driven GPU line (D-037). Verify: table-driven tests over

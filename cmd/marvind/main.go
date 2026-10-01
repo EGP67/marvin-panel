@@ -111,9 +111,9 @@ func run(args []string, stdout io.Writer) error {
 			return err // includes the D-006 refusal above 12 threads
 		}
 		if opts.oneshot {
-			col.Sample()
+			col.Sample(ctx)
 			time.Sleep(oneshotGap)
-			b, err := marshal(col.Sample())
+			b, err := marshal(col.Sample(ctx))
 			if err != nil {
 				return err
 			}
@@ -124,7 +124,7 @@ func run(args []string, stdout io.Writer) error {
 		}
 		latest := &server.Latest{}
 		// The first sample has null deltas: the startup shape (D-050) until the next tick.
-		if err := publish(latest, col.Sample()); err != nil {
+		if err := publish(latest, col.Sample(ctx)); err != nil {
 			return err
 		}
 		go liveLoop(ctx, col, latest, log)
@@ -214,7 +214,7 @@ func liveLoop(ctx context.Context, col *collect.Collector, l *server.Latest, log
 		case <-ctx.Done():
 			return
 		case <-t.C:
-			if err := publish(l, col.Sample()); err != nil {
+			if err := publish(l, col.Sample(ctx)); err != nil {
 				log.Error("publish snapshot", "err", err)
 			}
 		}

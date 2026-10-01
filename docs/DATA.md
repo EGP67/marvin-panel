@@ -5,11 +5,13 @@ nvidia-smi.
 
 ## GPU binding rule (read before writing gpu.go)
 GPU0 and GPU1 are the two NVIDIA GeForce RTX 3060 cards (PCI 0000:01:00.0 and
-0000:06:00.0). They come ONLY from nvidia-smi, matched by UUID, never by index order or
-/sys order. The motherboard HDMI is driven by the CPU's integrated graphics (amdgpu, PCI
-0000:11:00.0; its DRM card number is not stable, D-041), which also appears under
-/sys/class/drm and in hwmon ("amdgpu", label "edge"). It is NOT GPU0 or GPU1 and is
-excluded from telemetry.
+0000:06:00.0). They come ONLY from nvidia-smi, never by index order or /sys order: at
+the first successful query each card is bound by PCI address (00000000:01:00.0 = GPU0,
+00000000:06:00.0 = GPU1) and tracked by UUID afterwards (D-057). UUIDs are discovered at
+runtime and never written to source or logs. The motherboard HDMI is driven by the
+CPU's integrated graphics (amdgpu, PCI 0000:11:00.0; its DRM card number is not stable,
+D-041), which also appears under /sys/class/drm and in hwmon ("amdgpu", label "edge"). It
+is NOT GPU0 or GPU1 and is excluded from telemetry.
 
 ## Map
 CPU model string : /proc/cpuinfo "model name" (first), trimmed. Display form per D-020.
@@ -42,15 +44,19 @@ GPU              : nvidia-smi --query-gpu=index,name,uuid,pci.bus_id,memory.tota
                    memory.used,temperature.gpu,utilization.gpu,power.draw,power.limit
                    --format=csv,noheader,nounits
                    ONE subprocess per tick (measured 27 ms), 750 ms timeout, all fields
-                   parsed from it (D-008, D-024). Bind by uuid; log pci.bus_id.
+                   parsed from it (D-008, D-024). Bind by PCI, then UUID (D-057); log
+                   pci.bus_id once at bind. "[N/A]"/"[Not Supported]" -> null.
 Temps            : /sys/class/hwmon/hwmon*/ matched by NAME first, then label:
                    k10temp temp1 "Tctl" -> CPU; nvme temp1 "Composite" -> NVMe
                    (nvme_max_c from temp1_max, 83.85 C). Excluded: amdgpu ("edge", the
                    display adapter) and mt7921_phy0 (the Wi-Fi chip). hwmon indexes are
-                   not stable across boots: match by name at startup and log the winning
-                   path. GPU temperatures come from nvidia-smi.
+                   not stable across boots: match by name, read every 5 s, rescan on a
+                   read failure, log the winning paths (D-057). GPU temperatures come from
+                   nvidia-smi.
 SMART            : root-owned handoff file (see SMART handoff below).
-Fans             : system chassis fans only; no source today (see Fans below).
+Fans             : hwmon nct6687 (nct6683 force=1, D-057): FAN BANK 1 = fan3_input
+                   (SYS_FAN1 exhaust), FAN BANK 2 = fan6_input (SYS_FAN4 intake), max
+                   2000 RPM each. fan1 is the CPU cooler and is not displayed.
 
 ## Handling rules already paid for — keep them
 - Every delta needs a previous sample. The first tick is null and renders "--", never 0.
@@ -73,10 +79,10 @@ and render nodes (D-023, D-041).
 ## Fans (D-027, D-036)
 FAN BANK 1/2 are the SYSTEM CHASSIS FANS, never GPU fans. The box has eight chassis
 fans: four daisy-chained on each of two motherboard fan headers, so the two banks map
-1:1 onto the two headers. No hwmon fan*_input exists today (no SuperIO driver bound).
-Owner task O2 tries the in-kernel nct6683 driver. Until it succeeds, fans are null and
-render "FAN BANK n: NO TELEMETRY".
-If O2 succeeds, design for these physical facts:
+1:1 onto the two headers. O2 succeeded 2026-10-01 (D-057): the in-kernel nct6683 driver
+with force=1 registers nct6687 (NCT6687D EC); banks are fan3 (exhaust) and fan6 (intake),
+fan1 is the CPU cooler (not displayed). If the driver is absent, fans are null and render
+"FAN BANK n: NO TELEMETRY". Physical facts the verdicts rely on:
 - One tach per header: only the first fan in each chain reports RPM, so a failed fan in
   positions 2-4 is invisible to RPM alone.
 - All four fans on a chain share one PWM domain: bank RPM is a proxy for intent, not for
