@@ -22,6 +22,11 @@ T10 VIEW        embedded web/ (index.html = mockup SVG + b-* ids, app.js binding
 T10b DEPLOY     deploy/ units, Xorg config, polkit rule, kiosk session and Makefile
     deploy/restart/install targets (D-031, D-052); files and targets committed (T10b
     commit); installed under the owner exception, see report.
+T11a DISPLAY    kiosk on the SunFounder, native 1024x600 rotated right (D-054), page
+    fit; D-053 slice limits live; acceptance a PASS (no Xorg/brave on the RTX 3060s);
+    acceptance b PASS (slice device policy: iGPU open, NVIDIA refused); unattended reboot
+    PASS; idle 1.38% of one core; Brave Origin onboarding persisted in the kiosk profile
+    (repeat via ssh -X as heartofgold if the profile is ever deleted). Closed 2026-10-01.
 
 ## Owner tasks
 O1  HDMI PROBE — DONE for the SunFounder 7" (2026-09-29; see HANDOFF.md, D-044, D-045).
@@ -37,6 +42,7 @@ O3  PANEL WAKE TEST (after purchase). PeakDo powered from the PSU 5 V rail: it m
 
 ## Build
 Order (owner, 2026-10-01): T10b, T11a, then T4-T9 (display first).
+Next: T4-T9 collectors (live data replaces fixtures), then T11b soak.
 T4  COLLECT-CPU two-sample per-thread %, model string, thread count from
     /sys/devices/system/cpu/online, physical cores, frequency, loadavg (mood input only;
     no longer displayed, D-017), 120-sample ring. Refuse to start above 12 threads
@@ -61,47 +67,17 @@ T9  MOOD        hysteresis 90 s, line cooldown 10 min, family cooldown 3 min, da
     scripted timelines assert the mood sequence and the persisted count across a
     simulated restart. Also: gpu_line stays <= 38 characters at any temperature,
     including 3-digit readings (the "hot" template is exactly 38 at 2 digits).
-T11a DISPLAY    Owner first (if Step 8 of T10b stopped): make install-service-prereqs,
-    make deploy, make install-service. Then answer Brave Origin onboarding once via
-    ssh -X into the kiosk profile.
-    Findings so far (2026-10-01): acceptance a PASS; by-path DeviceAllow proven via
-    systemd-run; cgroup escape fixed by D-053 (pending owner install); rotation right
-    confirmed (cables south); native mode D-054 (colors correct, fills the glass;
-    1920x1125 rejected for color corruption); idle CPU 1.47% of one core at 1920x1080,
-    kiosk about 390 MiB. Pending: owner install of the slice drop-in, reboot test,
-    post-reboot checks.
-    (panel installed) kiosk enabled, screen blanking and DPMS off, rotation
-    set. Wake behavior verified on the installed display (SunFounder: reboot and
-    power-off/on verified 2026-09-29; re-check on the mounted panel).
-    Verify: journalctl -u marvind clean; no restarts; D-024 acceptance.
-    Acceptance also:
-    a. With the kiosk running, `nvidia-smi` lists no Xorg or brave process on either
-       RTX 3060, and the Xorg log shows no NVIDIA(GPU-n) screens (D-041). The 3060s are
-       dedicated to AI workloads; marvind's nvidia-smi query (D-024) is the only
-       permitted NVIDIA access.
-    b. Deploy proves DeviceAllow by-path resolution (D-023 note).
-    c. The owner reviews label fit for all five fixtures (from T10): WIFI header and
-       CON/ERR counters (D-046, D-049), SPACE rows (D-049). No font-size or bar changes
-       in Phase 1 (D-047).
-    Findings from the 2026-09-29 test session:
-    - Proven start path: systemd unit, PAMName=login, TTYPath=/dev/ttyN,
-      StandardInput=tty, xinit … -- :N vtN -nolisten tcp -keeptty -nocursor, as a
-      non-root user. logind hands over DRM fds only while that session's VT is in the
-      foreground; a background VT gets paused fds and X exits "no screens found".
-    - X defaults blank after 600 s (screen saver + DPMS). Kiosk X must start with
-      -s 0 -dpms (or run xset s off -dpms in the session).
-    - Brave --kiosk without a window manager sized its window 20 px short (1004x580 on
-      1024x600); with --window-position=0,0 --window-size=W,H it was 1 px short
-      (599x1023). Decide between an oversized window or a fullscreen flag; verify on
-      the panel.
-    - Brave Origin showed a purchase/license prompt on a fresh profile despite
-      --no-first-run. The method to suppress it for an unattended kiosk is UNKNOWN; it
-      must be resolved (persisted profile answer or managed policy) before T11a is done.
-    - Brave does not resize when the X screen is rotated after launch; rotation and mode
-      must be set (Xorg config, D-045) before Brave starts.
-    - The kiosk unit uses Restart=always so a display drop or Brave exit recovers.
-    - Rotation "right" re-verified on the mounted panel at first boot (D-045).
 T11b SOAK       24 h soak with flat RSS (D-010). Verify: RSS growth within noise.
+
+## Follow-ups (Phase 1, non-blocking)
+F1 Brave window 601x1025 on a 600x1024 screen (1 px overhang, invisible); try 600,1024 once.
+F2 PEAK label inside the plot at 100% peaks: low contrast over the line; owner review.
+F3 heartofgold-kiosk.service Requires=marvind.service bounces the kiosk on every marvind
+   restart; proposed Wants= (the page covers short outages, MARVIN.md rule 7 exception).
+F4 Push anomaly 2026-10-01: GitHub "cannot lock ref" with the ref already updated during a
+   slow pre-push hook; watch.
+F5 Docs lines over 90 columns (GEOMETRY, TASKS, HANDOFF): rewrap pass.
+F6 Network "% OF S" unbounded (D-051 (5)); decide with T5.
 
 ## Phase 2 — rotating sections (future, not v1)
 Keep the HEART OF GOLD title and separator fixed; fade the body out and the next view

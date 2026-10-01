@@ -19,11 +19,11 @@ Marvin's and stays attributed to him.
   used by the panel. Output names: kernel connector HDMI-A-1, X output HDMI-A-0 (D-045
   note).
 - Phase 1 typography frozen (D-047); dashboard is at-a-glance.
-- Kiosk running on the SunFounder since 2026-10-01 (fixture replay, D-052); native
-  1024x600 with page fit (D-054); sandbox on the user slice (D-053).
+- Kiosk live on the SunFounder since 2026-10-01: fixture replay (D-052), native 1024x600
+  with page fit (D-054), sandbox on the user slice (D-053); T11a closed.
 - Code: T1 scaffold and T2 fixtures committed (39b0ea9); T2b schema amendments
-  (155dabb, a4fac41, D-049 docs); T3 model (a40a1e3, D-050); T10 page (embedded web/).
-  No collectors or mood engine yet.
+  (155dabb, a4fac41, D-049 docs); T3 model (a40a1e3, D-050); T10 page (embedded web/);
+  T11a (6e9f4ec + close-out). No collectors or mood engine yet.
 - Docs: owner review 2026-09-26 recorded as D-014..D-033. CLAUDE.md is the agent entry
   point (D-030). Doc sync steps 3-5 done (342dc42, 9a9f058, a031e8f, f02df6c).
 - Gate: make verify passes under Claude Code, including govulncheck.
