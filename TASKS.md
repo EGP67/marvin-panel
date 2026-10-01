@@ -66,7 +66,8 @@ T11b SOAK       24 h soak with flat RSS (D-010). Verify: RSS growth within noise
 
 ## Follow-ups (Phase 1, non-blocking)
 F1 Brave window 601x1025 on a 600x1024 screen (1 px overhang, invisible); try 600,1024 once.
-   IN PROGRESS: --window-size=600,1024 tried in LIVE-1; result in the LIVE-1 report.
+   CLOSED: 600,1024 tried in LIVE-1 gave 599x1023 (1 px short); reverted to 601,1025, which
+   lands as 601x1025 and covers the screen. Keep 601,1025.
 F2 PEAK label inside the plot at 100% peaks: low contrast over the line; owner review.
 F3 heartofgold-kiosk.service Requires=marvind.service bounces the kiosk on every marvind
    restart; proposed Wants= (the page covers short outages, MARVIN.md rule 7 exception).
