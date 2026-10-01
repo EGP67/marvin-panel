@@ -26,6 +26,7 @@ Marvin's and stays attributed to him.
 - Marvin's mood engine live (D-058).
 - Line pool v1 live (D-059).
 - Phase 1 Wide (D-060) live; owner one-week run, then Phase 2.
+- GPU boot race fixed (D-061).
 
 ### Fallback: Phase 1 Thin (D-060)
 The last 64 px-margin build is tagged phase1-thin (commit 1ac87b6) and archived as

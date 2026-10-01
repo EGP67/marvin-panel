@@ -46,6 +46,9 @@ GPU              : nvidia-smi --query-gpu=index,name,uuid,pci.bus_id,memory.tota
                    ONE subprocess per tick (measured 27 ms), 750 ms timeout, all fields
                    parsed from it (D-008, D-024). Bind by PCI, then UUID (D-057); log
                    pci.bus_id once at bind. "[N/A]"/"[Not Supported]" -> null.
+                   Boot race (D-061): nodes created after marvind starts trigger one exit 3
+                   (no GPU bound yet, all three node ctimes after start) so systemd
+                   re-applies DeviceAllow; the unit also orders After=nvidia-persistenced.
 Temps            : /sys/class/hwmon/hwmon*/ matched by NAME first, then label:
                    k10temp temp1 "Tctl" -> CPU; nvme temp1 "Composite" -> NVMe
                    (nvme_max_c from temp1_max, 83.85 C). Excluded: amdgpu ("edge", the

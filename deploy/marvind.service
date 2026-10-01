@@ -1,5 +1,7 @@
 [Unit]
 Description=HEART OF GOLD telemetry daemon (NOT marvinweb)
+# D-061: NVIDIA device nodes exist before DeviceAllow is resolved (self-heal in marvind is the backstop).
+After=nvidia-persistenced.service
 [Service]
 User=heartofgold
 Group=heartofgold

@@ -90,3 +90,75 @@ func TestFixtureEveryBounds(t *testing.T) {
 		t.Fatalf("--fixture-every 100ms: %v, %s", err, o.fixtureEvery)
 	}
 }
+
+// fakeNodes returns a ctime function over a fixed table; absent paths are missing.
+func fakeNodes(ct map[string]time.Time) func(string) (time.Time, bool) {
+	return func(p string) (time.Time, bool) {
+		t, ok := ct[p]
+		return t, ok
+	}
+}
+
+func TestNodeWatchD061(t *testing.T) {
+	start := time.Date(2026, 10, 1, 17, 8, 50, 0, time.UTC)
+	newer := map[string]time.Time{}
+	older := map[string]time.Time{}
+	for i, p := range nvidiaNodes {
+		newer[p] = start.Add(time.Duration(i+1) * time.Second)
+		older[p] = start.Add(-time.Hour)
+	}
+	missing := map[string]time.Time{nvidiaNodes[0]: start.Add(time.Second), nvidiaNodes[1]: start.Add(time.Second)}
+	mixed := map[string]time.Time{nvidiaNodes[0]: start.Add(time.Second), nvidiaNodes[1]: start.Add(-time.Second), nvidiaNodes[2]: start.Add(time.Second)}
+	w := func(ct map[string]time.Time) *nodeWatch {
+		return &nodeWatch{start: start, paths: nvidiaNodes, ctime: fakeNodes(ct)}
+	}
+	cases := []struct {
+		name  string
+		watch *nodeWatch
+		bound bool
+		want  bool
+	}{
+		{"nodes newer than start, never bound", w(newer), false, true},
+		{"nodes older than start", w(older), false, false},
+		{"a node missing", w(missing), false, false},
+		{"one node older", w(mixed), false, false},
+		{"a GPU bound", w(newer), true, false},
+	}
+	for _, tc := range cases {
+		if got := tc.watch.exitWanted(tc.bound); got != tc.want {
+			t.Errorf("%s: exit=%v, want %v", tc.name, got, tc.want)
+		}
+	}
+
+	// Once a GPU has bound the check stops for good, even if the nodes look new.
+	stops := w(newer)
+	if stops.exitWanted(true) || stops.exitWanted(false) || stops.exitWanted(false) {
+		t.Error("the check must stop after the first bind")
+	}
+	// The exit fires at most once.
+	once := w(newer)
+	if !once.exitWanted(false) || once.exitWanted(false) {
+		t.Error("the exit must be requested exactly once")
+	}
+	// Nodes that appear later trigger on the tick where all three exist.
+	late := map[string]time.Time{}
+	grow := w(late)
+	if grow.exitWanted(false) {
+		t.Error("no nodes yet: no exit")
+	}
+	for p, ct := range newer {
+		late[p] = ct
+	}
+	if !grow.exitWanted(false) {
+		t.Error("all nodes now present and newer: exit")
+	}
+}
+
+func TestStatCtimeMissing(t *testing.T) {
+	if _, ok := statCtime(filepath.Join(t.TempDir(), "nvidia9")); ok {
+		t.Error("a missing node must report not ok")
+	}
+	if ct, ok := statCtime(t.TempDir()); !ok || time.Since(ct) > time.Minute {
+		t.Errorf("an existing path must report its ctime: %v %v", ct, ok)
+	}
+}

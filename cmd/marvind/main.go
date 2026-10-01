@@ -26,7 +26,7 @@ import (
 	"hog.local/marvin-panel/web"
 )
 
-const version = "0.6.0-wide1"
+const version = "0.6.1-gpuboot"
 
 // D-002: the one loopback port marvind binds; never auto-increment (see D-003).
 const defaultAddr = "127.0.0.1:8042"
@@ -76,8 +76,59 @@ type health struct {
 	Uptime  string    `json:"uptime"`
 }
 
+// processStart is recorded as early as possible for the D-061 node check.
+var processStart = time.Now()
+
+// errNodesLate asks systemd for a restart so DeviceAllow is resolved with the NVIDIA
+// nodes present (D-061); main maps it to exit status 3.
+var errNodesLate = errors.New("NVIDIA device nodes appeared after start; exiting so systemd re-applies DeviceAllow (D-061)")
+
+// nvidiaNodes are the nodes marvind.service allows (D-057).
+var nvidiaNodes = []string{"/dev/nvidiactl", "/dev/nvidia0", "/dev/nvidia1"}
+
+// nodeWatch decides the D-061 self-heal: exit once when no GPU has ever bound and every
+// node exists with a ctime later than the process start.
+type nodeWatch struct {
+	start time.Time
+	paths []string
+	ctime func(path string) (time.Time, bool) // false when the node is missing
+	done  bool
+}
+
+// statCtime is the Linux inode change time of path.
+func statCtime(path string) (time.Time, bool) {
+	var st syscall.Stat_t
+	if err := syscall.Stat(path, &st); err != nil {
+		return time.Time{}, false
+	}
+	return time.Unix(st.Ctim.Sec, st.Ctim.Nsec), true
+}
+
+// exitWanted is called after each live tick; after the first bind it never fires again.
+func (w *nodeWatch) exitWanted(gpuBound bool) bool {
+	if w.done {
+		return false
+	}
+	if gpuBound {
+		w.done = true
+		return false
+	}
+	for _, p := range w.paths {
+		t, ok := w.ctime(p)
+		if !ok || !t.After(w.start) {
+			return false
+		}
+	}
+	w.done = true
+	return true
+}
+
 func main() {
-	if err := run(os.Args[1:], os.Stdout); err != nil {
+	err := run(os.Args[1:], os.Stdout)
+	if errors.Is(err, errNodesLate) {
+		os.Exit(3) // Restart=always brings marvind back with the nodes allowed
+	}
+	if err != nil {
 		fmt.Fprintln(os.Stderr, "marvind:", err)
 		os.Exit(1)
 	}
@@ -94,9 +145,10 @@ func run(args []string, stdout io.Writer) error {
 	defer stop()
 
 	var (
-		src  server.Source
-		mode = "live"
-		desc []any
+		src       server.Source
+		mode      = "live"
+		desc      []any
+		nodesLate = make(chan struct{}, 1)
 	)
 	if opts.fixture != "" {
 		if opts.oneshot {
@@ -132,7 +184,8 @@ func run(args []string, stdout io.Writer) error {
 		if err := publish(latest, liveTick(ctx, col, eng)); err != nil {
 			return err
 		}
-		go liveLoop(ctx, col, eng, latest, log)
+		watch := &nodeWatch{start: processStart, paths: nvidiaNodes, ctime: statCtime}
+		go liveLoop(ctx, col, eng, latest, log, watch, nodesLate)
 		src = latest
 		desc = []any{"threads", col.Threads()}
 	}
@@ -177,9 +230,13 @@ func run(args []string, stdout io.Writer) error {
 
 	log.Info("marvind listening", append([]any{"addr", ln.Addr().String(), "mode", mode, "version", version}, desc...)...)
 
+	var result error
 	select {
 	case <-ctx.Done():
 		log.Info("signal received, shutting down")
+	case <-nodesLate:
+		log.Error(errNodesLate.Error())
+		result = errNodesLate
 	case err := <-errCh:
 		return err
 	}
@@ -189,7 +246,7 @@ func run(args []string, stdout io.Writer) error {
 	if err := srv.Shutdown(shutCtx); err != nil {
 		return fmt.Errorf("shutdown: %w", err)
 	}
-	return nil
+	return result
 }
 
 // marshal renders a snapshot exactly like the fixtures (two-space indent, trailing newline).
@@ -218,8 +275,10 @@ func liveTick(ctx context.Context, col *collect.Collector, eng *mood.Engine) mod
 	return s
 }
 
-// liveLoop samples every liveEvery until ctx is done.
-func liveLoop(ctx context.Context, col *collect.Collector, eng *mood.Engine, l *server.Latest, log *slog.Logger) {
+// liveLoop samples every liveEvery until ctx is done. While no GPU has ever bound it
+// asks the D-061 node watch after each tick and signals late once.
+func liveLoop(ctx context.Context, col *collect.Collector, eng *mood.Engine, l *server.Latest, log *slog.Logger,
+	watch *nodeWatch, late chan<- struct{}) {
 	t := time.NewTicker(liveEvery)
 	defer t.Stop()
 	for {
@@ -229,6 +288,10 @@ func liveLoop(ctx context.Context, col *collect.Collector, eng *mood.Engine, l *
 		case <-t.C:
 			if err := publish(l, liveTick(ctx, col, eng)); err != nil {
 				log.Error("publish snapshot", "err", err)
+			}
+			if watch.exitWanted(col.GPUEverBound()) {
+				late <- struct{}{}
+				return
 			}
 		}
 	}

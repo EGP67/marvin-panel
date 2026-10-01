@@ -168,3 +168,14 @@ func (g *gpuSet) apply(rows []gpuRow, bound func(slot int, bus string)) ([]model
 	}
 	return out, states
 }
+
+// GPUEverBound reports whether any card has bound since start (D-061: marvind's boot
+// self-heal stops checking the NVIDIA device nodes once it has).
+func (c *Collector) GPUEverBound() bool {
+	for _, card := range c.gpus.cards {
+		if card.uuid != "" {
+			return true
+		}
+	}
+	return false
+}
