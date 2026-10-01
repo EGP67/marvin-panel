@@ -17,28 +17,30 @@ import (
 )
 
 const (
-	schema     = "marvin/v1"
-	cpuModel   = "AMD Ryzen 5 9600X 6-Core Processor"
-	threads    = 12
-	physCores  = 6
-	hostName   = "hog"
-	kernel     = "6.8.0-142-generic"
-	gpuName    = "NVIDIA GeForce RTX 3060"
-	gpu0UUID   = "GPU-23f0baf7-c957-0754-f922-d20a294ec2a7"
-	gpu1UUID   = "GPU-b4124ee5-ff18-3b39-facd-544010000b6a"
-	gpuMemMiB  = 12288
-	gpuLimitW  = 170.0
-	netIf      = "wlp14s0"
-	diskDev    = "nvme0n1"
-	rootDev    = "/dev/mapper/ubuntu--vg-ubuntu--lv"
-	dataDev    = "/dev/mapper/ubuntu--vg-hogdata"
-	bootDev    = "/dev/nvme0n1p2"
-	rootFS     = "ext4"
-	dataFS     = "ext4"
-	bootFS     = "ext4"
-	rootTotal  = 211527139328  // 197 GiB (D-037)
-	dataTotal  = 1759218604442 // 1.6 TiB (D-037), rounded to whole bytes
-	bootTotal  = 2147483648    // 2.0 GiB (D-037)
+	schema    = "marvin/v1"
+	cpuModel  = "AMD Ryzen 5 9600X 6-Core Processor"
+	threads   = 12
+	physCores = 6
+	hostName  = "hog"
+	kernel    = "6.8.0-142-generic"
+	gpuName   = "NVIDIA GeForce RTX 3060"
+	gpu0UUID  = "GPU-23f0baf7-c957-0754-f922-d20a294ec2a7"
+	gpu1UUID  = "GPU-b4124ee5-ff18-3b39-facd-544010000b6a"
+	gpuMemMiB = 12288
+	gpuLimitW = 170.0
+	netIf     = "wlp14s0"
+	diskDev   = "nvme0n1"
+	rootDev   = "/dev/mapper/ubuntu--vg-ubuntu--lv"
+	dataDev   = "/dev/mapper/ubuntu--vg-hogdata"
+	bootDev   = "/dev/nvme0n1p2"
+	rootFS    = "ext4"
+	dataFS    = "ext4"
+	bootFS    = "ext4"
+	// Filesystem totals as statfs reports them (df -B1), hog.local 2026-10-01 (decided in D-049 doc commit).
+	// Not partition sizes: /boot's partition is 2.0 GiB, its ext4 filesystem 2040373248 bytes.
+	rootTotal  = 210779168768
+	dataTotal  = 1753240817664
+	bootTotal  = 2040373248
 	bootUsed   = 58.0
 	nvmeMaxC   = 83.85
 	memTotal   = 132535803904

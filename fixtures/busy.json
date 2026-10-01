@@ -311,32 +311,32 @@
   "storage": [
     {
       "device": "/dev/mapper/ubuntu--vg-ubuntu--lv",
-      "free_bytes": 160760625889,
+      "free_bytes": 160192168264,
       "fs": "ext4",
       "mount": "/",
       "state": "ok",
-      "total_bytes": 211527139328,
-      "used_bytes": 50766513439,
+      "total_bytes": 210779168768,
+      "used_bytes": 50587000504,
       "used_pct": 24
     },
     {
       "device": "/dev/mapper/ubuntu--vg-hogdata",
-      "free_bytes": 1055531162665,
+      "free_bytes": 1051944490598,
       "fs": "ext4",
       "mount": "/srv/hogdata",
       "state": "ok",
-      "total_bytes": 1759218604442,
-      "used_bytes": 703687441777,
+      "total_bytes": 1753240817664,
+      "used_bytes": 701296327066,
       "used_pct": 40
     },
     {
       "device": "/dev/nvme0n1p2",
-      "free_bytes": 901943132,
+      "free_bytes": 856956764,
       "fs": "ext4",
       "mount": "/boot",
       "state": "ok",
-      "total_bytes": 2147483648,
-      "used_bytes": 1245540516,
+      "total_bytes": 2040373248,
+      "used_bytes": 1183416484,
       "used_pct": 58
     }
   ],
