@@ -26,7 +26,7 @@ var (
 		"thermal_band", "power_w", "power_limit_w", "hist_util_pct", "util_sev",
 	}
 	wantNetKeys    = []string{"if", "rx_bps", "tx_bps", "rx_err", "tx_err"}
-	wantDiskIOKeys = []string{"device", "read_bps", "write_bps", "read_iops", "write_iops", "queue_avg", "in_flight"}
+	wantDiskIOKeys = []string{"device", "read_bps", "write_bps"}
 	wantSmartKeys  = []string{"state", "percentage_used", "unsafe_shutdowns", "age_seconds"}
 	wantMounts     = []string{"/", "/srv/hogdata", "/boot"}
 )
@@ -517,9 +517,6 @@ func TestStartup(t *testing.T) {
 	d := s.DiskIO
 	isNil("disk_io.read_bps", d.ReadBps == nil)
 	isNil("disk_io.write_bps", d.WriteBps == nil)
-	isNil("disk_io.read_iops", d.ReadIOPS == nil)
-	isNil("disk_io.write_iops", d.WriteIOPS == nil)
-	isNil("disk_io.queue_avg", d.QueueAvg == nil)
 	isNil("smart.percentage_used", s.Smart.PercentageUsed == nil)
 	isNil("smart.unsafe_shutdowns", s.Smart.UnsafeShutdowns == nil)
 	isNil("smart.age_seconds", s.Smart.AgeSeconds == nil)
@@ -553,7 +550,6 @@ func TestStartup(t *testing.T) {
 	notNil("connections.established", s.Connections.Established == nil)
 	notNil("network.rx_err", n.RxErr == nil)
 	notNil("network.tx_err", n.TxErr == nil)
-	notNil("disk_io.in_flight", d.InFlight == nil)
 
 	calm := typedAll(t)["calm"]
 	if !reflect.DeepEqual(s.Memory, calm.Memory) || !reflect.DeepEqual(s.Storage, calm.Storage) {

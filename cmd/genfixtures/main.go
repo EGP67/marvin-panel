@@ -64,12 +64,8 @@ type netSpec struct {
 }
 
 type diskIOSpec struct {
-	readB    float64
-	writeB   float64
-	rIOPS    int
-	wIOPS    int
-	inFlight int
-	queueAvg float64
+	readB  float64
+	writeB float64
 }
 
 // smartSpec: nil counters mean "no telemetry" (state unknown).
@@ -122,7 +118,7 @@ var scenarios = []spec{
 		memUsed: 9545129984, memCache: 70089203712, swapUsed: 0,
 		rootUsedPct: 23, dataUsedPct: 22,
 		net:    netSpec{rxBps: 2210000, txBps: 310000},
-		diskIO: diskIOSpec{readB: 12288, writeB: 57344, rIOPS: 3, wIOPS: 7, inFlight: 0, queueAvg: 0.0},
+		diskIO: diskIOSpec{readB: 12288, writeB: 57344},
 		estab:  14, smart: smartOK(312), panicCount: 0,
 	},
 	{
@@ -136,7 +132,7 @@ var scenarios = []spec{
 		memUsed: 103079215104, memCache: 20971520000, swapUsed: 0,
 		rootUsedPct: 24, dataUsedPct: 40,
 		net:    netSpec{rxBps: 123731968, txBps: 8388608},
-		diskIO: diskIOSpec{readB: 79872000, writeB: 92160000, rIOPS: 600, wIOPS: 730, inFlight: 5, queueAvg: 0.4},
+		diskIO: diskIOSpec{readB: 79872000, writeB: 92160000},
 		estab:  22, smart: smartOK(604), panicCount: 1,
 	},
 	{
@@ -150,7 +146,7 @@ var scenarios = []spec{
 		memUsed: 118111600640, memCache: 12884901888, swapUsed: 805306368,
 		rootUsedPct: 25, dataUsedPct: 82,
 		net:    netSpec{rxBps: 740000, txBps: 512000},
-		diskIO: diskIOSpec{readB: 270909440, writeB: 215040000, rIOPS: 1720, wIOPS: 1680, inFlight: 46, queueAvg: 3.1},
+		diskIO: diskIOSpec{readB: 270909440, writeB: 215040000},
 		estab:  19, smart: smartSpec{state: "unknown"}, panicCount: 1,
 	},
 	{
@@ -164,7 +160,7 @@ var scenarios = []spec{
 		memUsed: 125304578048, memCache: 5242880000, swapUsed: 3435973837,
 		rootUsedPct: 61, dataUsedPct: 97.4,
 		net:    netSpec{rxBps: 640000, txBps: 481280},
-		diskIO: diskIOSpec{readB: 390144000, writeB: 445440000, rIOPS: 2100, wIOPS: 2700, inFlight: 122, queueAvg: 8.7},
+		diskIO: diskIOSpec{readB: 390144000, writeB: 445440000},
 		estab:  41, smart: smartOK(128), panicCount: 2,
 	},
 	{
@@ -175,8 +171,7 @@ var scenarios = []spec{
 		gpus:    [2]gpuSpec{{uuid: gpu0UUID}, {uuid: gpu1UUID}},
 		memUsed: 9545129984, memCache: 70089203712, swapUsed: 0,
 		rootUsedPct: 23, dataUsedPct: 22,
-		diskIO: diskIOSpec{inFlight: 0},
-		estab:  14, smart: smartSpec{state: "unknown"},
+		estab: 14, smart: smartSpec{state: "unknown"},
 	},
 }
 
@@ -334,7 +329,7 @@ func base(s spec) model.Snapshot {
 		Fans:        fans,
 		Network:     []model.Net{{If: netIf, RxErr: ptr(0), TxErr: ptr(0)}},
 		Connections: model.Connections{Established: ptr(s.estab)},
-		DiskIO:      model.DiskIO{Device: diskDev, InFlight: ptr(s.diskIO.inFlight)},
+		DiskIO:      model.DiskIO{Device: diskDev},
 		Storage: []model.Mount{
 			mountEntry("/", rootDev, rootFS, rootTotal, s.rootUsedPct),
 			mountEntry("/srv/hogdata", dataDev, dataFS, dataTotal, s.dataUsedPct),
@@ -407,8 +402,6 @@ func build(s spec) model.Snapshot {
 	snap.Network[0].TxBps = ptr(int64(s.net.txBps))
 	d := &snap.DiskIO
 	d.ReadBps, d.WriteBps = ptr(int64(s.diskIO.readB)), ptr(int64(s.diskIO.writeB))
-	d.ReadIOPS, d.WriteIOPS = ptr(s.diskIO.rIOPS), ptr(s.diskIO.wIOPS)
-	d.QueueAvg = ptr(r1(s.diskIO.queueAvg))
 	snap.PanicCount = ptr(s.panicCount)
 	if err := model.CheckAgreement(&snap); err != nil {
 		panic(fmt.Sprintf("genfixtures: %s violates agreement: %v", s.name, err))

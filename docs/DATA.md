@@ -30,8 +30,7 @@ Memory           : /proc/meminfo. used = MemTotal - MemAvailable (NOT MemFree).
 Disk space       : syscall.Statfs on /, /srv/hogdata, /boot (D-019).
 Disk I/O         : /proc/diskstats line for nvme0n1 (D-035), fields counted with
                    major=1, minor=2, name=3: sectors read (6) and written (10) x 512 per
-                   second; IOPS from reads (4) and writes (8) completed; in_flight (12);
-                   queue_avg = delta of weighted ms (14) / delta of elapsed ms.
+                   second. No IOPS, in_flight or queue (D-056).
 Network          : /sys/class/net/wlp14s0/statistics/{rx_bytes,tx_bytes} deltas per
                    second; errors from rx_errors / tx_errors. No link ceiling (D-018).
 Connections      : count entries with state 01 (ESTABLISHED) in /proc/net/tcp and

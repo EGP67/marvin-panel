@@ -52,7 +52,6 @@
   function fixed1(v) { return isNum(v) ? v.toFixed(1) : DASH; }
   function fahr(c) { return isNum(c) ? String(CToF(c)) : DASH; }
   function mibps(bps) { return isNum(bps) ? (bps / MIB).toFixed(1) : DASH; }
-  function kilo(v) { return isNum(v) ? (v >= 1000 ? (v / 1000).toFixed(1) + 'k' : String(v)) : DASH; }
 
   function sum(vals) {
     var t = 0;
@@ -217,8 +216,6 @@
       setText('b-io-' + k[0], k[1] + ' ' + mibps(bps) + ' MiB/s');
       setWidth('b-io-' + k[0] + '-bar', isNum(bps) ? 408 * Math.min(1, bps / (IO_SCALE_MIB * MIB)) : 0);
     });
-    setText('b-io-iops', 'IOPS ' + kilo(get(d, 'read_iops')) + '/' + kilo(get(d, 'write_iops')) +
-      ' · QUEUE ' + fixed1(get(d, 'queue_avg')));
   }
 
   function renderSpace(storage, smart, cpu) {

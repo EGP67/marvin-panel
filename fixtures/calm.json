@@ -169,12 +169,8 @@
   },
   "disk_io": {
     "device": "nvme0n1",
-    "in_flight": 0,
-    "queue_avg": 0,
     "read_bps": 12288,
-    "read_iops": 3,
-    "write_bps": 57344,
-    "write_iops": 7
+    "write_bps": 57344
   },
   "fans": [
     {

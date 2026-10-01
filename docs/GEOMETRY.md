@@ -103,7 +103,7 @@ text stays unbounded while its bar clamps; revisit when T5 sets S (D-051).
 
 ## STORAGE · I/O cell (D-021, D-049)
 Header "STORAGE · I/O" and "SCALE 200 MiB/s" as drawn; their ~2 px clearance is accepted by
-the owner (D-049).
+the owner (D-049). No IOPS/QUEUE line (D-056).
 
 ## SPACE cell (D-019, D-049)
 Rows "/", "/srv/hogdata", "/boot" at baselines 1466, 1506, 1546; bars (track and fill)

@@ -105,11 +105,10 @@ string. Until O2 decides, every fan has `rpm` null, `max_rpm` null, `verdict` "u
 `rx_err`/`tx_err` int|null. There are no link fields: Wi-Fi has no fixed ceiling. The bar
 scale S is a panel constant in docs/GEOMETRY.md.
 
-## `disk_io` — the physical NVMe (D-035)
-`device` string, always "nvme0n1"; `read_bps`/`write_bps` int|null;
-`read_iops`/`write_iops` int|null; `queue_avg` float|null (delta of /proc/diskstats
-weighted time-in-queue ms / delta of elapsed ms); `in_flight` int|null. Per-mount I/O is
-not reported: summing LVM volumes double-counts against the physical disk.
+## `disk_io` — the physical NVMe (D-035, D-056)
+`device` string, always "nvme0n1"; `read_bps`/`write_bps` int|null. IOPS, queue and
+in-flight counts are not on the wire (D-056). Per-mount I/O is not reported: summing LVM
+volumes double-counts against the physical disk.
 
 ## `storage[]` — exactly three entries, in this order: "/", "/srv/hogdata", "/boot" (D-019)
 `device`, `mount`, `fs` strings; `total_bytes`/`used_bytes`/`free_bytes` int|null;

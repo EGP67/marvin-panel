@@ -186,7 +186,6 @@
   <text x="96" y="1512" font-size="26" fill="#cdeef7">WRITE 41.7 MiB/s</text>
   <rect x="96" y="1522" width="408" height="14" rx="7" fill="#12303c"/>
   <rect x="96" y="1522" width="86" height="14" rx="7" fill="url(#bar)"/>
-  <text x="96" y="1550" class="sm">IOPS 214/1.8k · QUEUE 0.4</text>
 
   <text x="560" y="1424" class="lbl">SPACE</text>
   <text x="976" y="1424" text-anchor="end" class="sm">IOWAIT 0.8% · SMART OK</text>

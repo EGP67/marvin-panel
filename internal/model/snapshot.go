@@ -62,16 +62,12 @@ type CPU struct {
 	TotalPct      *float64   `json:"total_pct"`
 }
 
-// DiskIO is the STORAGE · I/O cell for the physical NVMe (D-035). Device is
-// identity; the counters are nullable.
+// DiskIO is the STORAGE · I/O cell for the physical NVMe (D-035, D-056). Device is
+// identity; the byte rates are nullable.
 type DiskIO struct {
-	Device    string   `json:"device"`
-	InFlight  *int     `json:"in_flight"`
-	QueueAvg  *float64 `json:"queue_avg"`
-	ReadBps   *int64   `json:"read_bps"`
-	ReadIOPS  *int     `json:"read_iops"`
-	WriteBps  *int64   `json:"write_bps"`
-	WriteIOPS *int     `json:"write_iops"`
+	Device   string `json:"device"`
+	ReadBps  *int64 `json:"read_bps"`
+	WriteBps *int64 `json:"write_bps"`
 }
 
 // Fan is one FAN BANK entry; rpm null is real telemetry (D-027). Verdict is
