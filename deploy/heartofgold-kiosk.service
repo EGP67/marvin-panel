@@ -21,15 +21,7 @@ Environment=HOME=/var/lib/heartofgold-kiosk
 ExecStart=/usr/bin/xinit /opt/heartofgold/bin/heartofgold-kiosk-session -- :0 vt1 -nolisten tcp -keeptty -nocursor -s 0 -dpms
 Restart=always
 RestartSec=3
-MemoryHigh=768M
-MemoryMax=1G
-CPUQuota=50%
-# By-path resolution is UNVERIFIED (D-023 note); T11a acceptance b proves it: iGPU opens,
-# NVIDIA nodes (0000:01:00.0, 0000:06:00.0) are refused.
-DevicePolicy=closed
-DeviceAllow=/dev/dri/by-path/pci-0000:11:00.0-card rw
-DeviceAllow=/dev/dri/by-path/pci-0000:11:00.0-render rw
-DeviceAllow=/dev/tty0 rw
-DeviceAllow=/dev/tty1 rw
+# Limits and device policy live on user-<uid>.slice (D-053): PAMName=login moves the session
+# out of this unit's cgroup, so settings here would bind nothing.
 [Install]
 WantedBy=multi-user.target

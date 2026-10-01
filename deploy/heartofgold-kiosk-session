@@ -1,7 +1,9 @@
 #!/bin/sh
-# Kiosk X session (D-014, D-025, D-028). The profile persists the Brave Origin onboarding answer (D-052).
+# Kiosk X session (D-014, D-025, D-028, D-054). The profile persists the Brave Origin onboarding answer (D-052).
+# Native panel mode before Brave starts: Brave does not resize after a mode or rotation change (D-054).
+xrandr --output HDMI-A-0 --mode 1024x600 --rotate right || echo "heartofgold-kiosk-session: xrandr failed" >&2
 exec /usr/bin/brave-origin --kiosk --no-first-run --disable-gpu --password-store=basic \
   --noerrdialogs --disable-session-crashed-bubble \
   --user-data-dir=/var/lib/heartofgold-kiosk/profile \
-  --window-position=0,0 --window-size=1080,1920 \
+  --window-position=0,0 --window-size=601,1025 \
   http://127.0.0.1:8042/

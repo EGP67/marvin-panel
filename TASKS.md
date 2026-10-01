@@ -64,6 +64,12 @@ T9  MOOD        hysteresis 90 s, line cooldown 10 min, family cooldown 3 min, da
 T11a DISPLAY    Owner first (if Step 8 of T10b stopped): make install-service-prereqs,
     make deploy, make install-service. Then answer Brave Origin onboarding once via
     ssh -X into the kiosk profile.
+    Findings so far (2026-10-01): acceptance a PASS; by-path DeviceAllow proven via
+    systemd-run; cgroup escape fixed by D-053 (pending owner install); rotation right
+    confirmed (cables south); native mode D-054 (colors correct, fills the glass;
+    1920x1125 rejected for color corruption); idle CPU 1.47% of one core at 1920x1080,
+    kiosk about 390 MiB. Pending: owner install of the slice drop-in, reboot test,
+    post-reboot checks.
     (panel installed) kiosk enabled, screen blanking and DPMS off, rotation
     set. Wake behavior verified on the installed display (SunFounder: reboot and
     power-off/on verified 2026-09-29; re-check on the mounted panel).

@@ -18,6 +18,12 @@ Advance 0.602 em (DejaVu Sans Mono, resolved on hog). Every px/char budget in th
 assumes it (D-049).
 A fill attribute always wins over the stylesheet (D-051).
 
+## Display mapping (D-054)
+Native 1024x600 rotated right (screen 600x1024). The page fits the design uniformly
+through the SVG viewBox: the top 50 design px are cropped, the height fills, and the
+background and glass rects widen to the window (no black bars, never stretched). All
+coordinates in this file stay design units.
+
 ## Vertical map (top -> bottom)
 title baseline 126 | rule y=170 | phrase 190-318 | processor 338-808 | graphics 828-1178
 memory|network 1198-1368 | storage I/O|space 1388-1558 | thermals 1578-1856
@@ -32,6 +38,7 @@ big number at three digits ("100"): the "%" tspan and the three axis labels are 
 restored below 100 (D-051)
 PEAK label at (cx+14, cy-7), anchor end; below its point at cy+21 when cy-7 would be above
 y=410, clear of "LAST 120 s" (D-051)
+PEAK label right edge = max(cx+14, 470) (left-edge companion to D-051 (3)).
 core boxes: 6 columns, x = 88 + 154*i, w=134; row A y=584 h=64, row B y=672 h=64
 dot region inside a box: x=box+5 w=124, y=box+4 h=56
 

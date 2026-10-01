@@ -15,6 +15,7 @@
   var NULL_COLOR = '#6b9dad';
   var THERMAL_OK_TEXT = '#cdeef7';
   var DASH = '--';
+  var TOP_TRIM = 50; // D-054: empty design px cropped above the title
 
   function $(id) { return document.getElementById(id); }
 
@@ -124,7 +125,8 @@
       var cy = 494 - hist[pk] * 0.96;
       setAttr('b-cpu-peak', 'cx', cx.toFixed(1));
       setAttr('b-cpu-peak', 'cy', cy.toFixed(1));
-      setAttr('b-cpu-peak-text', 'x', (cx + 14).toFixed(1));
+      // Left-edge companion to D-051 (3): the right edge never reaches the axis labels (x <= 344).
+      setAttr('b-cpu-peak-text', 'x', Math.max(cx + 14, 470).toFixed(1));
       // D-051 (3): below the point when above it would crowd "LAST 120 s".
       setAttr('b-cpu-peak-text', 'y', (cy - 7 < 410 ? cy + 21 : cy - 7).toFixed(1));
       setText('b-cpu-peak-text', 'PEAK ' + Math.round(hist[pk]) + '%');
@@ -300,6 +302,34 @@
     setText('b-phrase-1', 'THE SHIP IS NOT ANSWERING. I KNOW HOW IT FEELS.');
     setText('b-phrase-2', '');
   }
+
+  // D-054: fit the 1080x1920 design to the window uniformly via the viewBox. The top
+  // TOP_TRIM design px are cropped; the background and glass widen to cover the view.
+  function fit() {
+    var svg = document.querySelector('svg');
+    if (!svg) { return; }
+    var vw = window.innerWidth;
+    var vh = window.innerHeight;
+    var H = 1920 - TOP_TRIM;
+    var box;
+    if (vw / vh >= 1080 / H) {
+      var W = vw / (vh / H);
+      box = [(1080 - W) / 2, TOP_TRIM, W, H];
+    } else {
+      box = [0, TOP_TRIM, 1080, vh / (vw / 1080)];
+    }
+    svg.setAttribute('viewBox', box.join(' '));
+    ['b-bg', 'b-glass'].forEach(function (id) {
+      setAttr(id, 'x', box[0]);
+      setAttr(id, 'y', box[1]);
+      setAttr(id, 'width', box[2]);
+      setAttr(id, 'height', box[3]);
+    });
+    return box;
+  }
+
+  fit();
+  window.addEventListener('resize', fit);
 
   var fails = 0;
 

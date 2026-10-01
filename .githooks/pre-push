@@ -1,0 +1,3 @@
+#!/bin/sh
+# Push gate: the mandatory quality gate must pass before anything leaves this clone.
+exec make verify

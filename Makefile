@@ -5,7 +5,7 @@ BIN     := bin/marvind
 PREFIX  := /opt/heartofgold
 
 # deploy must be phony: a deploy/ directory exists.
-.PHONY: all build test lint vuln secrets verify tools hooks clean shot \
+.PHONY: all build test lint vuln secrets verify tools clean shot \
 	deploy restart restart-kiosk install-service-prereqs install-service
 
 all: verify build
@@ -35,11 +35,6 @@ tools:
 	$(GO) install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
 	$(GO) install golang.org/x/vuln/cmd/govulncheck@latest
 	$(GO) install github.com/zricethezav/gitleaks/v8@latest
-
-# Blocks pushes that skipped the gate. Install once per clone.
-hooks:
-	printf '#!/bin/sh\nmake verify || { echo "push blocked: make verify failed"; exit 1; }\n' > .git/hooks/pre-push
-	chmod +x .git/hooks/pre-push
 
 # Renders one fixture snapshot for eyeballing; extend to a browser screenshot at T10.
 shot: build
@@ -84,6 +79,9 @@ install-service:
 	sudo install -m 0644 deploy/marvind.service deploy/heartofgold-kiosk.service /etc/systemd/system/
 	sudo install -d -m 0755 /etc/X11/xorg.conf.d
 	sudo install -m 0644 deploy/10-heartofgold.conf /etc/X11/xorg.conf.d/10-heartofgold.conf
+	U=$$(id -u heartofgold); D=/etc/systemd/system/user-$$U.slice.d; \
+	if [ -e "$$D/50-heartofgold.conf" ]; then sudo cp -p "$$D/50-heartofgold.conf" "/srv/hogdata/marvin/archive/user-slice-50-heartofgold.conf.$$(date +%Y%m%d-%H%M%S)"; fi; \
+	sudo install -d -m 0755 "$$D" && sudo install -m 0644 deploy/heartofgold-user-slice.conf "$$D/50-heartofgold.conf"
 	@grep -q '^allowed_users=console' /etc/X11/Xwrapper.config || { echo "Xwrapper.config: allowed_users=console missing (D-025); not edited"; exit 1; }
 	sudo systemctl daemon-reload
 	sudo systemctl disable getty@tty1.service
