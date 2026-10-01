@@ -100,9 +100,6 @@ func TestNvidiaSMITimeout(t *testing.T) {
 			t.Errorf("timed-out GPU must be stale: %+v", g)
 		}
 	}
-	if s.GPULine != "THE BRAINS ARE NOT ANSWERING." {
-		t.Errorf("gpu_line %q", s.GPULine)
-	}
 }
 
 func TestHwmonDiscovery(t *testing.T) {
@@ -144,38 +141,5 @@ func TestFanMappingAndVerdicts(t *testing.T) {
 	}
 	if n := fans([2]*int{nil, nil}, &ok); n[0].MaxRPM != nil || n[0].Verdict != "unknown" {
 		t.Errorf("null fan: %+v", n[0])
-	}
-}
-
-func TestInterimPhrase(t *testing.T) {
-	ip := func(v int) *int { return &v }
-	fp := func(v float64) *float64 { return &v }
-	cases := []struct {
-		fan   *int
-		total *float64
-		want  string
-	}{
-		{nil, fp(50), "FAN BANK 1: NO TELEMETRY. I'M COOLING BY FORCE OF WILL."},
-		{ip(900), nil, "ALL SYSTEMS NOMINAL. THEY'RE ALWAYS NOMINAL RIGHT BEFORE SOMETHING."},
-		{ip(900), fp(3.4), "THE CPU IS IDLE AT 3%. I'VE NEVER ONCE BEEN IDLE."},
-		{ip(900), fp(19.6), "THE CPU IS IDLE AT 20%. I'VE NEVER ONCE BEEN IDLE."}, // < 20 rounds to 20
-		{ip(900), fp(20), "PROCESSOR AT 20%. I THINK, THEREFORE I AM — OVERWHELMED."},
-		{ip(900), fp(100), "PROCESSOR AT 100%. I THINK, THEREFORE I AM — OVERWHELMED."},
-	}
-	for _, tc := range cases {
-		lines := interimPhrase(tc.fan, tc.total)
-		if got := strings.Join(lines, " "); got != tc.want {
-			t.Errorf("phrase = %q, want %q", got, tc.want)
-		}
-		total := 0
-		for _, l := range lines {
-			if n := len([]rune(l)); n > 52 {
-				t.Errorf("line %q is %d runes", l, n)
-			}
-			total += len([]rune(l))
-		}
-		if len(lines) < 1 || len(lines) > 2 || total > 100 {
-			t.Errorf("phrase budget: %q", lines)
-		}
 	}
 }

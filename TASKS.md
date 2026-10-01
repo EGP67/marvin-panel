@@ -39,6 +39,8 @@ T7  COLLECT-GPU  one nvidia-smi per tick, 750 ms timeout, PCI-then-UUID binding,
     marking (T7 commit, D-057).
 T8  COLLECT-TEMPFAN  hwmon k10temp Tctl, nvme Composite, nct6687 fan banks (T8 commit,
     D-057).
+T9  MOOD  internal/mood: hysteresis, phrase selection and cooldowns, doomed re-assert,
+    GPU-line pacing, persisted PANIC COUNT (D-058).
 
 ## Owner tasks
 O1  HDMI PROBE — DONE for the SunFounder 7" (2026-09-29; see HANDOFF.md, D-044, D-045).
@@ -52,13 +54,7 @@ O3  PANEL WAKE TEST (after purchase). PeakDo powered from the PSU 5 V rail: it m
 
 ## Build
 Order (owner, 2026-10-01): T10b, T11a, then T4-T9 (display first).
-Next: T9 mood, then the owed T5/T6 load measurements (F6, D-021), then T11b soak.
-T9  MOOD        hysteresis 90 s, line cooldown 10 min, family cooldown 3 min, danger
-    repeat 60 s; lifetime PANIC COUNT persisted in /var/lib/heartofgold/ with atomic
-    writes (D-017); the state-driven GPU line (D-037). Verify: table-driven tests over
-    scripted timelines assert the mood sequence and the persisted count across a
-    simulated restart. Also: gpu_line stays <= 38 characters at any temperature,
-    including 3-digit readings (the "hot" template is exactly 38 at 2 digits).
+Next: T9b line pool (owner review), the T5/T6 load measurements (F6, D-021), then T11b soak.
 T11b SOAK       24 h soak with flat RSS (D-010). Verify: RSS growth within noise.
 
 ## Follow-ups (Phase 1, non-blocking)

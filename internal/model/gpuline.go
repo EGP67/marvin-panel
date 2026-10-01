@@ -11,27 +11,50 @@ type GPUState struct {
 	MemUsedMiB     *int
 }
 
-// GPULine picks the GRAPHICS box line (D-037, docs/MARVIN.md "GPU line"); first match
-// wins. Shared by genfixtures and the live collector (D-055).
-func GPULine(gs []GPUState) string {
+// GPULineKind is the GRAPHICS box line state (docs/MARVIN.md "GPU line").
+type GPULineKind string
+
+// GPU line states, in evaluation order.
+const (
+	GPUStale    GPULineKind = "stale"
+	GPUHot      GPULineKind = "hot"
+	GPUThinking GPULineKind = "thinking"
+	GPULoaded   GPULineKind = "loaded"
+	GPUEmpty    GPULineKind = "empty"
+)
+
+// GPULineState classifies the cards (first match wins) and renders the line (D-037);
+// at or above 100 °C the hot line uses the short form so it stays within 38 runes
+// (D-058). Shared by genfixtures and the live engine.
+func GPULineState(gs []GPUState) (GPULineKind, string) {
 	maxTemp, sumUtil := math.Inf(-1), 0.0
 	for _, g := range gs {
 		if g.TempC == nil || g.UtilPct == nil {
-			return "THE BRAINS ARE NOT ANSWERING."
+			return GPUStale, "THE BRAINS ARE NOT ANSWERING."
 		}
 		maxTemp = math.Max(maxTemp, *g.TempC)
 		sumUtil += *g.UtilPct
 	}
 	if maxTemp >= 80 {
-		return fmt.Sprintf("THINKING THIS HARD RUNS AT %d DEGREES.", int(math.Round(maxTemp)))
+		n := int(math.Round(maxTemp))
+		if n >= 100 {
+			return GPUHot, fmt.Sprintf("THINKING THIS HARD: %d DEGREES.", n)
+		}
+		return GPUHot, fmt.Sprintf("THINKING THIS HARD RUNS AT %d DEGREES.", n)
 	}
 	if len(gs) > 0 && sumUtil/float64(len(gs)) >= 20 {
-		return "SOMEONE ASKED IT SOMETHING. NOT ME."
+		return GPUThinking, "SOMEONE ASKED IT SOMETHING. NOT ME."
 	}
 	for _, g := range gs {
 		if g.MemUsedMiB != nil && *g.MemUsedMiB >= 1024 {
-			return "MODEL LOADED. NOBODY ASKS IT ANYTHING."
+			return GPULoaded, "MODEL LOADED. NOBODY ASKS IT ANYTHING."
 		}
 	}
-	return "BOTH BRAINS EMPTY. RESTFUL, NOT HAPPY."
+	return GPUEmpty, "BOTH BRAINS EMPTY. RESTFUL, NOT HAPPY."
+}
+
+// GPULine is the text of GPULineState.
+func GPULine(gs []GPUState) string {
+	_, s := GPULineState(gs)
+	return s
 }

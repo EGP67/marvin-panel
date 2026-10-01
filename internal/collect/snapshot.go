@@ -9,7 +9,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"math"
 	"os"
 	"path/filepath"
 	"syscall"
@@ -18,37 +17,19 @@ import (
 	"hog.local/marvin-panel/internal/model"
 )
 
-// Interim engine values until T9 (D-055, D-057).
+// Wire constants; mood, phrase and gpu_line are chosen by internal/mood (D-058).
 const (
-	Scenario    = "live"
-	interimMood = "content"
-	gpuName     = "NVIDIA GeForce RTX 3060"
-	gpuUnbound  = "unbound"
-	netIf       = "wlp14s0"
-	diskDev     = "nvme0n1"
-	cpuHistLen  = 120
-	gpuHistLen  = 30
-	smartEvery  = 5 * time.Second
-	smartPath   = "var/lib/marvin/smart.json"
-	hwmonEvery  = 5 * time.Second
+	Scenario   = "live"
+	gpuName    = "NVIDIA GeForce RTX 3060"
+	gpuUnbound = "unbound"
+	netIf      = "wlp14s0"
+	diskDev    = "nvme0n1"
+	cpuHistLen = 120
+	gpuHistLen = 30
+	smartEvery = 5 * time.Second
+	smartPath  = "var/lib/marvin/smart.json"
+	hwmonEvery = 5 * time.Second
 )
-
-// interimPhrase picks the phrase until T9 (D-057), each a docs/MARVIN.md seed line that
-// is speakable from the snapshot, wrapped to the 52-character line budget: the fans line
-// while FAN BANK 1 is null, else the idle line under 20%, else the processor line. The
-// first tick has no total_pct; it uses the content line.
-func interimPhrase(fan1 *int, total *float64) []string {
-	switch {
-	case fan1 == nil:
-		return []string{"FAN BANK 1: NO TELEMETRY.", "I'M COOLING BY FORCE OF WILL."}
-	case total == nil:
-		return []string{"ALL SYSTEMS NOMINAL. THEY'RE ALWAYS", "NOMINAL RIGHT BEFORE SOMETHING."}
-	case *total < 20:
-		return []string{fmt.Sprintf("THE CPU IS IDLE AT %d%%. I'VE NEVER ONCE BEEN IDLE.", int(math.Round(*total)))}
-	default:
-		return []string{fmt.Sprintf("PROCESSOR AT %d%%. I THINK, THEREFORE I AM —", int(math.Round(*total))), "OVERWHELMED."}
-	}
-}
 
 // Options configures a Collector; zero values mean the real host.
 type Options struct {
@@ -187,7 +168,6 @@ func (c *Collector) Sample(ctx context.Context) model.Snapshot {
 	s := model.Snapshot{
 		Schema:      model.SchemaVersion,
 		Scenario:    Scenario,
-		Mood:        interimMood,
 		GeneratedAt: at.UTC().Format(time.RFC3339),
 		Host:        model.Host{Hostname: c.hostname, Kernel: c.kernel},
 	}
@@ -211,7 +191,6 @@ func (c *Collector) Sample(ctx context.Context) model.Snapshot {
 		s.Temps.NvmeThermalBand, s.Temps.NvmeSensor = &b, &sensor
 	}
 	s.Fans = fans(hw.rpm, s.CPU.ThermalBand)
-	s.Phrase = model.Phrase{Lines: interimPhrase(hw.rpm[0], s.CPU.TotalPct)}
 
 	if b, ok := c.read("meminfo", "proc/meminfo"); ok {
 		s.Memory = memory(parseMeminfo(bytes.NewReader(b)))
@@ -251,11 +230,9 @@ func (c *Collector) Sample(ctx context.Context) model.Snapshot {
 	if err == nil {
 		rows = parseGPUCSV(out)
 	}
-	var states []model.GPUState
-	s.GPUs, states = c.gpus.apply(rows, func(slot int, bus string) {
+	s.GPUs, _ = c.gpus.apply(rows, func(slot int, bus string) {
 		c.log.Info("gpu bound", "slot", fmt.Sprintf("GPU%d", slot), "pci", bus)
 	})
-	s.GPULine = model.GPULine(states)
 
 	c.prevAt, c.havePrev = at, true
 	if err := model.CheckAgreement(&s); err != nil {

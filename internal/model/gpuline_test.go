@@ -25,3 +25,21 @@ func TestGPULine(t *testing.T) {
 		}
 	}
 }
+
+func TestGPULineBudget(t *testing.T) {
+	for n := 0; n <= 999; n++ {
+		temp := float64(n)
+		kind, s := GPULineState([]GPUState{{TempC: &temp, UtilPct: fp(0)}, {TempC: fp(30), UtilPct: fp(0)}})
+		if r := len([]rune(s)); r < 1 || r > 38 {
+			t.Fatalf("%d °C (%s): %q is %d runes", n, kind, s, r)
+		}
+		if n == 99 && s != "THINKING THIS HARD RUNS AT 99 DEGREES." || n == 100 && s != "THINKING THIS HARD: 100 DEGREES." {
+			t.Errorf("%d °C: %q", n, s)
+		}
+	}
+	for _, gs := range [][]GPUState{{{}, {}}, {{TempC: fp(40), UtilPct: fp(50)}}, {{TempC: fp(40), UtilPct: fp(0)}}} {
+		if _, s := GPULineState(gs); len([]rune(s)) > 38 {
+			t.Errorf("%q over budget", s)
+		}
+	}
+}

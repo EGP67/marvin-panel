@@ -40,10 +40,36 @@ aggrieved   "84 DEGREES. I RAN COLD ONCE. NOBODY NOTICED."
 doomed      "4% REMAINS ON /srv/hogdata. I'D TELL YOU WHAT THAT MEANS BUT YOU'D ONLY CLEAN SOMETHING IMPORTANT."
 doomed      "SMART SAYS THE DRIVE IS FAILING. I HAVE NO FEELINGS ABOUT THIS. (I HAVE MANY.)"
 fans        "FAN BANK 1: NO TELEMETRY. I'M COOLING BY FORCE OF WILL."
-memory      "SWAP 0% — SPARE, UNLIKE ME."
+memory      "SWAP 0% — SPARE, UNLIKE ME."   [spoken by the MEMORY cell, never the phrase box]
 network     "118 MIB/S INBOUND AND STILL NOBODY CALLS."
 processes   "JAVA AT 94%. AMBITIOUS."   [UNSPEAKABLE — see below]
 night       "I'M NOT ASLEEP. I'M IGNORING YOU WITH MY EYES CLOSED."
+doomed      "GPU1 IS AT 92 DEGREES. I DID WARN YOU. I ALWAYS WARN YOU."   (D-058)
+fallback    "I'M STILL HERE. NOBODY ASKED."                              (D-058)
+gpu (hot)   "THINKING THIS HARD: 104 DEGREES."   (GPU line at >= 100 °C, D-058)
+
+## Engine (D-058)
+internal/mood. Parameters:
+- Moods, first match wins: doomed (a mount below 5% free, SMART failing, or CPU, GPU0,
+  GPU1 or NVMe >= 90 °C); aggrieved (iowait > 15% or any of those > 80 °C); melancholic
+  (load1/threads > 0.85 held 120 s); bored (load1/threads < 0.02); content otherwise. A
+  null input never triggers.
+- First complete sample (cpu.total_pct non-null): adopt the mood at once; afterwards a new
+  candidate must hold 90 s. Before it: mood content, the fallback line.
+- PANIC COUNT: +1 per confirmed hysteresis entry into doomed (never on adoption);
+  /var/lib/heartofgold/panic_count, one decimal line, written atomically, mode 0640;
+  missing creates 0; unreadable or corrupt renders null and is never overwritten.
+- Phrase selection: on mood change, every 120 s, or when the line stops being true; the
+  least recently shown eligible line wins (table order breaks ties); exact line 10 min
+  and family 3 min cooldowns, except that the line on screen may simply continue.
+  Doomed: the trigger lines re-assert every 60 s, ignoring cooldowns. Situational lines
+  (fans, network, night 00:00-05:59 local) speak in bored, content and melancholic.
+  Lines are re-rendered from live values every tick and wrapped at word boundaries
+  (<= 52 per line, <= 100 total); an over-budget render is ineligible. Nothing eligible:
+  "I'M STILL HERE. NOBODY ASKED."
+- GPU line: a new state shows after 30 s held; the text re-renders every 5 min within a
+  state; >= 100 °C uses "THINKING THIS HARD: <n> DEGREES." (<= 38 runes). Topic rule: while
+  the GPU line is hot, a non-doomed phrase line about GPU heat is not chosen.
 
 ## Line requirements — speakability
 Every line carries `requires: [metric paths]`. The engine may emit a line only if EVERY
@@ -62,7 +88,10 @@ state, not a wire field.
 | doomed "4% REMAINS ON /srv/hogdata" | storage[mount=/srv/hogdata].free_bytes, total_bytes | SPEAKABLE |
 | doomed "SMART SAYS THE DRIVE IS FAILING" | smart.state == "failing" | SPEAKABLE (D-035, D-036) |
 | fans "FAN BANK 1: NO TELEMETRY" | fans[0].rpm == null | SPEAKABLE (absence is the requirement) |
-| memory "SWAP 0%" | memory.swap_total_bytes, memory.swap_used_bytes | SPEAKABLE |
+| doomed "<DEVICE> IS AT <n> DEGREES" | a temperature >= 90 (cpu.temp_c, gpus[].temp_c or temps.nvme_c); names that device | SPEAKABLE (D-058) |
+| fallback "I'M STILL HERE. NOBODY ASKED." | nothing | SPEAKABLE (D-058) |
+| gpu hot "THINKING THIS HARD: <n> DEGREES." | gpus[].temp_c >= 100 | SPEAKABLE (D-058) |
+| memory "SWAP 0%" | memory.swap_total_bytes, memory.swap_used_bytes | SPEAKABLE (MEMORY cell only) |
 | network "118 MIB/S INBOUND" | network[0].rx_bps | SPEAKABLE |
 | processes "JAVA AT 94%" | per-process telemetry — does not exist on this ship | UNSPEAKABLE (kept so the reason survives) |
 | night "I'M NOT ASLEEP" | time of day only | SPEAKABLE |

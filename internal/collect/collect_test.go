@@ -367,14 +367,10 @@ func TestFullSnapshot(t *testing.T) {
 	}
 
 	// D-050 / D-055 / D-057 values from the testdata root.
-	if s.Scenario != "live" || s.Mood != "content" || s.PanicCount != nil || s.GeneratedAt != "2026-10-01T12:00:01Z" {
-		t.Errorf("top: %q %q %v %q", s.Scenario, s.Mood, s.PanicCount, s.GeneratedAt)
-	}
-	if strings.Join(s.Phrase.Lines, " ") != "PROCESSOR AT 35%. I THINK, THEREFORE I AM — OVERWHELMED." {
-		t.Errorf("phrase %q", s.Phrase.Lines)
-	}
-	if s.GPULine != "MODEL LOADED. NOBODY ASKS IT ANYTHING." {
-		t.Errorf("gpu_line %q", s.GPULine)
+	// Measured fields only: the engine (internal/mood, D-058) fills mood, phrase, gpu_line
+	// and panic_count.
+	if s.Scenario != "live" || s.Mood != "" || s.Phrase.Lines != nil || s.GPULine != "" || s.PanicCount != nil || s.GeneratedAt != "2026-10-01T12:00:01Z" {
+		t.Errorf("top: %q %q %q %q %v %q", s.Scenario, s.Mood, s.Phrase.Lines, s.GPULine, s.PanicCount, s.GeneratedAt)
 	}
 	if *s.CPU.TempC != 42.3 || *s.CPU.Band != model.BandOK || *s.CPU.ThermalBand != model.BandOK {
 		t.Errorf("cpu temp %v", f64(s.CPU.TempC))

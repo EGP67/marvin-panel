@@ -19,7 +19,7 @@ func TestLiveOneshot(t *testing.T) {
 	defer func() { liveRoot, oneshotGap = root, gap }()
 
 	var buf bytes.Buffer
-	if err := run([]string{"--oneshot"}, &buf); err != nil {
+	if err := run([]string{"--oneshot", "--state-dir", t.TempDir()}, &buf); err != nil {
 		t.Fatal(err)
 	}
 	dec := json.NewDecoder(&buf)
@@ -33,6 +33,10 @@ func TestLiveOneshot(t *testing.T) {
 	}
 	if err := model.CheckAgreement(&s); err != nil {
 		t.Fatal(err)
+	}
+	// The engine filled every engine-chosen field (D-050, D-058).
+	if s.Mood == "" || len(s.Phrase.Lines) == 0 || s.GPULine == "" || s.PanicCount == nil || *s.PanicCount != 0 {
+		t.Fatalf("engine fields: %q %q %q %v", s.Mood, s.Phrase.Lines, s.GPULine, s.PanicCount)
 	}
 }
 
@@ -68,6 +72,9 @@ func TestParseFlagsDefaults(t *testing.T) {
 	}
 	if o.addr != defaultAddr || o.fixture != "" || o.oneshot {
 		t.Fatalf("defaults wrong: %+v", o)
+	}
+	if o.stateDir != "/var/lib/heartofgold" {
+		t.Fatalf("--state-dir default = %q", o.stateDir)
 	}
 	if o.fixtureEvery != time.Second {
 		t.Fatalf("--fixture-every default = %s, want 1s", o.fixtureEvery)

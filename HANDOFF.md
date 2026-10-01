@@ -23,6 +23,7 @@ Marvin's and stays attributed to him.
   sandbox on the user slice (D-053); T11a closed.
 - Panel live since LIVE-1 (D-055): CPU, memory, network, disk, space, SMART, uptime;
   GPUs, temperatures and fans live after the owner installs the T7+T8 unit (D-057).
+- Marvin's mood engine live (D-058).
 - Code: T1 scaffold and T2 fixtures committed (39b0ea9); T2b schema amendments
   (155dabb, a4fac41, D-049 docs); T3 model (a40a1e3, D-050); T10 page (embedded web/);
   T11a (6e9f4ec + close-out); LIVE-1 collectors T4-T6 (internal/collect, D-055). No
@@ -115,7 +116,7 @@ cmd/genfixtures/           sole author of fixtures/*.json (seeded, byte-determin
 internal/server/           HTTP handlers, fixture replay
 internal/model/            Snapshot types, bands, severity, Ring, agreement (T3)
 internal/collect/          live collectors, one file per source (T4-T6, D-055)
-internal/mood/             planned T9: state machine, hysteresis, cooldowns, PANIC COUNT
+internal/mood/             mood engine: hysteresis, phrase selection, PANIC COUNT (T9, D-058)
 fixtures/                  deterministic snapshots: calm busy hot dying startup
 web/                       index.html (mockup SVG + b-* ids) + app.js, embedded (T10)
 deploy/                    units, Xorg config, polkit rule, kiosk session (D-052)

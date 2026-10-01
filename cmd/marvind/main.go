@@ -1,6 +1,6 @@
 // Command marvind collects host telemetry and serves it to the HEART OF GOLD panel.
-// Live mode (default, D-055) samples /proc, /sys, statfs and the SMART handoff every
-// second; --fixture replays fixture files for development. Both serve /snapshot.json,
+// Live mode (default, D-055) samples /proc, /sys, statfs, hwmon, nvidia-smi and the
+// SMART handoff every second and runs Marvin's mood engine on each sample (D-058); --fixture replays fixture files for development. Both serve /snapshot.json,
 // the embedded page at / (D-011) and /healthz on 127.0.0.1:8042.
 package main
 
@@ -20,11 +20,13 @@ import (
 	"time"
 
 	"hog.local/marvin-panel/internal/collect"
+	"hog.local/marvin-panel/internal/model"
+	"hog.local/marvin-panel/internal/mood"
 	"hog.local/marvin-panel/internal/server"
 	"hog.local/marvin-panel/web"
 )
 
-const version = "0.4.0-live1"
+const version = "0.5.0-t9"
 
 // D-002: the one loopback port marvind binds; never auto-increment (see D-003).
 const defaultAddr = "127.0.0.1:8042"
@@ -45,6 +47,7 @@ type options struct {
 	fixture      string
 	fixtureEvery time.Duration
 	oneshot      bool
+	stateDir     string
 }
 
 func parseFlags(args []string) (options, error) {
@@ -54,6 +57,7 @@ func parseFlags(args []string) (options, error) {
 	fs.StringVar(&o.fixture, "fixture", "", "fixture file or dir to replay instead of live collection")
 	fs.DurationVar(&o.fixtureEvery, "fixture-every", time.Second, "fixture rotation interval (>= 100ms)")
 	fs.BoolVar(&o.oneshot, "oneshot", false, "print one snapshot as JSON and exit")
+	fs.StringVar(&o.stateDir, "state-dir", "/var/lib/heartofgold", "mood engine state (PANIC COUNT, D-058)")
 	if err := fs.Parse(args); err != nil {
 		return o, fmt.Errorf("parse flags: %w", err)
 	}
@@ -110,10 +114,11 @@ func run(args []string, stdout io.Writer) error {
 		if err != nil {
 			return err // includes the D-006 refusal above 12 threads
 		}
+		eng := mood.New(mood.Options{StateDir: opts.stateDir, Log: log})
 		if opts.oneshot {
-			col.Sample(ctx)
+			liveTick(ctx, col, eng)
 			time.Sleep(oneshotGap)
-			b, err := marshal(col.Sample(ctx))
+			b, err := marshal(liveTick(ctx, col, eng))
 			if err != nil {
 				return err
 			}
@@ -124,10 +129,10 @@ func run(args []string, stdout io.Writer) error {
 		}
 		latest := &server.Latest{}
 		// The first sample has null deltas: the startup shape (D-050) until the next tick.
-		if err := publish(latest, col.Sample(ctx)); err != nil {
+		if err := publish(latest, liveTick(ctx, col, eng)); err != nil {
 			return err
 		}
-		go liveLoop(ctx, col, latest, log)
+		go liveLoop(ctx, col, eng, latest, log)
 		src = latest
 		desc = []any{"threads", col.Threads()}
 	}
@@ -205,8 +210,16 @@ func publish(l *server.Latest, s any) error {
 	return nil
 }
 
+// liveTick measures one snapshot and lets the engine choose its mood, phrase, GPU line
+// and PANIC COUNT.
+func liveTick(ctx context.Context, col *collect.Collector, eng *mood.Engine) model.Snapshot {
+	s := col.Sample(ctx)
+	eng.Apply(&s, time.Now())
+	return s
+}
+
 // liveLoop samples every liveEvery until ctx is done.
-func liveLoop(ctx context.Context, col *collect.Collector, l *server.Latest, log *slog.Logger) {
+func liveLoop(ctx context.Context, col *collect.Collector, eng *mood.Engine, l *server.Latest, log *slog.Logger) {
 	t := time.NewTicker(liveEvery)
 	defer t.Stop()
 	for {
@@ -214,7 +227,7 @@ func liveLoop(ctx context.Context, col *collect.Collector, l *server.Latest, log
 		case <-ctx.Done():
 			return
 		case <-t.C:
-			if err := publish(l, col.Sample(ctx)); err != nil {
+			if err := publish(l, liveTick(ctx, col, eng)); err != nil {
 				log.Error("publish snapshot", "err", err)
 			}
 		}
