@@ -132,6 +132,7 @@
     "load15": 8.7,
     "load5": 10.2,
     "model": "AMD Ryzen 5 9600X 6-Core Processor",
+    "model_display": "AMD RYZEN 5 9600X",
     "per_thread_pct": [
       38.7,
       62.6,
@@ -148,8 +149,18 @@
     ],
     "physical_cores": 6,
     "temp_c": 67.4,
+    "thermal_band": "ok",
     "threads": 12,
     "total_pct": 78.2
+  },
+  "disk_io": {
+    "device": "nvme0n1",
+    "in_flight": 5,
+    "queue_avg": 0.4,
+    "read_bps": 79872000,
+    "read_iops": 600,
+    "write_bps": 92160000,
+    "write_iops": 730
   },
   "fans": [
     {
@@ -168,9 +179,10 @@
     }
   ],
   "generated_at": "2026-09-25T13:00:00Z",
+  "gpu_line": "SOMEONE ASKED IT SOMETHING. NOT ME.",
   "gpus": [
     {
-      "band": "ok",
+      "display_name": "RTX 3060",
       "hist_util_pct": [
         57.6,
         55.9,
@@ -208,13 +220,13 @@
       "name": "NVIDIA GeForce RTX 3060",
       "power_limit_w": 170,
       "power_w": 148.2,
-      "sm_clock_mhz": 1957,
       "temp_c": 58,
+      "thermal_band": "ok",
       "util_pct": 62,
       "uuid": "GPU-23f0baf7-c957-0754-f922-d20a294ec2a7"
     },
     {
-      "band": "warn",
+      "display_name": "RTX 3060",
       "hist_util_pct": [
         65.4,
         68.1,
@@ -252,15 +264,15 @@
       "name": "NVIDIA GeForce RTX 3060",
       "power_limit_w": 170,
       "power_w": 155.9,
-      "sm_clock_mhz": 1980,
       "temp_c": 61.5,
+      "thermal_band": "ok",
       "util_pct": 71,
       "uuid": "GPU-b4124ee5-ff18-3b39-facd-544010000b6a"
     }
   ],
   "host": {
     "hostname": "hog",
-    "kernel": "6.8.0-139-generic",
+    "kernel": "6.8.0-142-generic",
     "uptime_seconds": 93240
   },
   "memory": {
@@ -274,62 +286,64 @@
   "mood": "melancholic",
   "network": [
     {
-      "if": "enp13s0",
-      "link_known": true,
-      "link_mbps": 1000,
+      "if": "wlp14s0",
       "rx_bps": 123731968,
       "rx_err": 0,
       "tx_bps": 8388608,
       "tx_err": 0
-    },
-    {
-      "if": "wlp14s0",
-      "link_known": false,
-      "link_mbps": null,
-      "rx_bps": 1100000,
-      "rx_err": 0,
-      "tx_bps": 96000,
-      "tx_err": 0
     }
   ],
+  "panic_count": 1,
+  "phrase": {
+    "lines": [
+      "THE HEART OF GOLD HAS THE WORST PROBABILITY",
+      "COEFFICIENT IN THE GALAXY. MY TEMP IS SECOND."
+    ]
+  },
   "scenario": "busy",
   "schema": "marvin/v1",
+  "smart": {
+    "age_seconds": 604,
+    "percentage_used": 1,
+    "state": "ok",
+    "unsafe_shutdowns": 12
+  },
   "storage": [
     {
       "device": "/dev/mapper/ubuntu--vg-ubuntu--lv",
-      "free_bytes": 163208757248,
+      "free_bytes": 160760625889,
       "fs": "ext4",
-      "in_flight": 3,
       "mount": "/",
-      "read_bps": 61440000,
-      "read_iops": 480,
       "state": "ok",
-      "total_bytes": 214748364800,
-      "used_bytes": 51539607552,
-      "used_pct": 24,
-      "write_bps": 40960000,
-      "write_iops": 320
+      "total_bytes": 211527139328,
+      "used_bytes": 50766513439,
+      "used_pct": 24
     },
     {
       "device": "/dev/mapper/ubuntu--vg-hogdata",
-      "free_bytes": 1069421690880,
+      "free_bytes": 1055531162665,
       "fs": "ext4",
-      "in_flight": 2,
       "mount": "/srv/hogdata",
-      "read_bps": 18432000,
-      "read_iops": 120,
       "state": "ok",
-      "total_bytes": 1782369484800,
-      "used_bytes": 712947793920,
-      "used_pct": 40,
-      "write_bps": 51200000,
-      "write_iops": 410
+      "total_bytes": 1759218604442,
+      "used_bytes": 703687441777,
+      "used_pct": 40
+    },
+    {
+      "device": "/dev/nvme0n1p2",
+      "free_bytes": 901943132,
+      "fs": "ext4",
+      "mount": "/boot",
+      "state": "ok",
+      "total_bytes": 2147483648,
+      "used_bytes": 1245540516,
+      "used_pct": 58
     }
   ],
   "temps": {
-    "nvme_band": "ok",
     "nvme_c": 44.2,
-    "nvme_max_c": 83.9,
-    "nvme_sensor": "Composite"
+    "nvme_max_c": 83.85,
+    "nvme_sensor": "Composite",
+    "nvme_thermal_band": "ok"
   }
 }

@@ -22,6 +22,5 @@ tags = ["hardware-id"]
 [rules.allowlist]
 paths = [
   '''cmd/genfixtures/main\.go''',
-  '''docs/SCHEMA\.md''',
   '''fixtures/(calm|busy|hot|dying)\.json''',
 ]

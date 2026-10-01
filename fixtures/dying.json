@@ -132,6 +132,7 @@
     "load15": 14.9,
     "load5": 15.8,
     "model": "AMD Ryzen 5 9600X 6-Core Processor",
+    "model_display": "AMD RYZEN 5 9600X",
     "per_thread_pct": [
       88.9,
       57.7,
@@ -148,29 +149,40 @@
     ],
     "physical_cores": 6,
     "temp_c": 93.7,
+    "thermal_band": "danger",
     "threads": 12,
     "total_pct": 88.6
+  },
+  "disk_io": {
+    "device": "nvme0n1",
+    "in_flight": 122,
+    "queue_avg": 8.7,
+    "read_bps": 390144000,
+    "read_iops": 2100,
+    "write_bps": 445440000,
+    "write_iops": 2700
   },
   "fans": [
     {
       "bank": 1,
       "label": "FAN BANK 1",
-      "max_rpm": 2900,
-      "rpm": 2884,
-      "verdict": "not_cooling"
+      "max_rpm": null,
+      "rpm": null,
+      "verdict": "unknown"
     },
     {
       "bank": 2,
       "label": "FAN BANK 2",
-      "max_rpm": 2920,
-      "rpm": 2908,
-      "verdict": "not_cooling"
+      "max_rpm": null,
+      "rpm": null,
+      "verdict": "unknown"
     }
   ],
   "generated_at": "2026-09-25T15:00:00Z",
+  "gpu_line": "THINKING THIS HARD RUNS AT 91 DEGREES.",
   "gpus": [
     {
-      "band": "danger",
+      "display_name": "RTX 3060",
       "hist_util_pct": [
         100,
         100,
@@ -208,13 +220,13 @@
       "name": "NVIDIA GeForce RTX 3060",
       "power_limit_w": 170,
       "power_w": 169.9,
-      "sm_clock_mhz": 1500,
       "temp_c": 91.3,
+      "thermal_band": "danger",
       "util_pct": 100,
       "uuid": "GPU-23f0baf7-c957-0754-f922-d20a294ec2a7"
     },
     {
-      "band": "warn",
+      "display_name": "RTX 3060",
       "hist_util_pct": [
         100,
         100,
@@ -252,15 +264,15 @@
       "name": "NVIDIA GeForce RTX 3060",
       "power_limit_w": 170,
       "power_w": 168.2,
-      "sm_clock_mhz": 1531,
       "temp_c": 88.7,
+      "thermal_band": "warn",
       "util_pct": 99,
       "uuid": "GPU-b4124ee5-ff18-3b39-facd-544010000b6a"
     }
   ],
   "host": {
     "hostname": "hog",
-    "kernel": "6.8.0-139-generic",
+    "kernel": "6.8.0-142-generic",
     "uptime_seconds": 259240
   },
   "memory": {
@@ -274,62 +286,64 @@
   "mood": "doomed",
   "network": [
     {
-      "if": "enp13s0",
-      "link_known": true,
-      "link_mbps": 1000,
-      "rx_bps": 50331648,
-      "rx_err": 0,
-      "tx_bps": 3145728,
-      "tx_err": 0
-    },
-    {
       "if": "wlp14s0",
-      "link_known": false,
-      "link_mbps": null,
       "rx_bps": 640000,
       "rx_err": 0,
       "tx_bps": 481280,
       "tx_err": 0
     }
   ],
+  "panic_count": 2,
+  "phrase": {
+    "lines": [
+      "3% REMAINS ON /srv/hogdata. I'D TELL YOU WHAT THAT",
+      "MEANS BUT YOU'D ONLY CLEAN SOMETHING IMPORTANT."
+    ]
+  },
   "scenario": "dying",
   "schema": "marvin/v1",
+  "smart": {
+    "age_seconds": 128,
+    "percentage_used": 1,
+    "state": "ok",
+    "unsafe_shutdowns": 12
+  },
   "storage": [
     {
       "device": "/dev/mapper/ubuntu--vg-ubuntu--lv",
-      "free_bytes": 83751862272,
+      "free_bytes": 82495584338,
       "fs": "ext4",
-      "in_flight": 64,
       "mount": "/",
-      "read_bps": 297984000,
-      "read_iops": 1400,
       "state": "ok",
-      "total_bytes": 214748364800,
-      "used_bytes": 130996502528,
-      "used_pct": 61,
-      "write_bps": 199680000,
-      "write_iops": 1200
+      "total_bytes": 211527139328,
+      "used_bytes": 129031554990,
+      "used_pct": 61
     },
     {
       "device": "/dev/mapper/ubuntu--vg-hogdata",
-      "free_bytes": 46341606605,
+      "free_bytes": 45739683715,
       "fs": "ext4",
-      "in_flight": 58,
       "mount": "/srv/hogdata",
-      "read_bps": 92160000,
-      "read_iops": 700,
       "state": "danger",
-      "total_bytes": 1782369484800,
-      "used_bytes": 1736027878195,
-      "used_pct": 97.4,
-      "write_bps": 245760000,
-      "write_iops": 1500
+      "total_bytes": 1759218604442,
+      "used_bytes": 1713478920727,
+      "used_pct": 97.4
+    },
+    {
+      "device": "/dev/nvme0n1p2",
+      "free_bytes": 901943132,
+      "fs": "ext4",
+      "mount": "/boot",
+      "state": "ok",
+      "total_bytes": 2147483648,
+      "used_bytes": 1245540516,
+      "used_pct": 58
     }
   ],
   "temps": {
-    "nvme_band": "ok",
     "nvme_c": 58.3,
-    "nvme_max_c": 83.9,
-    "nvme_sensor": "Composite"
+    "nvme_max_c": 83.85,
+    "nvme_sensor": "Composite",
+    "nvme_thermal_band": "ok"
   }
 }

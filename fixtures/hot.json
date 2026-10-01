@@ -132,6 +132,7 @@
     "load15": 11.4,
     "load5": 12.9,
     "model": "AMD Ryzen 5 9600X 6-Core Processor",
+    "model_display": "AMD RYZEN 5 9600X",
     "per_thread_pct": [
       66.3,
       100,
@@ -148,8 +149,18 @@
     ],
     "physical_cores": 6,
     "temp_c": 84.4,
+    "thermal_band": "warn",
     "threads": 12,
     "total_pct": 94.1
+  },
+  "disk_io": {
+    "device": "nvme0n1",
+    "in_flight": 46,
+    "queue_avg": 3.1,
+    "read_bps": 270909440,
+    "read_iops": 1720,
+    "write_bps": 215040000,
+    "write_iops": 1680
   },
   "fans": [
     {
@@ -168,9 +179,10 @@
     }
   ],
   "generated_at": "2026-09-25T14:00:00Z",
+  "gpu_line": "THINKING THIS HARD RUNS AT 82 DEGREES.",
   "gpus": [
     {
-      "band": "warn",
+      "display_name": "RTX 3060",
       "hist_util_pct": [
         86.6,
         89.2,
@@ -208,13 +220,13 @@
       "name": "NVIDIA GeForce RTX 3060",
       "power_limit_w": 170,
       "power_w": 166.4,
-      "sm_clock_mhz": 2017,
       "temp_c": 79.4,
+      "thermal_band": "warn",
       "util_pct": 88,
       "uuid": "GPU-23f0baf7-c957-0754-f922-d20a294ec2a7"
     },
     {
-      "band": "warn",
+      "display_name": "RTX 3060",
       "hist_util_pct": [
         97.9,
         87,
@@ -252,15 +264,15 @@
       "name": "NVIDIA GeForce RTX 3060",
       "power_limit_w": 170,
       "power_w": 169.8,
-      "sm_clock_mhz": 2032,
       "temp_c": 82.1,
+      "thermal_band": "warn",
       "util_pct": 94,
       "uuid": "GPU-b4124ee5-ff18-3b39-facd-544010000b6a"
     }
   ],
   "host": {
     "hostname": "hog",
-    "kernel": "6.8.0-139-generic",
+    "kernel": "6.8.0-142-generic",
     "uptime_seconds": 172980
   },
   "memory": {
@@ -274,62 +286,63 @@
   "mood": "aggrieved",
   "network": [
     {
-      "if": "enp13s0",
-      "link_known": true,
-      "link_mbps": 1000,
-      "rx_bps": 96468992,
-      "rx_err": 0,
-      "tx_bps": 41943040,
-      "tx_err": 0
-    },
-    {
       "if": "wlp14s0",
-      "link_known": false,
-      "link_mbps": null,
       "rx_bps": 740000,
       "rx_err": 0,
       "tx_bps": 512000,
       "tx_err": 0
     }
   ],
+  "panic_count": 1,
+  "phrase": {
+    "lines": [
+      "84 DEGREES. I RAN COLD ONCE. NOBODY NOTICED."
+    ]
+  },
   "scenario": "hot",
   "schema": "marvin/v1",
+  "smart": {
+    "age_seconds": null,
+    "percentage_used": null,
+    "state": "unknown",
+    "unsafe_shutdowns": null
+  },
   "storage": [
     {
       "device": "/dev/mapper/ubuntu--vg-ubuntu--lv",
-      "free_bytes": 161061273600,
+      "free_bytes": 158645354496,
       "fs": "ext4",
-      "in_flight": 27,
       "mount": "/",
-      "read_bps": 199229440,
-      "read_iops": 1100,
       "state": "ok",
-      "total_bytes": 214748364800,
-      "used_bytes": 53687091200,
-      "used_pct": 25,
-      "write_bps": 122880000,
-      "write_iops": 900
+      "total_bytes": 211527139328,
+      "used_bytes": 52881784832,
+      "used_pct": 25
     },
     {
       "device": "/dev/mapper/ubuntu--vg-hogdata",
-      "free_bytes": 320826507264,
+      "free_bytes": 316659348800,
       "fs": "ext4",
-      "in_flight": 19,
       "mount": "/srv/hogdata",
-      "read_bps": 71680000,
-      "read_iops": 620,
       "state": "warn",
-      "total_bytes": 1782369484800,
-      "used_bytes": 1461542977536,
-      "used_pct": 82,
-      "write_bps": 92160000,
-      "write_iops": 780
+      "total_bytes": 1759218604442,
+      "used_bytes": 1442559255642,
+      "used_pct": 82
+    },
+    {
+      "device": "/dev/nvme0n1p2",
+      "free_bytes": 901943132,
+      "fs": "ext4",
+      "mount": "/boot",
+      "state": "ok",
+      "total_bytes": 2147483648,
+      "used_bytes": 1245540516,
+      "used_pct": 58
     }
   ],
   "temps": {
-    "nvme_band": "ok",
     "nvme_c": 51.8,
-    "nvme_max_c": 83.9,
-    "nvme_sensor": "Composite"
+    "nvme_max_c": 83.85,
+    "nvme_sensor": "Composite",
+    "nvme_thermal_band": "ok"
   }
 }

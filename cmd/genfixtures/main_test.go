@@ -8,6 +8,24 @@ import (
 	"sort"
 	"strings"
 	"testing"
+	"unicode/utf8"
+)
+
+// Key sets per docs/SCHEMA.md.
+var (
+	wantTopKeys = []string{
+		"schema", "scenario", "mood", "generated_at", "host", "phrase", "gpu_line", "cpu",
+		"memory", "gpus", "temps", "fans", "network", "connections", "disk_io", "storage",
+		"smart", "panic_count",
+	}
+	wantGPUKeys = []string{
+		"name", "display_name", "uuid", "mem_total_mib", "mem_used_mib", "util_pct", "temp_c",
+		"thermal_band", "power_w", "power_limit_w", "hist_util_pct",
+	}
+	wantNetKeys    = []string{"if", "rx_bps", "tx_bps", "rx_err", "tx_err"}
+	wantDiskIOKeys = []string{"device", "read_bps", "write_bps", "read_iops", "write_iops", "queue_avg", "in_flight"}
+	wantSmartKeys  = []string{"state", "percentage_used", "unsafe_shutdowns", "age_seconds"}
+	wantMounts     = []string{"/", "/srv/hogdata", "/boot"}
 )
 
 func render(t *testing.T, s spec) []byte {
@@ -80,14 +98,31 @@ func num(t *testing.T, m map[string]any, key string) float64 {
 	return v
 }
 
-func wantBand(c float64) string {
-	switch {
-	case c >= 90:
-		return "danger"
-	case c >= 60:
-		return "warn"
-	default:
-		return "ok"
+// optInt decodes an int|null field.
+func optInt(m map[string]any, key string) *int {
+	if v, ok := m[key].(float64); ok {
+		return ptr(int(v))
+	}
+	return nil
+}
+
+func mount(t *testing.T, doc map[string]any, mnt string) map[string]any {
+	t.Helper()
+	for _, e := range arr[any](t, doc, "storage") {
+		if m := e.(map[string]any); m["mount"] == mnt {
+			return m
+		}
+	}
+	t.Fatalf("missing mount %q", mnt)
+	return nil
+}
+
+func checkKeys(t *testing.T, name, what string, m map[string]any, want []string) {
+	t.Helper()
+	w := append([]string(nil), want...)
+	sort.Strings(w)
+	if got := mapKeys(m); strings.Join(got, ",") != strings.Join(w, ",") {
+		t.Errorf("%s: %s keys = %v, want %v", name, what, got, w)
 	}
 }
 
@@ -111,22 +146,117 @@ func walkPct(t *testing.T, name string, v any, path string) {
 	}
 }
 
+func walkKeys(v any, visit func(string)) {
+	switch node := v.(type) {
+	case map[string]any:
+		for k, child := range node {
+			visit(k)
+			walkKeys(child, visit)
+		}
+	case []any:
+		for _, child := range node {
+			walkKeys(child, visit)
+		}
+	}
+}
+
+func TestBands(t *testing.T) {
+	cases := []struct {
+		c            float64
+		cpu, thermal string
+	}{
+		{59.9, "ok", "ok"},
+		{60, "warn", "ok"},
+		{69.9, "warn", "ok"},
+		{70, "warn", "warn"},
+		{89.9, "warn", "warn"},
+		{90, "danger", "danger"},
+	}
+	for _, tc := range cases {
+		if got := cpuBand(tc.c); got != tc.cpu {
+			t.Errorf("cpuBand(%v) = %s, want %s", tc.c, got, tc.cpu)
+		}
+		if got := thermalBand(tc.c); got != tc.thermal {
+			t.Errorf("thermalBand(%v) = %s, want %s", tc.c, got, tc.thermal)
+		}
+	}
+}
+
+func TestFanVerdict(t *testing.T) {
+	cases := []struct {
+		rpm, max *int
+		band     string
+		want     string
+	}{
+		{nil, nil, "ok", "unknown"},
+		{ptr(0), ptr(2900), "ok", "stalled"},
+		{ptr(2900), ptr(2900), "warn", "not_cooling"},
+		{ptr(2900), ptr(2900), "ok", "ok"},
+		{ptr(1500), ptr(2900), "warn", "ok"},
+	}
+	for _, tc := range cases {
+		if got := fanVerdict(tc.rpm, tc.max, tc.band); got != tc.want {
+			t.Errorf("fanVerdict(%v, %v, %s) = %s, want %s", optStr(tc.rpm), optStr(tc.max), tc.band, got, tc.want)
+		}
+	}
+}
+
+func optStr(p *int) any {
+	if p == nil {
+		return "nil"
+	}
+	return *p
+}
+
+func TestGPULine(t *testing.T) {
+	g := func(temp, util float64, mem int) gpuState {
+		return gpuState{tempC: ptr(temp), utilPct: ptr(util), memUsedMiB: mem}
+	}
+	cases := []struct {
+		name string
+		gs   []gpuState
+		want string
+	}{
+		{"stale", []gpuState{{tempC: nil, utilPct: ptr(50.0)}, g(40, 0, 0)}, "THE BRAINS ARE NOT ANSWERING."},
+		{"hot", []gpuState{g(79.4, 88, 10112), g(82.1, 94, 11904)}, "THINKING THIS HARD RUNS AT 82 DEGREES."},
+		{"thinking", []gpuState{g(58, 62, 9420), g(61.5, 71, 11800)}, "SOMEONE ASKED IT SOMETHING. NOT ME."},
+		{"loaded", []gpuState{g(44, 0, 8099), g(36, 0, 11243)}, "MODEL LOADED. NOBODY ASKS IT ANYTHING."},
+		{"empty", []gpuState{g(35, 0, 5), g(33, 1, 5)}, "BOTH BRAINS EMPTY. RESTFUL, NOT HAPPY."},
+	}
+	for _, tc := range cases {
+		if got := gpuLine(tc.gs); got != tc.want {
+			t.Errorf("%s: gpuLine = %q, want %q", tc.name, got, tc.want)
+		}
+	}
+}
+
+func TestDisplayNames(t *testing.T) {
+	if got := modelDisplay(cpuModel); got != "AMD RYZEN 5 9600X" {
+		t.Errorf("modelDisplay = %q", got)
+	}
+	if got := gpuDisplay(gpuName); got != "RTX 3060" {
+		t.Errorf("gpuDisplay = %q", got)
+	}
+}
+
 func TestInvariants(t *testing.T) {
 	docs := decodeAll(t)
-	var topKeys string
 	for name, doc := range docs {
 		if doc["schema"] != schema {
 			t.Errorf("%s: schema = %v", name, doc["schema"])
 		}
-		if k := marshalKeys(t, doc); k != topKeys && topKeys != "" {
-			t.Errorf("%s: top-level keys differ: %s vs %s", name, k, topKeys)
-		} else if topKeys == "" {
-			topKeys = k
-		}
+		checkKeys(t, name, "top-level", doc, wantTopKeys)
 
 		cpu := sub(t, doc, "cpu")
-		if b, ok := cpu["band"].(string); !ok || b != wantBand(num(t, cpu, "temp_c")) {
-			t.Errorf("%s: cpu band %v inconsistent with temp %v", name, cpu["band"], cpu["temp_c"])
+		cpuTemp := num(t, cpu, "temp_c")
+		if cpu["band"] != cpuBand(cpuTemp) {
+			t.Errorf("%s: cpu.band %v inconsistent with temp %v", name, cpu["band"], cpuTemp)
+		}
+		if cpu["thermal_band"] != thermalBand(cpuTemp) {
+			t.Errorf("%s: cpu.thermal_band %v inconsistent with temp %v", name, cpu["thermal_band"], cpuTemp)
+		}
+		if cpu["model_display"] != "AMD RYZEN 5 9600X" {
+			t.Errorf("%s: cpu.model_display = %v", name, cpu["model_display"])
 		}
 		if th := cpu["threads"].(float64); len(arr[any](t, cpu, "per_thread_pct")) != int(th) {
 			t.Errorf("%s: per_thread_pct length != threads", name)
@@ -135,54 +265,140 @@ func TestInvariants(t *testing.T) {
 			t.Errorf("%s: hist_pct length = %d, want 120", name, len(h))
 		}
 
-		for _, e := range arr[any](t, doc, "gpus") {
-			g := e.(map[string]any)
-			if g["band"] != wantBand(num(t, g, "temp_c")) {
-				t.Errorf("%s: gpu band inconsistent for %v", name, g["uuid"])
-			}
+		gpus := arr[any](t, doc, "gpus")
+		if len(gpus) != 2 {
+			t.Errorf("%s: %d gpus, want 2", name, len(gpus))
 		}
-		for _, e := range arr[any](t, doc, "storage") {
+		states := make([]gpuState, 0, len(gpus))
+		for _, e := range gpus {
+			g := e.(map[string]any)
+			checkKeys(t, name, "gpus[]", g, wantGPUKeys)
+			if g["thermal_band"] != thermalBand(num(t, g, "temp_c")) {
+				t.Errorf("%s: gpu thermal_band inconsistent for %v", name, g["uuid"])
+			}
+			if g["display_name"] != "RTX 3060" {
+				t.Errorf("%s: gpu display_name = %v", name, g["display_name"])
+			}
+			if u := g["uuid"]; u != gpu0UUID && u != gpu1UUID {
+				t.Errorf("%s: unexpected gpu uuid", name)
+			}
+			states = append(states, gpuState{
+				tempC: ptr(num(t, g, "temp_c")), utilPct: ptr(num(t, g, "util_pct")),
+				memUsedMiB: int(num(t, g, "mem_used_mib")),
+			})
+		}
+
+		gl, _ := doc["gpu_line"].(string)
+		if n := utf8.RuneCountInString(gl); n < 1 || n > 38 {
+			t.Errorf("%s: gpu_line %q is %d runes, want 1-38", name, gl, n)
+		}
+		if want := gpuLine(states); gl != want {
+			t.Errorf("%s: gpu_line = %q, want %q", name, gl, want)
+		}
+
+		temps := sub(t, doc, "temps")
+		if temps["nvme_thermal_band"] != thermalBand(num(t, temps, "nvme_c")) {
+			t.Errorf("%s: nvme_thermal_band inconsistent", name)
+		}
+		if num(t, temps, "nvme_max_c") != 83.85 {
+			t.Errorf("%s: nvme_max_c = %v, want 83.85", name, temps["nvme_max_c"])
+		}
+
+		nets := arr[any](t, doc, "network")
+		if len(nets) != 1 {
+			t.Fatalf("%s: %d network entries, want 1", name, len(nets))
+		}
+		n0 := nets[0].(map[string]any)
+		checkKeys(t, name, "network[0]", n0, wantNetKeys)
+		if n0["if"] != "wlp14s0" {
+			t.Errorf("%s: network[0].if = %v", name, n0["if"])
+		}
+
+		dio := sub(t, doc, "disk_io")
+		checkKeys(t, name, "disk_io", dio, wantDiskIOKeys)
+		if dio["device"] != "nvme0n1" {
+			t.Errorf("%s: disk_io.device = %v", name, dio["device"])
+		}
+
+		storage := arr[any](t, doc, "storage")
+		if len(storage) != len(wantMounts) {
+			t.Errorf("%s: %d storage entries, want %d", name, len(storage), len(wantMounts))
+		}
+		for i, e := range storage {
 			m := e.(map[string]any)
+			if i < len(wantMounts) && m["mount"] != wantMounts[i] {
+				t.Errorf("%s: storage[%d].mount = %v, want %s", name, i, m["mount"], wantMounts[i])
+			}
 			used, free, total := num(t, m, "used_bytes"), num(t, m, "free_bytes"), num(t, m, "total_bytes")
 			if used+free != total {
 				t.Errorf("%s: %v used+free != total", name, m["mount"])
 			}
-			state := "ok"
-			switch up := num(t, m, "used_pct"); {
-			case up >= 90:
-				state = "danger"
-			case up >= 80:
-				state = "warn"
-			}
-			if m["state"] != state {
-				t.Errorf("%s: %v state %v != %v at %v%%", name, m["mount"], m["state"], state, m["used_pct"])
+			if want := mountState(num(t, m, "used_pct")); m["state"] != want {
+				t.Errorf("%s: %v state %v != %v at %v%%", name, m["mount"], m["state"], want, m["used_pct"])
 			}
 		}
 
-		cpuBand, _ := cpu["band"].(string)
-		for _, e := range arr[any](t, doc, "fans") {
+		mem := sub(t, doc, "memory")
+		if num(t, mem, "used_bytes")+num(t, mem, "cache_bytes") > num(t, mem, "total_bytes") {
+			t.Errorf("%s: memory used + cache > total", name)
+		}
+
+		fans := arr[any](t, doc, "fans")
+		if len(fans) != 2 {
+			t.Errorf("%s: %d fans, want 2", name, len(fans))
+		}
+		cpuThermal, _ := cpu["thermal_band"].(string)
+		for _, e := range fans {
 			f := e.(map[string]any)
-			verdict := "unknown"
-			if rpm, ok := f["rpm"].(float64); ok {
-				verdict = "ok"
-				switch max := f["max_rpm"].(float64); {
-				case rpm == 0:
-					verdict = "stalled"
-				case max > 0 && rpm >= 0.99*max && cpuBand != "ok":
-					verdict = "not_cooling"
+			rpm, maxRPM := optInt(f, "rpm"), optInt(f, "max_rpm")
+			if want := fanVerdict(rpm, maxRPM, cpuThermal); f["verdict"] != want {
+				t.Errorf("%s: fan %v verdict %v != %v", name, f["bank"], f["verdict"], want)
+			}
+			if rpm != nil || maxRPM != nil || f["verdict"] != "unknown" {
+				t.Errorf("%s: fan %v must be rpm null, max_rpm null, verdict unknown (D-027)", name, f["bank"])
+			}
+		}
+
+		lines := arr[any](t, sub(t, doc, "phrase"), "lines")
+		if len(lines) < 1 || len(lines) > 2 {
+			t.Errorf("%s: %d phrase lines, want 1-2", name, len(lines))
+		}
+		total := 0
+		for _, l := range lines {
+			s, _ := l.(string)
+			n := utf8.RuneCountInString(s)
+			total += n
+			if n > 52 {
+				t.Errorf("%s: phrase line %q is %d runes, want <= 52", name, s, n)
+			}
+		}
+		if total > 100 {
+			t.Errorf("%s: phrase total %d runes, want <= 100", name, total)
+		}
+
+		pc, ok := doc["panic_count"].(float64)
+		if !ok || pc < 0 {
+			t.Errorf("%s: panic_count = %v, want non-null >= 0", name, doc["panic_count"])
+		}
+
+		smart := sub(t, doc, "smart")
+		checkKeys(t, name, "smart", smart, wantSmartKeys)
+		switch smart["state"] {
+		case "ok", "failing":
+		case "unknown":
+			for _, k := range []string{"percentage_used", "unsafe_shutdowns", "age_seconds"} {
+				if smart[k] != nil {
+					t.Errorf("%s: smart unknown but %s = %v", name, k, smart[k])
 				}
 			}
-			if f["verdict"] != verdict {
-				t.Errorf("%s: fan %v verdict %v != %v", name, f["bank"], f["verdict"], verdict)
-			}
+		default:
+			t.Errorf("%s: smart.state = %v", name, smart["state"])
 		}
-
-		for _, e := range arr[any](t, doc, "network") {
-			n := e.(map[string]any)
-			if (n["link_mbps"] != nil) != n["link_known"].(bool) {
-				t.Errorf("%s: %v link_mbps/link_known disagree", name, n["if"])
+		walkKeys(smart, func(k string) {
+			if k == "serial_number" || k == "wwn" || k == "uuid" {
+				t.Errorf("%s: forbidden key %q under smart", name, k)
 			}
-		}
+		})
 
 		walkPct(t, name, doc, "")
 
@@ -216,20 +432,35 @@ func TestMoodMatrix(t *testing.T) {
 	if num(t, dying, "temp_c") < 90 {
 		t.Error("dying CPU must be >= 90C")
 	}
-	for _, e := range arr[any](t, docs["dying"], "storage") {
-		if m := e.(map[string]any); m["mount"] == "/srv/hogdata" && (100-num(t, m, "used_pct")) >= 5 {
-			t.Error("dying hogdata must have < 5% free")
-		}
+	if 100-num(t, mount(t, docs["dying"], "/srv/hogdata"), "used_pct") >= 5 {
+		t.Error("dying hogdata must have < 5% free")
 	}
-}
 
-func marshalKeys(t *testing.T, doc map[string]any) string {
-	t.Helper()
-	b, err := json.Marshal(mapKeys(doc))
-	if err != nil {
-		t.Fatal(err)
+	busy := docs["busy"]
+	if rx := num(t, arr[any](t, busy, "network")[0].(map[string]any), "rx_bps"); rx < 118*1048576 {
+		t.Errorf("busy wlp14s0 rx_bps = %v, want >= 118 MiB/s", rx)
 	}
-	return string(b)
+	if bc := sub(t, busy, "cpu"); bc["band"] != "warn" || bc["thermal_band"] != "ok" {
+		t.Errorf("busy cpu band/thermal_band = %v/%v, want warn/ok", bc["band"], bc["thermal_band"])
+	}
+	if g1 := arr[any](t, docs["hot"], "gpus")[1].(map[string]any); num(t, g1, "temp_c") != 82.1 {
+		t.Errorf("hot gpus[1].temp_c = %v, want 82.1", g1["temp_c"])
+	}
+	if st := mount(t, docs["hot"], "/srv/hogdata")["state"]; st != "warn" {
+		t.Errorf("hot /srv/hogdata state = %v, want warn", st)
+	}
+	if up := num(t, mount(t, docs["dying"], "/srv/hogdata"), "used_pct"); up != 97.4 {
+		t.Errorf("dying /srv/hogdata used_pct = %v, want 97.4", up)
+	}
+	if pc := docs["calm"]["panic_count"]; pc != 0.0 {
+		t.Errorf("calm panic_count = %v, want 0", pc)
+	}
+	if pc, _ := docs["dying"]["panic_count"].(float64); pc <= 0 {
+		t.Errorf("dying panic_count = %v, want > 0", docs["dying"]["panic_count"])
+	}
+	if st := sub(t, docs["hot"], "smart")["state"]; st != "unknown" {
+		t.Errorf("hot smart.state = %v, want unknown", st)
+	}
 }
 
 func mapKeys(m map[string]any) []string {
