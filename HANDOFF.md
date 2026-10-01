@@ -25,6 +25,17 @@ Marvin's and stays attributed to him.
   GPUs, temperatures and fans live after the owner installs the T7+T8 unit (D-057).
 - Marvin's mood engine live (D-058).
 - Line pool v1 live (D-059).
+- Phase 1 Wide (D-060) live; owner one-week run, then Phase 2.
+
+### Fallback: Phase 1 Thin (D-060)
+The last 64 px-margin build is tagged phase1-thin (commit 1ac87b6) and archived as
+/srv/hogdata/marvin/archive/marvind.phase1-thin (sha256 8e7cc960…7ff627a22). The
+panic_count state file is compatible both ways.
+- fast:   cp -p /srv/hogdata/marvin/archive/marvind.phase1-thin /opt/heartofgold/bin/marvind.new &&
+          mv -f /opt/heartofgold/bin/marvind.new /opt/heartofgold/bin/marvind && make restart &&
+          make restart-kiosk
+- source: git worktree add /tmp/phase1-thin phase1-thin && make -C /tmp/phase1-thin deploy &&
+          make restart && make restart-kiosk; afterwards git worktree remove /tmp/phase1-thin
 - Code: T1 scaffold and T2 fixtures committed (39b0ea9); T2b schema amendments
   (155dabb, a4fac41, D-049 docs); T3 model (a40a1e3, D-050); T10 page (embedded web/);
   T11a (6e9f4ec + close-out); LIVE-1 collectors T4-T6 (internal/collect, D-055). No

@@ -43,6 +43,7 @@ T9  MOOD  internal/mood: hysteresis, phrase selection and cooldowns, doomed re-a
     GPU-line pacing, persisted PANIC COUNT (D-058).
 T9b LINE POOL  owner-approved pool v1 (B1-B10, C1-C10, M1-M10, A1-A10, D1-D10, S1-S9, F,
     GPU-line pools) with truth conditions and a MARVIN.md drift test (D-059).
+WIDE-1 Phase 1 Wide (D-060); fallback tag phase1-thin.
 
 ## Owner tasks
 O1  HDMI PROBE — DONE for the SunFounder 7" (2026-09-29; see HANDOFF.md, D-044, D-045).
@@ -56,7 +57,8 @@ O3  PANEL WAKE TEST (after purchase). PeakDo powered from the PSU 5 V rail: it m
 
 ## Build
 Order (owner, 2026-10-01): T10b, T11a, then T4-T9 (display first).
-Next: T5/T6 load measurements with the owner (F6, D-021), then T11b soak.
+Next: Owner one-week run on Phase 1 Wide (reboot check first), then Phase 2. T5/T6 load
+measurements (F6, D-021) still owed.
 T11b SOAK       24 h soak with flat RSS (D-010). Verify: RSS growth within noise.
 
 ## Follow-ups (Phase 1, non-blocking)
@@ -74,6 +76,10 @@ F6 Network "% OF S" unbounded (D-051 (5)); decide with T5.
 F7 Kiosk slice hits MemoryHigh (reclaim of page cache, no OOM): watch memory.events high and
    CPU during T11b; raise MemoryHigh only on real cost.
 F8 Phase 2: narrower side margins (owner 2026-10-01; layout change, GEOMETRY).
+   RESOLVED by D-060 (Phase 1 Wide, 24 px margins).
+F9 PEAK label outline (F2) — deferred to Phase 2.
+F10 A8 into the GPU-heat topic rule — deferred to Phase 2.
+F11 hourly soak sampler — not adopted for the week run.
 
 ## Phase 2 — rotating sections (future, not v1)
 Keep the HEART OF GOLD title and separator fixed; fade the body out and the next view

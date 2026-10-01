@@ -48,6 +48,38 @@
 
   function setWidth(id, w) { setAttr(id, 'width', isNum(w) ? Math.max(0, w) : 0); }
 
+  // D-060: horizontal geometry is read from the SVG at load (tracks, plot range,
+  // sparkline baselines, core boxes); only the y constants live here.
+  var G = { track: {} };
+  function num(id, attr) {
+    var el = $(id);
+    return el ? parseFloat(el.getAttribute(attr)) : NaN;
+  }
+  // PEAK label minimum right edge: 470 on the Phase 1 Thin plot (356..986), carried to
+  // the current plot by the same proportional map (D-051 (3), D-060).
+  var THIN_PLOT_X1 = 356;
+  var THIN_PLOT_X2 = 986;
+  var THIN_PEAK_MIN = 470;
+  function readGeometry() {
+    ['gpu', 'mem', 'net-rx', 'net-tx', 'io-read', 'io-write', 'space-0', 'space-1', 'space-2',
+      'th-cpu', 'th-gpu0', 'th-gpu1', 'th-nvme', 'fan-0', 'fan-1'].forEach(function (k) {
+      G.track[k] = { x: num('b-' + k + '-track', 'x'), w: num('b-' + k + '-track', 'width') };
+    });
+    G.gx1 = num('b-cpu-grid100', 'x1');
+    G.gx2 = num('b-cpu-grid100', 'x2');
+    G.peakMin = G.gx1 + (THIN_PEAK_MIN - THIN_PLOT_X1) * (G.gx2 - G.gx1) / (THIN_PLOT_X2 - THIN_PLOT_X1);
+    G.spark = [0, 1].map(function (g) {
+      return { x1: num('b-gpu' + g + '-base', 'x1'), x2: num('b-gpu' + g + '-base', 'x2') };
+    });
+    G.core = [];
+    for (var c = 0; c < 12; c++) {
+      var x = num('b-core-box-' + c, 'x') + 5; // dot region inset (GEOMETRY)
+      G.core.push(x);
+      setAttr('b-core-' + c, 'x', x);
+    }
+  }
+  function tw(k) { return G.track[k].w; }
+
   function round(v) { return isNum(v) ? String(Math.round(v)) : DASH; }
   function fixed1(v) { return isNum(v) ? v.toFixed(1) : DASH; }
   function fahr(c) { return isNum(c) ? String(CToF(c)) : DASH; }
@@ -107,11 +139,11 @@
     var graph = ['b-cpu-area', 'b-cpu-line', 'b-cpu-peak', 'b-cpu-peak-text', 'b-cpu-now-halo', 'b-cpu-now'];
     for (var g = 0; g < graph.length; g++) { setAttr(graph[g], 'visibility', run ? 'visible' : 'hidden'); }
     if (run) {
-      var step = 630 / 119;
-      var pts = points(hist, run, 356, step, 494, 0.96);
+      var step = (G.gx2 - G.gx1) / 119;
+      var pts = points(hist, run, G.gx1, step, 494, 0.96);
       setAttr('b-cpu-line', 'points', pts.join(' '));
-      var x0 = (356 + run[0] * step).toFixed(1);
-      var x1 = (356 + run[1] * step).toFixed(1);
+      var x0 = (G.gx1 + run[0] * step).toFixed(1);
+      var x1 = (G.gx1 + run[1] * step).toFixed(1);
       setAttr('b-cpu-area', 'points', pts.join(' ') + ' ' + x1 + ',494 ' + x0 + ',494');
       var nowY = (494 - hist[run[1]] * 0.96).toFixed(1);
       ['b-cpu-now-halo', 'b-cpu-now'].forEach(function (id) {
@@ -120,12 +152,12 @@
       });
       var pk = run[0];
       for (var i = run[0]; i <= run[1]; i++) { if (hist[i] > hist[pk]) { pk = i; } }
-      var cx = 356 + pk * step;
+      var cx = G.gx1 + pk * step;
       var cy = 494 - hist[pk] * 0.96;
       setAttr('b-cpu-peak', 'cx', cx.toFixed(1));
       setAttr('b-cpu-peak', 'cy', cy.toFixed(1));
       // Left-edge companion to D-051 (3): the right edge never reaches the axis labels (x <= 344).
-      setAttr('b-cpu-peak-text', 'x', Math.max(cx + 14, 470).toFixed(1));
+      setAttr('b-cpu-peak-text', 'x', Math.max(cx + 14, G.peakMin).toFixed(1));
       // D-051 (3): below the point when above it would crowd "LAST 120 s".
       setAttr('b-cpu-peak-text', 'y', (cy - 7 < 410 ? cy + 21 : cy - 7).toFixed(1));
       setText('b-cpu-peak-text', 'PEAK ' + Math.round(hist[pk]) + '%');
@@ -150,7 +182,7 @@
     var u = [get(g0, 'util_pct'), get(g1, 'util_pct')];
     var mean = isNum(u[0]) && isNum(u[1]) ? (u[0] + u[1]) / 2 : null;
     setText('b-gpu-pct', round(mean));
-    setWidth('b-gpu-bar', isNum(mean) ? 896 * mean / 100 : 0);
+    setWidth('b-gpu-bar', isNum(mean) ? tw('gpu') * mean / 100 : 0);
     var used = sum([get(g0, 'mem_used_mib'), get(g1, 'mem_used_mib')]);
     var total = sum([get(g0, 'mem_total_mib'), get(g1, 'mem_total_mib')]);
     setText('b-gpu-vram', 'VRAM  ' + (isNum(used) ? (used / 1024).toFixed(1) : DASH) + ' / ' +
@@ -172,7 +204,8 @@
         fahr(t) + '°F / ' + round(t) + '°C');
       var hist = get(gpu, 'hist_util_pct');
       var run = lastRun(hist);
-      setAttr(p + '-spark', 'points', run ? points(hist, run, g === 0 ? 104 : 568, 408 / 29, 1160, 0.28).join(' ') : '');
+      var sp = G.spark[g];
+      setAttr(p + '-spark', 'points', run ? points(hist, run, sp.x1, (sp.x2 - sp.x1) / 29, 1160, 0.28).join(' ') : '');
     }
   }
 
@@ -182,8 +215,8 @@
     var cache = get(m, 'cache_bytes');
     var total = get(m, 'total_bytes');
     var ok = isNum(total) && total > 0;
-    setWidth('b-mem-cache', ok && isNum(used) && isNum(cache) ? 408 * (used + cache) / total : 0);
-    setWidth('b-mem-used', ok && isNum(used) ? 408 * used / total : 0);
+    setWidth('b-mem-cache', ok && isNum(used) && isNum(cache) ? tw('mem') * (used + cache) / total : 0);
+    setWidth('b-mem-used', ok && isNum(used) ? tw('mem') * used / total : 0);
     setText('b-mem-text', (isNum(used) ? (used / GIB).toFixed(1) : DASH) + ' / ' +
       (isNum(total) ? String(Math.round(total / GIB)) : DASH) + ' GiB · CACHE ' +
       (isNum(cache) ? (cache / GIB).toFixed(1) : DASH));
@@ -206,7 +239,7 @@
       var frac = isNum(bps) ? bps / (NET_SCALE_MIB * MIB) : null;
       setText('b-net-' + d[0], d[1] + ' ' + mibps(bps) + ' MiB/s');
       setText('b-net-' + d[0] + '-pct', round(isNum(frac) ? frac * 100 : null) + '% OF ' + NET_SCALE_MIB + ' MiB/s');
-      setWidth('b-net-' + d[0] + '-bar', isNum(frac) ? 416 * Math.min(1, frac) : 0);
+      setWidth('b-net-' + d[0] + '-bar', isNum(frac) ? tw('net-' + d[0]) * Math.min(1, frac) : 0);
     });
   }
 
@@ -214,7 +247,7 @@
     [['read', 'READ'], ['write', 'WRITE']].forEach(function (k) {
       var bps = get(d, k[0] + '_bps');
       setText('b-io-' + k[0], k[1] + ' ' + mibps(bps) + ' MiB/s');
-      setWidth('b-io-' + k[0] + '-bar', isNum(bps) ? 408 * Math.min(1, bps / (IO_SCALE_MIB * MIB)) : 0);
+      setWidth('b-io-' + k[0] + '-bar', isNum(bps) ? tw('io-' + k[0]) * Math.min(1, bps / (IO_SCALE_MIB * MIB)) : 0);
     });
   }
 
@@ -224,7 +257,7 @@
     for (var i = 0; i < 3; i++) {
       var m = at(storage, i);
       var up = get(m, 'used_pct');
-      setWidth('b-space-' + i + '-bar', isNum(up) ? 180 * up / 100 : 0);
+      setWidth('b-space-' + i + '-bar', isNum(up) ? tw('space-' + i) * Math.min(1, up / 100) : 0);
       setFill('b-space-' + i + '-bar', bandColor(get(m, 'state')));
       setText('b-space-' + i + '-pct', round(up) + '%');
     }
@@ -235,7 +268,7 @@
     setText(p + '-f', fahr(c) + '°F');
     setFill(p + '-f', band === 'ok' ? THERMAL_OK_TEXT : bandColor(band));
     setText(p + '-c', round(c) + '°C');
-    setWidth(p + '-bar', isNum(c) ? 206 * Math.min(1, c / 100) : 0);
+    setWidth(p + '-bar', isNum(c) ? tw('th-' + name) * Math.min(1, c / 100) : 0);
     setFill(p + '-bar', bandColor(band));
   }
 
@@ -256,7 +289,7 @@
       var p = 'b-fan-' + b;
       if (isNum(rpm)) {
         setText(p + '-label', 'FAN BANK ' + (b + 1));
-        setWidth(p + '-bar', isNum(max) && max > 0 ? 250 * Math.min(1, rpm / max) : 0);
+        setWidth(p + '-bar', isNum(max) && max > 0 ? tw('fan-' + b) * Math.min(1, rpm / max) : 0);
         setText(p + '-rpm', rpm + ' RPM');
       } else {
         setText(p + '-label', 'FAN BANK ' + (b + 1) + ': NO TELEMETRY');
@@ -325,6 +358,7 @@
     return box;
   }
 
+  readGeometry();
   fit();
   window.addEventListener('resize', fit);
 

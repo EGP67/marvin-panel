@@ -23,23 +23,25 @@ html,body{width:100%;height:100%} svg{display:block;width:100vw;height:100vh}</s
     <!-- CPU CORE DOT MATRIX -
          One global 11px dot lattice, phase-locked so every core box gets whole
          dots and no clipped edges. Constraints you must preserve if you resize:
-           horizontal core pitch (154) % 11 == 0
+           horizontal core pitch (165) % 11 == 0
            vertical row pitch (672-584=88) % 11 == 0
            fill heights snap to multiples of 11 (5 rows = 0,20,40,60,80,100%)
     - -->
-    <pattern id="dots" patternUnits="userSpaceOnUse" width="11" height="11" patternTransform="translate(5,3)">
+    <pattern id="dots" patternUnits="userSpaceOnUse" width="11" height="11" patternTransform="translate(10,3)">
       <circle cx="7" cy="7" r="3.2" fill="#ffffff"/>
     </pattern>
-    <pattern id="dotsDim" patternUnits="userSpaceOnUse" width="11" height="11" patternTransform="translate(5,3)">
+    <pattern id="dotsDim" patternUnits="userSpaceOnUse" width="11" height="11" patternTransform="translate(10,3)">
       <circle cx="7" cy="7" r="3.2" fill="#15323d"/>
     </pattern>
     <mask id="dotMask">
-      <rect x="88" y="584" width="904" height="152" fill="url(#dots)"/>
+      <rect x="60" y="584" width="959" height="152" fill="url(#dots)"/>
     </mask>
 
     <style>
       text{font-family:ui-monospace,"DejaVu Sans Mono",monospace}
       text:not([fill]){fill:#9fd4e3}
+      .hdr{font-size:23px;letter-spacing:3px}
+      .hdr:not([fill]){fill:#9fd4e3}
       .lbl{font-size:23px;letter-spacing:3px}
       .lbl:not([fill]){fill:#4d7f8f}
       .val{font-size:28px}
@@ -64,13 +66,13 @@ html,body{width:100%;height:100%} svg{display:block;width:100vw;height:100vh}</s
 
   <!-- TITLE -->
   <text x="540" y="126" text-anchor="middle" font-size="78" letter-spacing="14" fill="#5fd8ef">HEART OF GOLD</text>
-  <line x1="64" y1="170" x2="1016" y2="170" stroke="#1d4a5a" stroke-width="2"/>
+  <line x1="24" y1="170" x2="1056" y2="170" stroke="#1d4a5a" stroke-width="2"/>
 
   <!-- PHRASE -->
-  <rect x="64" y="190" width="952" height="128" rx="14" fill="#0c1620" stroke="#3a2f14"/>
+  <rect x="24" y="190" width="1032" height="128" rx="14" fill="#0c1620" stroke="#3a2f14"/>
   <text id="b-phrase-1" x="540" y="240" text-anchor="middle" class="quip">THE HEART OF GOLD HAS THE WORST PROBABILITY</text>
   <text id="b-phrase-2" x="540" y="280" text-anchor="middle" class="quip">COEFFICIENT IN THE GALAXY. MY TEMP IS SECOND.</text>
-  <text x="984" y="310" text-anchor="end" font-size="19" letter-spacing="3" fill="#6b7f5a">— MARVIN, ON BOARD SINCE LAUNCH</text>
+  <text x="1021.3" y="310" text-anchor="end" font-size="19" letter-spacing="3" fill="#6b7f5a">— MARVIN, ON BOARD SINCE LAUNCH</text>
 
   <!-- PROCESSOR -
        BIG NUMBER FILL = CPU TEMP BAND (swap this one attribute per tick):
@@ -79,183 +81,183 @@ html,body{width:100%;height:100%} svg{display:block;width:100vw;height:100vh}</s
          temp C >= 90        -> #ff6a3d   (red)
        Shown here at 48C -> cyan.
     - -->
-  <rect x="64" y="338" width="952" height="470" rx="14" fill="#08131c" stroke="#153a48"/>
-  <text x="96" y="382" font-size="30" letter-spacing="3">PROCESSOR: <tspan id="b-cpu-model" fill="#4d7f8f">AMD RYZEN 5 9600X</tspan></text>
-  <text x="992" y="386" text-anchor="end" class="sm">LAST 120 s</text>
-  <text id="b-cpu-pct" x="96" y="500" class="hi" fill="#5fd8ef">52<tspan id="b-cpu-pct-sign" font-size="56">%</tspan></text>
-  <text id="b-cpu-info" x="96" y="548" class="val">4.9 GHZ | TEMP: 118°F / 48°C</text>
+  <rect x="24" y="338" width="1032" height="470" rx="14" fill="#08131c" stroke="#153a48"/>
+  <text x="58.7" y="382" font-size="30" letter-spacing="3">PROCESSOR: <tspan id="b-cpu-model" fill="#4d7f8f">AMD RYZEN 5 9600X</tspan></text>
+  <text x="1030" y="386" text-anchor="end" class="sm">LAST 120 s</text>
+  <text id="b-cpu-pct" x="58.7" y="500" class="hi" fill="#5fd8ef">52<tspan id="b-cpu-pct-sign" font-size="56">%</tspan></text>
+  <text id="b-cpu-info" x="58.7" y="548" class="val">4.9 GHZ | TEMP: 118°F / 48°C</text>
 
   <!-- utilization graph, right of the big number -->
   <g stroke="#173d4a" stroke-width="1">
-    <line x1="356" y1="398" x2="986" y2="398"/>
-    <line x1="356" y1="446" x2="986" y2="446"/>
-    <line x1="356" y1="494" x2="986" y2="494"/>
+    <line id="b-cpu-grid100" x1="340.5" y1="398" x2="1023.5" y2="398"/>
+    <line x1="340.5" y1="446" x2="1023.5" y2="446"/>
+    <line x1="340.5" y1="494" x2="1023.5" y2="494"/>
   </g>
   <g id="b-cpu-axis" class="sm" text-anchor="end" stroke="none">
-    <text x="344" y="404">100</text><text x="344" y="452">50</text><text x="344" y="500">0</text>
+    <text x="327.5" y="404">100</text><text x="327.5" y="452">50</text><text x="327.5" y="500">0</text>
   </g>
-  <polygon id="b-cpu-area" points="356,477 379,473 403,476 426,461 449,467 473,455 496,459 519,444 543,452 566,464 589,469 613,458 636,435 659,448 683,460 706,466 729,452 753,439 776,425 799,434 823,447 846,458 869,462 893,455 916,441 939,449 963,460 986,444 986,494 356,494"
+  <polygon id="b-cpu-area" points="340.5,477 365.5,473 391.5,476 416.4,461 441.4,467 467.4,455 492.3,459 517.2,444 543.3,452 568.2,464 593.1,469 619.1,458 644.1,435 669,448 695,460 719.9,466 744.9,452 770.9,439 795.8,425 820.8,434 846.8,447 871.7,458 896.6,462 922.7,455 947.6,441 972.5,449 998.5,460 1023.5,444 1023.5,494 340.5,494"
            fill="#5fd8ef" fill-opacity=".14"/>
-  <polyline id="b-cpu-line" points="356,477 379,473 403,476 426,461 449,467 473,455 496,459 519,444 543,452 566,464 589,469 613,458 636,435 659,448 683,460 706,466 729,452 753,439 776,425 799,434 823,447 846,458 869,462 893,455 916,441 939,449 963,460 986,444"
+  <polyline id="b-cpu-line" points="340.5,477 365.5,473 391.5,476 416.4,461 441.4,467 467.4,455 492.3,459 517.2,444 543.3,452 568.2,464 593.1,469 619.1,458 644.1,435 669,448 695,460 719.9,466 744.9,452 770.9,439 795.8,425 820.8,434 846.8,447 871.7,458 896.6,462 922.7,455 947.6,441 972.5,449 998.5,460 1023.5,444"
             fill="none" stroke="#5fd8ef" stroke-width="3"/>
-  <circle id="b-cpu-peak" cx="776" cy="425" r="4" fill="#f0b429"/>
-  <text id="b-cpu-peak-text" x="790" y="418" text-anchor="end" class="sm">PEAK 72%</text>
-  <circle id="b-cpu-now-halo" cx="986" cy="444" r="9" fill="#5fd8ef" fill-opacity=".22"/>
-  <circle id="b-cpu-now" cx="986" cy="444" r="5" fill="#5fd8ef"/>
+  <circle id="b-cpu-peak" cx="795.8" cy="425" r="4" fill="#f0b429"/>
+  <text id="b-cpu-peak-text" x="811" y="418" text-anchor="end" class="sm">PEAK 72%</text>
+  <circle id="b-cpu-now-halo" cx="1023.5" cy="444" r="9" fill="#5fd8ef" fill-opacity=".22"/>
+  <circle id="b-cpu-now" cx="1023.5" cy="444" r="5" fill="#5fd8ef"/>
 
   <!-- 12 cores, two rows of six, same footprint as before -->
   <g fill="none" stroke="#1c4a5a">
-    <rect x="88"  y="584" width="134" height="64" rx="8"/><rect x="242" y="584" width="134" height="64" rx="8"/>
-    <rect x="396" y="584" width="134" height="64" rx="8"/><rect x="550" y="584" width="134" height="64" rx="8"/>
-    <rect x="704" y="584" width="134" height="64" rx="8"/><rect x="858" y="584" width="134" height="64" rx="8"/>
-    <rect x="88"  y="672" width="134" height="64" rx="8"/><rect x="242" y="672" width="134" height="64" rx="8"/>
-    <rect x="396" y="672" width="134" height="64" rx="8"/><rect x="550" y="672" width="134" height="64" rx="8"/>
-    <rect x="704" y="672" width="134" height="64" rx="8"/><rect x="858" y="672" width="134" height="64" rx="8"/>
+    <rect id="b-core-box-0" x="60"  y="584" width="134" height="64" rx="8"/><rect id="b-core-box-1" x="225" y="584" width="134" height="64" rx="8"/>
+    <rect id="b-core-box-2" x="390" y="584" width="134" height="64" rx="8"/><rect id="b-core-box-3" x="555" y="584" width="134" height="64" rx="8"/>
+    <rect id="b-core-box-4" x="720" y="584" width="134" height="64" rx="8"/><rect id="b-core-box-5" x="885" y="584" width="134" height="64" rx="8"/>
+    <rect id="b-core-box-6" x="60"  y="672" width="134" height="64" rx="8"/><rect id="b-core-box-7" x="225" y="672" width="134" height="64" rx="8"/>
+    <rect id="b-core-box-8" x="390" y="672" width="134" height="64" rx="8"/><rect id="b-core-box-9" x="555" y="672" width="134" height="64" rx="8"/>
+    <rect id="b-core-box-10" x="720" y="672" width="134" height="64" rx="8"/><rect id="b-core-box-11" x="885" y="672" width="134" height="64" rx="8"/>
   </g>
   <g fill="url(#dotsDim)">
-    <rect x="93"  y="588" width="124" height="56"/><rect x="247" y="588" width="124" height="56"/>
-    <rect x="401" y="588" width="124" height="56"/><rect x="555" y="588" width="124" height="56"/>
-    <rect x="709" y="588" width="124" height="56"/><rect x="863" y="588" width="124" height="56"/>
-    <rect x="93"  y="676" width="124" height="56"/><rect x="247" y="676" width="124" height="56"/>
-    <rect x="401" y="676" width="124" height="56"/><rect x="555" y="676" width="124" height="56"/>
-    <rect x="709" y="676" width="124" height="56"/><rect x="863" y="676" width="124" height="56"/>
+    <rect x="65"  y="588" width="124" height="56"/><rect x="230" y="588" width="124" height="56"/>
+    <rect x="395" y="588" width="124" height="56"/><rect x="560" y="588" width="124" height="56"/>
+    <rect x="725" y="588" width="124" height="56"/><rect x="890" y="588" width="124" height="56"/>
+    <rect x="65"  y="676" width="124" height="56"/><rect x="230" y="676" width="124" height="56"/>
+    <rect x="395" y="676" width="124" height="56"/><rect x="560" y="676" width="124" height="56"/>
+    <rect x="725" y="676" width="124" height="56"/><rect x="890" y="676" width="124" height="56"/>
   </g>
   <g mask="url(#dotMask)"><!-- fill = utilization, colour = severity ramp -->
-    <rect id="b-core-0" x="93"  y="600" width="124" height="44" fill="#ff6a3d"/><rect id="b-core-1" x="247" y="622" width="124" height="22" fill="#f0b429"/>
-    <rect id="b-core-2" x="401" y="633" width="124" height="11" fill="#5fd8ef"/><rect id="b-core-3" x="555" y="611" width="124" height="33" fill="#f0b429"/>
-    <rect id="b-core-4" x="709" y="633" width="124" height="11" fill="#5fd8ef"/><rect id="b-core-5" x="863" y="600" width="124" height="44" fill="#ff6a3d"/>
-    <rect id="b-core-6" x="93"  y="710" width="124" height="22" fill="#5fd8ef"/><rect id="b-core-7" x="247" y="677" width="124" height="55" fill="#ff6a3d"/>
-    <rect id="b-core-8" x="401" y="721" width="124" height="11" fill="#5fd8ef"/><rect id="b-core-9" x="555" y="699" width="124" height="33" fill="#f0b429"/>
-    <rect id="b-core-10" x="709" y="710" width="124" height="22" fill="#f0b429"/><rect id="b-core-11" x="863" y="688" width="124" height="44" fill="#ff6a3d"/>
+    <rect id="b-core-0" x="65"  y="600" width="124" height="44" fill="#ff6a3d"/><rect id="b-core-1" x="230" y="622" width="124" height="22" fill="#f0b429"/>
+    <rect id="b-core-2" x="395" y="633" width="124" height="11" fill="#5fd8ef"/><rect id="b-core-3" x="560" y="611" width="124" height="33" fill="#f0b429"/>
+    <rect id="b-core-4" x="725" y="633" width="124" height="11" fill="#5fd8ef"/><rect id="b-core-5" x="890" y="600" width="124" height="44" fill="#ff6a3d"/>
+    <rect id="b-core-6" x="65"  y="710" width="124" height="22" fill="#5fd8ef"/><rect id="b-core-7" x="230" y="677" width="124" height="55" fill="#ff6a3d"/>
+    <rect id="b-core-8" x="395" y="721" width="124" height="11" fill="#5fd8ef"/><rect id="b-core-9" x="560" y="699" width="124" height="33" fill="#f0b429"/>
+    <rect id="b-core-10" x="725" y="710" width="124" height="22" fill="#f0b429"/><rect id="b-core-11" x="890" y="688" width="124" height="44" fill="#ff6a3d"/>
   </g>
   <g class="sm" text-anchor="middle" font-size="18">
-    <text id="b-core-label-0" x="155" y="665">C0 78%</text><text id="b-core-label-1" x="309" y="665">C1 44%</text><text id="b-core-label-2" x="463" y="665">C2 11%</text>
-    <text id="b-core-label-3" x="617" y="665">C3 67%</text><text id="b-core-label-4" x="771" y="665">C4 22%</text><text id="b-core-label-5" x="925" y="665">C5 89%</text>
-    <text id="b-core-label-6" x="155" y="752">C6 35%</text><text id="b-core-label-7" x="309" y="752">C7 94%</text><text id="b-core-label-8" x="463" y="752">C8 16%</text>
-    <text id="b-core-label-9" x="617" y="752">C9 58%</text><text id="b-core-label-10" x="771" y="752">C10 41%</text><text id="b-core-label-11" x="925" y="752">C11 73%</text>
+    <text id="b-core-label-0" x="127" y="665">C0 78%</text><text id="b-core-label-1" x="292" y="665">C1 44%</text><text id="b-core-label-2" x="457" y="665">C2 11%</text>
+    <text id="b-core-label-3" x="622" y="665">C3 67%</text><text id="b-core-label-4" x="787" y="665">C4 22%</text><text id="b-core-label-5" x="952" y="665">C5 89%</text>
+    <text id="b-core-label-6" x="127" y="752">C6 35%</text><text id="b-core-label-7" x="292" y="752">C7 94%</text><text id="b-core-label-8" x="457" y="752">C8 16%</text>
+    <text id="b-core-label-9" x="622" y="752">C9 58%</text><text id="b-core-label-10" x="787" y="752">C10 41%</text><text id="b-core-label-11" x="952" y="752">C11 73%</text>
   </g>
 
   <!-- GPU -->
-  <rect x="64" y="828" width="952" height="350" rx="14" fill="#08131c" stroke="#153a48"/>
-  <text x="96" y="866" class="lbl">GRAPHICS</text>
-  <text x="992" y="866" text-anchor="end" class="lbl">TOTAL GPU UTILIZATION</text>
-  <text id="b-gpu-pct" x="96" y="962" class="gpu">44<tspan font-size="46">%</tspan></text>
-  <text id="b-gpu-vram" x="340" y="918" class="val">VRAM  19.4 / 24.0 GiB</text>
-  <text id="b-gpu-power" x="340" y="956" class="val">POWER 301 / 340 W</text>
-  <text id="b-gpu-line" x="340" y="994" class="quip" style="font-size:28px">SOMEONE ASKED IT SOMETHING. NOT ME.</text>
-  <rect x="96" y="1020" width="896" height="20" rx="10" fill="#12303c"/>
-  <rect id="b-gpu-bar" x="96" y="1020" width="394" height="20" rx="10" fill="url(#bar)"/>
+  <rect x="24" y="828" width="1032" height="350" rx="14" fill="#08131c" stroke="#153a48"/>
+  <text x="58.7" y="866" class="hdr">GRAPHICS</text>
+  <text x="1030" y="866" text-anchor="end" class="lbl">TOTAL GPU UTILIZATION</text>
+  <text id="b-gpu-pct" x="58.7" y="962" class="gpu">44<tspan font-size="46">%</tspan></text>
+  <text id="b-gpu-vram" x="323.2" y="918" class="val">VRAM  19.4 / 24.0 GiB</text>
+  <text id="b-gpu-power" x="323.2" y="956" class="val">POWER 301 / 340 W</text>
+  <text id="b-gpu-line" x="323.2" y="994" class="quip" style="font-size:28px">SOMEONE ASKED IT SOMETHING. NOT ME.</text>
+  <rect id="b-gpu-track" x="58.7" y="1020" width="971.3" height="20" rx="10" fill="#12303c"/>
+  <rect id="b-gpu-bar" x="58.7" y="1020" width="427.1" height="20" rx="10" fill="url(#bar)"/>
 
-  <rect x="88" y="1060" width="440" height="110" rx="10" fill="#0b1a24" stroke="#1c4a5a"/>
-  <text id="b-gpu0-head" x="104" y="1092" class="val">GPU0 · RTX 3060</text>
-  <text id="b-gpu0-pct" x="512" y="1092" text-anchor="end" font-size="28" fill="#ff6a3d">78%</text>
-  <text id="b-gpu0-info" x="104" y="1118" class="dim">12 GiB · 142°F / 61°C</text>
-  <line x1="104" y1="1162" x2="512" y2="1162" stroke="#1c4a5a"/>
-  <polyline id="b-gpu0-spark" points="104,1145 133,1139 162,1148 191,1134 220,1141 249,1132 278,1146 307,1136 336,1150 365,1138 394,1133 423,1143 452,1137 481,1147 510,1140"
+  <rect x="50" y="1060" width="477" height="110" rx="10" fill="#0b1a24" stroke="#1c4a5a"/>
+  <text id="b-gpu0-head" x="67.4" y="1092" class="val">GPU0 · RTX 3060</text>
+  <text id="b-gpu0-pct" x="509.6" y="1092" text-anchor="end" font-size="28" fill="#ff6a3d">78%</text>
+  <text id="b-gpu0-info" x="67.4" y="1118" class="dim">12 GiB · 142°F / 61°C</text>
+  <line id="b-gpu0-base" x1="67.4" y1="1162" x2="509.6" y2="1162" stroke="#1c4a5a"/>
+  <polyline id="b-gpu0-spark" points="67.4,1145 98.8,1139 130.2,1148 161.7,1134 193.1,1141 224.5,1132 256,1146 287.4,1136 318.9,1150 350.3,1138 381.7,1133 413.2,1143 444.6,1137 476,1147 507.5,1140"
             fill="none" stroke="#5fd8ef" stroke-width="3"/>
 
-  <rect x="552" y="1060" width="440" height="110" rx="10" fill="#0b1a24" stroke="#1c4a5a"/>
-  <text id="b-gpu1-head" x="568" y="1092" class="val">GPU1 · RTX 3060</text>
-  <text id="b-gpu1-pct" x="976" y="1092" text-anchor="end" font-size="28" fill="#5fd8ef">9%</text>
-  <text id="b-gpu1-info" x="568" y="1118" class="dim">12 GiB · 111°F / 44°C</text>
-  <line x1="568" y1="1162" x2="976" y2="1162" stroke="#1c4a5a"/>
-  <polyline id="b-gpu1-spark" points="568,1159 597,1158 626,1160 655,1157 684,1144 713,1159 742,1158 771,1160 800,1156 829,1138 858,1159 887,1158 916,1157 945,1159 974,1158"
+  <rect x="553" y="1060" width="477" height="110" rx="10" fill="#0b1a24" stroke="#1c4a5a"/>
+  <text id="b-gpu1-head" x="570.4" y="1092" class="val">GPU1 · RTX 3060</text>
+  <text id="b-gpu1-pct" x="1012.6" y="1092" text-anchor="end" font-size="28" fill="#5fd8ef">9%</text>
+  <text id="b-gpu1-info" x="570.4" y="1118" class="dim">12 GiB · 111°F / 44°C</text>
+  <line id="b-gpu1-base" x1="570.4" y1="1162" x2="1012.6" y2="1162" stroke="#1c4a5a"/>
+  <polyline id="b-gpu1-spark" points="570.4,1159 601.8,1158 633.2,1160 664.7,1157 696.1,1144 727.5,1159 759,1158 790.4,1160 821.8,1156 853.3,1138 884.7,1159 916.2,1158 947.6,1157 979,1159 1010.5,1158"
             fill="none" stroke="#5fd8ef" stroke-width="3"/>
 
   <!-- MEMORY | NETWORK -->
-  <rect x="64" y="1198" width="952" height="170" rx="14" fill="#08131c" stroke="#153a48"/>
-  <line x1="520" y1="1216" x2="520" y2="1352" stroke="#1c4a5a"/>
-  <text x="96" y="1232" class="lbl">MEMORY</text>
-  <text id="b-mem-pct" x="504" y="1236" text-anchor="end" font-size="30" fill="#5fd8ef">34%</text>
-  <rect x="96" y="1250" width="408" height="22" rx="11" fill="#12303c"/>
-  <rect id="b-mem-cache" x="96" y="1250" width="344" height="22" rx="11" fill="#1c6f83"/>
-  <rect id="b-mem-used" x="96" y="1250" width="139" height="22" rx="11" fill="url(#bar)"/>
-  <text id="b-mem-text" x="96" y="1304" font-size="24" fill="#cdeef7">42.0 / 123 GiB · CACHE 62.0</text>
-  <text id="b-mem-swap" x="96" y="1338" class="dim">SWAP 0% — SPARE, UNLIKE ME</text>
+  <rect x="24" y="1198" width="1032" height="170" rx="14" fill="#08131c" stroke="#153a48"/>
+  <line x1="518.3" y1="1216" x2="518.3" y2="1352" stroke="#1c4a5a"/>
+  <text x="58.7" y="1232" class="hdr">MEMORY</text>
+  <text id="b-mem-pct" x="501" y="1236" text-anchor="end" font-size="30" fill="#5fd8ef">34%</text>
+  <rect id="b-mem-track" x="58.7" y="1250" width="442.3" height="22" rx="11" fill="#12303c"/>
+  <rect id="b-mem-cache" x="58.7" y="1250" width="372.9" height="22" rx="11" fill="#1c6f83"/>
+  <rect id="b-mem-used" x="58.7" y="1250" width="150.7" height="22" rx="11" fill="url(#bar)"/>
+  <text id="b-mem-text" x="58.7" y="1304" font-size="24" fill="#cdeef7">42.0 / 123 GiB · CACHE 62.0</text>
+  <text id="b-mem-swap" x="58.7" y="1338" class="dim">SWAP 0% — SPARE, UNLIKE ME</text>
 
-  <text x="560" y="1232" class="lbl">WIFI</text>
-  <text id="b-net-con" x="976" y="1232" text-anchor="end" class="sm">CON 87 · ERR 0</text>
-  <text id="b-net-rx" x="560" y="1272" font-size="24" fill="#cdeef7">RX 18.8 MiB/s</text>
-  <text id="b-net-rx-pct" x="976" y="1272" text-anchor="end" class="sm">47% OF 40 MiB/s</text>
-  <rect x="560" y="1282" width="416" height="16" rx="8" fill="#12303c"/>
-  <rect id="b-net-rx-bar" x="560" y="1282" width="196" height="16" rx="8" fill="url(#bar)"/>
-  <text id="b-net-tx" x="560" y="1326" font-size="24" fill="#cdeef7">TX 2.4 MiB/s</text>
-  <text id="b-net-tx-pct" x="976" y="1326" text-anchor="end" class="sm">6% OF 40 MiB/s</text>
-  <rect x="560" y="1336" width="416" height="16" rx="8" fill="#12303c"/>
-  <rect id="b-net-tx-bar" x="560" y="1336" width="25" height="16" rx="8" fill="url(#bar)"/>
+  <text x="561.7" y="1232" class="hdr">WIFI</text>
+  <text id="b-net-con" x="1012.6" y="1232" text-anchor="end" class="sm">CON 87 · ERR 0</text>
+  <text id="b-net-rx" x="561.7" y="1272" font-size="24" fill="#cdeef7">RX 18.8 MiB/s</text>
+  <text id="b-net-rx-pct" x="1012.6" y="1272" text-anchor="end" class="sm">47% OF 40 MiB/s</text>
+  <rect id="b-net-rx-track" x="561.7" y="1282" width="450.9" height="16" rx="8" fill="#12303c"/>
+  <rect id="b-net-rx-bar" x="561.7" y="1282" width="212.5" height="16" rx="8" fill="url(#bar)"/>
+  <text id="b-net-tx" x="561.7" y="1326" font-size="24" fill="#cdeef7">TX 2.4 MiB/s</text>
+  <text id="b-net-tx-pct" x="1012.6" y="1326" text-anchor="end" class="sm">6% OF 40 MiB/s</text>
+  <rect id="b-net-tx-track" x="561.7" y="1336" width="450.9" height="16" rx="8" fill="#12303c"/>
+  <rect id="b-net-tx-bar" x="561.7" y="1336" width="27.1" height="16" rx="8" fill="url(#bar)"/>
 
   <!-- STORAGE: I/O | SPACE -->
-  <rect x="64" y="1388" width="952" height="170" rx="14" fill="#08131c" stroke="#153a48"/>
-  <line x1="520" y1="1406" x2="520" y2="1542" stroke="#1c4a5a"/>
-  <text x="96" y="1424" class="lbl">STORAGE · I/O</text>
-  <text x="504" y="1424" text-anchor="end" class="sm">SCALE 200 MiB/s</text>
-  <text id="b-io-read" x="96" y="1462" font-size="26" fill="#cdeef7">READ 128.6 MiB/s</text>
-  <rect x="96" y="1472" width="408" height="14" rx="7" fill="#12303c"/>
-  <rect id="b-io-read-bar" x="96" y="1472" width="261" height="14" rx="7" fill="url(#bar)"/>
-  <text id="b-io-write" x="96" y="1512" font-size="26" fill="#cdeef7">WRITE 41.7 MiB/s</text>
-  <rect x="96" y="1522" width="408" height="14" rx="7" fill="#12303c"/>
-  <rect id="b-io-write-bar" x="96" y="1522" width="86" height="14" rx="7" fill="url(#bar)"/>
+  <rect x="24" y="1388" width="1032" height="170" rx="14" fill="#08131c" stroke="#153a48"/>
+  <line x1="518.3" y1="1406" x2="518.3" y2="1542" stroke="#1c4a5a"/>
+  <text x="58.7" y="1424" class="hdr">STORAGE · I/O</text>
+  <text x="501" y="1424" text-anchor="end" class="sm">SCALE 200 MiB/s</text>
+  <text id="b-io-read" x="58.7" y="1462" font-size="26" fill="#cdeef7">READ 128.6 MiB/s</text>
+  <rect id="b-io-read-track" x="58.7" y="1472" width="442.3" height="14" rx="7" fill="#12303c"/>
+  <rect id="b-io-read-bar" x="58.7" y="1472" width="282.9" height="14" rx="7" fill="url(#bar)"/>
+  <text id="b-io-write" x="58.7" y="1512" font-size="26" fill="#cdeef7">WRITE 41.7 MiB/s</text>
+  <rect id="b-io-write-track" x="58.7" y="1522" width="442.3" height="14" rx="7" fill="#12303c"/>
+  <rect id="b-io-write-bar" x="58.7" y="1522" width="93.2" height="14" rx="7" fill="url(#bar)"/>
 
-  <text x="560" y="1424" class="lbl">SPACE</text>
-  <text id="b-space-head" x="976" y="1424" text-anchor="end" class="sm">IOWAIT 0.8% · SMART OK</text>
-  <text x="560" y="1466" font-size="22" fill="#cdeef7">/</text>
-  <rect x="732" y="1453" width="180" height="16" rx="8" fill="#12303c"/>
-  <rect id="b-space-0-bar" x="732" y="1453" width="74" height="16" rx="8" fill="#5fd8ef"/>
-  <text id="b-space-0-pct" x="976" y="1466" text-anchor="end" class="sm">41%</text>
-  <text x="560" y="1506" font-size="22" fill="#cdeef7">/srv/hogdata</text>
-  <rect x="732" y="1493" width="180" height="16" rx="8" fill="#12303c"/>
-  <rect id="b-space-1-bar" x="732" y="1493" width="148" height="16" rx="8" fill="#f0b429"/>
-  <text id="b-space-1-pct" x="976" y="1506" text-anchor="end" class="sm">82%</text>
-  <text x="560" y="1546" font-size="22" fill="#cdeef7">/boot</text>
-  <rect x="732" y="1533" width="180" height="16" rx="8" fill="#12303c"/>
-  <rect id="b-space-2-bar" x="732" y="1533" width="104" height="16" rx="8" fill="#5fd8ef"/>
-  <text id="b-space-2-pct" x="976" y="1546" text-anchor="end" class="sm">58%</text>
+  <text x="561.7" y="1424" class="hdr">SPACE</text>
+  <text id="b-space-head" x="1012.6" y="1424" text-anchor="end" class="sm">IOWAIT 0.8% · SMART OK</text>
+  <text x="561.7" y="1466" font-size="22" fill="#cdeef7">/</text>
+  <rect id="b-space-0-track" x="748.1" y="1453" width="195.2" height="16" rx="8" fill="#12303c"/>
+  <rect id="b-space-0-bar" x="748.1" y="1453" width="80.3" height="16" rx="8" fill="#5fd8ef"/>
+  <text id="b-space-0-pct" x="1012.6" y="1466" text-anchor="end" class="sm">41%</text>
+  <text x="561.7" y="1506" font-size="22" fill="#cdeef7">/srv/hogdata</text>
+  <rect id="b-space-1-track" x="748.1" y="1493" width="195.2" height="16" rx="8" fill="#12303c"/>
+  <rect id="b-space-1-bar" x="748.1" y="1493" width="160.5" height="16" rx="8" fill="#f0b429"/>
+  <text id="b-space-1-pct" x="1012.6" y="1506" text-anchor="end" class="sm">82%</text>
+  <text x="561.7" y="1546" font-size="22" fill="#cdeef7">/boot</text>
+  <rect id="b-space-2-track" x="748.1" y="1533" width="195.2" height="16" rx="8" fill="#12303c"/>
+  <rect id="b-space-2-bar" x="748.1" y="1533" width="112.8" height="16" rx="8" fill="#5fd8ef"/>
+  <text id="b-space-2-pct" x="1012.6" y="1546" text-anchor="end" class="sm">58%</text>
 
   <!-- THERMALS -->
-  <rect x="64" y="1578" width="952" height="278" rx="14" fill="#08131c" stroke="#153a48"/>
-  <text x="96" y="1616" class="lbl">THERMALS</text>
-  <text x="992" y="1616" text-anchor="end" class="lbl">| = LIMIT · AMBER OVER 70°C</text>
+  <rect x="24" y="1578" width="1032" height="278" rx="14" fill="#08131c" stroke="#153a48"/>
+  <text x="58.7" y="1616" class="hdr">THERMALS</text>
+  <text x="1030" y="1616" text-anchor="end" class="lbl">| = LIMIT · AMBER OVER 70°C</text>
 
-  <text x="96" y="1660" class="lbl">CPU</text>
-  <text id="b-th-cpu-f" x="96" y="1716" class="fah">118°F</text>
-  <text id="b-th-cpu-c" x="96" y="1750" class="cel">48°C</text>
-  <rect x="96" y="1762" width="206" height="12" rx="6" fill="#12303c"/>
-  <rect id="b-th-cpu-bar" x="96" y="1762" width="99" height="12" rx="6" fill="#5fd8ef"/>
-  <line x1="291" y1="1758" x2="291" y2="1778" stroke="#4d7f8f" stroke-width="3"/>
+  <text x="58.7" y="1660" class="hdr">CPU</text>
+  <text id="b-th-cpu-f" x="58.7" y="1716" class="fah">118°F</text>
+  <text id="b-th-cpu-c" x="58.7" y="1750" class="cel">48°C</text>
+  <rect id="b-th-cpu-track" x="58.7" y="1762" width="223.3" height="12" rx="6" fill="#12303c"/>
+  <rect id="b-th-cpu-bar" x="58.7" y="1762" width="107.3" height="12" rx="6" fill="#5fd8ef"/>
+  <line x1="270.1" y1="1758" x2="270.1" y2="1778" stroke="#4d7f8f" stroke-width="3"/>
 
-  <text x="322" y="1660" class="lbl">GPU0</text>
-  <text id="b-th-gpu0-f" x="322" y="1716" class="fah">142°F</text>
-  <text id="b-th-gpu0-c" x="322" y="1750" class="cel">61°C</text>
-  <rect x="322" y="1762" width="206" height="12" rx="6" fill="#12303c"/>
-  <rect id="b-th-gpu0-bar" x="322" y="1762" width="126" height="12" rx="6" fill="#5fd8ef"/>
-  <line x1="517" y1="1758" x2="517" y2="1778" stroke="#4d7f8f" stroke-width="3"/>
+  <text x="303.7" y="1660" class="hdr">GPU0</text>
+  <text id="b-th-gpu0-f" x="303.7" y="1716" class="fah">142°F</text>
+  <text id="b-th-gpu0-c" x="303.7" y="1750" class="cel">61°C</text>
+  <rect id="b-th-gpu0-track" x="303.7" y="1762" width="223.3" height="12" rx="6" fill="#12303c"/>
+  <rect id="b-th-gpu0-bar" x="303.7" y="1762" width="136.6" height="12" rx="6" fill="#5fd8ef"/>
+  <line x1="515.1" y1="1758" x2="515.1" y2="1778" stroke="#4d7f8f" stroke-width="3"/>
 
-  <text x="548" y="1660" class="lbl">GPU1</text>
-  <text id="b-th-gpu1-f" x="548" y="1716" class="fah">111°F</text>
-  <text id="b-th-gpu1-c" x="548" y="1750" class="cel">44°C</text>
-  <rect x="548" y="1762" width="206" height="12" rx="6" fill="#12303c"/>
-  <rect id="b-th-gpu1-bar" x="548" y="1762" width="91" height="12" rx="6" fill="#5fd8ef"/>
-  <line x1="743" y1="1758" x2="743" y2="1778" stroke="#4d7f8f" stroke-width="3"/>
+  <text x="548.7" y="1660" class="hdr">GPU1</text>
+  <text id="b-th-gpu1-f" x="548.7" y="1716" class="fah">111°F</text>
+  <text id="b-th-gpu1-c" x="548.7" y="1750" class="cel">44°C</text>
+  <rect id="b-th-gpu1-track" x="548.7" y="1762" width="223.3" height="12" rx="6" fill="#12303c"/>
+  <rect id="b-th-gpu1-bar" x="548.7" y="1762" width="98.6" height="12" rx="6" fill="#5fd8ef"/>
+  <line x1="760.1" y1="1758" x2="760.1" y2="1778" stroke="#4d7f8f" stroke-width="3"/>
 
-  <text x="774" y="1660" class="lbl">NVME M.2</text>
-  <text id="b-th-nvme-f" x="774" y="1716" class="fah" fill="#f0b429">160°F</text>
-  <text id="b-th-nvme-c" x="774" y="1750" class="cel">71°C</text>
-  <rect x="774" y="1762" width="206" height="12" rx="6" fill="#12303c"/>
-  <rect id="b-th-nvme-bar" x="774" y="1762" width="146" height="12" rx="6" fill="#f0b429"/>
-  <line x1="947" y1="1758" x2="947" y2="1778" stroke="#4d7f8f" stroke-width="3"/>
+  <text x="793.7" y="1660" class="hdr">NVME M.2</text>
+  <text id="b-th-nvme-f" x="793.7" y="1716" class="fah" fill="#f0b429">160°F</text>
+  <text id="b-th-nvme-c" x="793.7" y="1750" class="cel">71°C</text>
+  <rect id="b-th-nvme-track" x="793.7" y="1762" width="223.3" height="12" rx="6" fill="#12303c"/>
+  <rect id="b-th-nvme-bar" x="793.7" y="1762" width="158.2" height="12" rx="6" fill="#f0b429"/>
+  <line x1="981.2" y1="1758" x2="981.2" y2="1778" stroke="#4d7f8f" stroke-width="3"/>
 
-  <text id="b-fan-0-label" x="96" y="1822" class="lbl">FAN BANK 1</text>
-  <rect x="96" y="1830" width="250" height="16" rx="4" fill="#12303c"/>
-  <rect id="b-fan-0-bar" x="96" y="1830" width="155" height="16" rx="4" fill="#5fd8ef"/>
-  <text id="b-fan-0-rpm" x="362" y="1844" class="val">1240 RPM</text>
-  <text id="b-fan-1-label" x="560" y="1822" class="lbl">FAN BANK 2</text>
-  <rect x="560" y="1830" width="250" height="16" rx="4" fill="#12303c"/>
-  <rect id="b-fan-1-bar" x="560" y="1830" width="51" height="16" rx="4" fill="#5fd8ef"/>
-  <text id="b-fan-1-rpm" x="826" y="1844" class="val">612 RPM</text>
+  <text id="b-fan-0-label" x="58.7" y="1822" class="hdr">FAN BANK 1</text>
+  <rect id="b-fan-0-track" x="58.7" y="1830" width="271" height="16" rx="4" fill="#12303c"/>
+  <rect id="b-fan-0-bar" x="58.7" y="1830" width="168" height="16" rx="4" fill="#5fd8ef"/>
+  <text id="b-fan-0-rpm" x="347" y="1844" class="val">1240 RPM</text>
+  <text id="b-fan-1-label" x="561.7" y="1822" class="hdr">FAN BANK 2</text>
+  <rect id="b-fan-1-track" x="561.7" y="1830" width="271" height="16" rx="4" fill="#12303c"/>
+  <rect id="b-fan-1-bar" x="561.7" y="1830" width="55.3" height="16" rx="4" fill="#5fd8ef"/>
+  <text id="b-fan-1-rpm" x="850" y="1844" class="val">612 RPM</text>
 
   <!-- FOOTER -->
-  <text id="b-footer" x="96" y="1900" class="lbl">UPTIME 41d 07:12:03 · PANIC COUNT 0</text>
-  <text x="992" y="1900" text-anchor="end" font-size="30" letter-spacing="6" fill="#f0b429">DON'T PANIC</text>
+  <text id="b-footer" x="58.7" y="1900" class="lbl">UPTIME 41d 07:12:03 · PANIC COUNT 0</text>
+  <text x="1030" y="1900" text-anchor="end" font-size="30" letter-spacing="6" fill="#f0b429">DON'T PANIC</text>
 
   <rect id="b-glass" width="1080" height="1920" fill="url(#glass)"/>
 </svg>
