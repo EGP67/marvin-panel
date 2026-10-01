@@ -92,8 +92,13 @@
 
   function renderCPU(cpu) {
     setText('b-cpu-model', get(cpu, 'model_display') || DASH);
-    setText('b-cpu-pct', round(get(cpu, 'total_pct')));
+    var total = get(cpu, 'total_pct');
+    setText('b-cpu-pct', round(total));
     setFill('b-cpu-pct', bandColor(get(cpu, 'band')));
+    // D-051 (2): three digits at 132px reach the axis labels; drop "%" and the axis.
+    var wide = isNum(total) && Math.round(total) >= 100;
+    setAttr('b-cpu-pct-sign', 'visibility', wide ? 'hidden' : 'visible');
+    setAttr('b-cpu-axis', 'visibility', wide ? 'hidden' : 'visible');
     var t = get(cpu, 'temp_c');
     setText('b-cpu-info', fixed1(get(cpu, 'freq_ghz')) + ' GHZ | TEMP: ' + fahr(t) + '°F / ' + round(t) + '°C');
 
@@ -120,7 +125,8 @@
       setAttr('b-cpu-peak', 'cx', cx.toFixed(1));
       setAttr('b-cpu-peak', 'cy', cy.toFixed(1));
       setAttr('b-cpu-peak-text', 'x', (cx + 14).toFixed(1));
-      setAttr('b-cpu-peak-text', 'y', (cy - 7).toFixed(1));
+      // D-051 (3): below the point when above it would crowd "LAST 120 s".
+      setAttr('b-cpu-peak-text', 'y', (cy - 7 < 410 ? cy + 21 : cy - 7).toFixed(1));
       setText('b-cpu-peak-text', 'PEAK ' + Math.round(hist[pk]) + '%');
     }
 

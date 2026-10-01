@@ -16,6 +16,7 @@ dim 24 | small 19 | celsius 25 | core label 18
 family: ui-monospace,"DejaVu Sans Mono",monospace
 Advance 0.602 em (DejaVu Sans Mono, resolved on hog). Every px/char budget in this file
 assumes it (D-049).
+A fill attribute always wins over the stylesheet (D-051).
 
 ## Vertical map (top -> bottom)
 title baseline 126 | rule y=170 | phrase 190-318 | processor 338-808 | graphics 828-1178
@@ -27,6 +28,10 @@ title "PROCESSOR: " + cpu.model_display (D-020), baseline 382 | "LAST 120 s" rig
 aligned baseline 386
 big number baseline 500 at x=96 | "n GHZ | TEMP n°F / m°C" baseline 548
 graph plot area x=356..986, y=398 (=100%) .. 494 (=0%); axis labels anchor=end x=344
+big number at three digits ("100"): the "%" tspan and the three axis labels are hidden,
+restored below 100 (D-051)
+PEAK label at (cx+14, cy-7), anchor end; below its point at cy+21 when cy-7 would be above
+y=410, clear of "LAST 120 s" (D-051)
 core boxes: 6 columns, x = 88 + 154*i, w=134; row A y=584 h=64, row B y=672 h=64
 dot region inside a box: x=box+5 w=124, y=box+4 h=56
 
@@ -86,7 +91,8 @@ Percentage text (right, "34%") = used_pct only. Detail line format as drawn:
 ## NETWORK cell (D-018, D-046, D-049)
 Header "WIFI". Counters "CON n · ERR n", right-aligned at x=976 (wire field
 connections.established). RX/TX right labels "<n>% OF <S> MiB/s". S = 40 MiB/s until T5
-measurements (D-037). Label fit is confirmed in the T10 Brave screenshot.
+measurements (D-037). Label fit is confirmed in the T10 Brave screenshot. The "% OF S"
+text stays unbounded while its bar clamps; revisit when T5 sets S (D-051).
 
 ## STORAGE · I/O cell (D-021, D-049)
 Header "STORAGE · I/O" and "SCALE 200 MiB/s" as drawn; their ~2 px clearance is accepted by
@@ -104,6 +110,8 @@ OK, FAIL or -- (unknown).
 ("DON'T PANIC" occupies 751..992).
 Format: "UPTIME 41d 07:12:03 · PANIC COUNT 0" (35 characters).
 panic_count null renders "--". A count above 99 renders "99+".
+"UPTIME 100d … · PANIC COUNT 99+" (38 characters, ends x≈736) is accepted; it stays 15 px
+clear of DON'T PANIC at 751 (D-051).
 
 ## Model-string shortening (D-020)
 CPU: uppercase, strip the trailing " 6-Core Processor" -> "AMD RYZEN 5 9600X".

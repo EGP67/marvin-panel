@@ -29,16 +29,25 @@
     </mask>
 
     <style>
-      text{font-family:ui-monospace,"DejaVu Sans Mono",monospace;fill:#9fd4e3}
-      .lbl{font-size:23px;letter-spacing:3px;fill:#4d7f8f}
-      .val{font-size:28px;fill:#cdeef7}
-      .dim{font-size:24px;fill:#6b9dad}
-      .sm{font-size:19px;letter-spacing:1px;fill:#5d8b9a}
+      text{font-family:ui-monospace,"DejaVu Sans Mono",monospace}
+      text:not([fill]){fill:#9fd4e3}
+      .lbl{font-size:23px;letter-spacing:3px}
+      .lbl:not([fill]){fill:#4d7f8f}
+      .val{font-size:28px}
+      .val:not([fill]){fill:#cdeef7}
+      .dim{font-size:24px}
+      .dim:not([fill]){fill:#6b9dad}
+      .sm{font-size:19px;letter-spacing:1px}
+      .sm:not([fill]){fill:#5d8b9a}
       .hi{font-size:132px;font-weight:600}
-      .quip{font-size:30px;fill:#f0b429;font-style:italic}
-      .gpu{font-size:104px;fill:#5fd8ef;font-weight:600}
-      .fah{font-size:42px;fill:#cdeef7}
-      .cel{font-size:25px;fill:#6b9dad}
+      .quip{font-size:30px;font-style:italic}
+      .quip:not([fill]){fill:#f0b429}
+      .gpu{font-size:104px;font-weight:600}
+      .gpu:not([fill]){fill:#5fd8ef}
+      .fah{font-size:42px}
+      .fah:not([fill]){fill:#cdeef7}
+      .cel{font-size:25px}
+      .cel:not([fill]){fill:#6b9dad}
     </style>
   </defs>
 

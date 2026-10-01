@@ -21,7 +21,7 @@ type Store struct {
 }
 
 // Load reads path: one JSON file, or a directory whose *.json files form the
-// rotation in Glob's stable order (alphabetical: busy, calm, dying, hot).
+// rotation in Glob's stable order (alphabetical: busy, calm, dying, hot, startup).
 func Load(path string) (*Store, error) {
 	fi, err := os.Stat(path)
 	if err != nil {
