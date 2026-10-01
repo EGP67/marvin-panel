@@ -24,6 +24,7 @@ Marvin's and stays attributed to him.
 - Panel live since LIVE-1 (D-055): CPU, memory, network, disk, space, SMART, uptime;
   GPUs, temperatures and fans live after the owner installs the T7+T8 unit (D-057).
 - Marvin's mood engine live (D-058).
+- Line pool v1 live (D-059).
 - Code: T1 scaffold and T2 fixtures committed (39b0ea9); T2b schema amendments
   (155dabb, a4fac41, D-049 docs); T3 model (a40a1e3, D-050); T10 page (embedded web/);
   T11a (6e9f4ec + close-out); LIVE-1 collectors T4-T6 (internal/collect, D-055). No

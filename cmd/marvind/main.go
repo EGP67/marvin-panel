@@ -26,7 +26,7 @@ import (
 	"hog.local/marvin-panel/web"
 )
 
-const version = "0.5.0-t9"
+const version = "0.5.1-t9b"
 
 // D-002: the one loopback port marvind binds; never auto-increment (see D-003).
 const defaultAddr = "127.0.0.1:8042"

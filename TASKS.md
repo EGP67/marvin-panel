@@ -41,6 +41,8 @@ T8  COLLECT-TEMPFAN  hwmon k10temp Tctl, nvme Composite, nct6687 fan banks (T8 c
     D-057).
 T9  MOOD  internal/mood: hysteresis, phrase selection and cooldowns, doomed re-assert,
     GPU-line pacing, persisted PANIC COUNT (D-058).
+T9b LINE POOL  owner-approved pool v1 (B1-B10, C1-C10, M1-M10, A1-A10, D1-D10, S1-S9, F,
+    GPU-line pools) with truth conditions and a MARVIN.md drift test (D-059).
 
 ## Owner tasks
 O1  HDMI PROBE — DONE for the SunFounder 7" (2026-09-29; see HANDOFF.md, D-044, D-045).
@@ -54,7 +56,7 @@ O3  PANEL WAKE TEST (after purchase). PeakDo powered from the PSU 5 V rail: it m
 
 ## Build
 Order (owner, 2026-10-01): T10b, T11a, then T4-T9 (display first).
-Next: T9b line pool (owner review), the T5/T6 load measurements (F6, D-021), then T11b soak.
+Next: T5/T6 load measurements with the owner (F6, D-021), then T11b soak.
 T11b SOAK       24 h soak with flat RSS (D-010). Verify: RSS growth within noise.
 
 ## Follow-ups (Phase 1, non-blocking)

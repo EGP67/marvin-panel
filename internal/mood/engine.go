@@ -1,7 +1,9 @@
 package mood
 
 import (
+	"fmt"
 	"log/slog"
+	"strings"
 	"time"
 
 	"hog.local/marvin-panel/internal/model"
@@ -41,17 +43,19 @@ type Engine struct {
 
 	gpuSet       bool
 	gpuKind      model.GPULineKind
+	gpuID        string
 	gpuText      string
 	gpuAt        time.Time
 	gpuPending   model.GPULineKind
 	gpuPendSince time.Time
+	gpuShown     map[string]time.Time
 }
 
 // New loads the PANIC COUNT (creating 0 on first run); a load error is logged once and
 // the count renders null.
 func New(o Options) *Engine {
 	e := &Engine{log: o.Log, lines: table, errs: map[string]string{},
-		lastShown: map[string]time.Time{}, famShown: map[string]time.Time{}}
+		lastShown: map[string]time.Time{}, famShown: map[string]time.Time{}, gpuShown: map[string]time.Time{}}
 	if e.log == nil {
 		e.log = slog.Default()
 	}
@@ -91,8 +95,7 @@ func (e *Engine) Apply(s *model.Snapshot, now time.Time) {
 	}
 	if !e.mood.adopted && s.CPU.TotalPct == nil {
 		s.Mood = Content
-		text, _ := fallbackLine.render(view{})
-		s.Phrase.Lines, _ = wrap(text)
+		s.Phrase.Lines, _ = wrap(fallbackLine.tpl)
 		return
 	}
 	if e.mood.step(s, now) && e.mood.current == Doomed {
@@ -111,12 +114,14 @@ func (e *Engine) eligible(l *line, v view) ([]string, bool) {
 	if !l.allows(v.mood) {
 		return nil, false
 	}
-	text, ok := l.render(v)
+	text, ok := l.text(v)
 	if !ok {
 		return nil, false
 	}
-	if l.gpuHeat != nil && v.gpuHot && v.mood != Doomed && l.gpuHeat(v) {
-		return nil, false // topic rule: the GPU line already says it
+	if l.gpuHeat && v.gpuHot && v.mood != Doomed {
+		if h, ok := hottest(v.s); ok && strings.HasPrefix(h.name, "GPU") {
+			return nil, false // topic rule (D-059): the GPU line already says it
+		}
 	}
 	return wrap(text)
 }
@@ -146,7 +151,7 @@ func (e *Engine) phrase(s *model.Snapshot, now time.Time) []string {
 		l = &fallbackLine
 	}
 	e.cur, e.selectedAt, e.selMood = l, now, v.mood
-	text, _ := l.render(v)
+	text, _ := l.text(v)
 	out, _ := wrap(text)
 	e.shown(l, now)
 	return out
@@ -197,29 +202,65 @@ func (e *Engine) shown(l *line, now time.Time) {
 	e.famShown[l.family] = now
 }
 
-// gpuLine paces the GRAPHICS line: a new state shows after GPUHold, and the text is
-// re-rendered every GPURefresh within a state. The first call adopts immediately.
+// gpuLine paces the GRAPHICS line (D-058, D-059): a new state shows after GPUHold; within
+// a state the pool rotates every GPURefresh, least recently shown first, with the
+// 10-minute repeat rule per line id; the line on screen continues if nothing else
+// qualifies. The first call adopts at once. Text is rendered at selection.
 func (e *Engine) gpuLine(s *model.Snapshot, now time.Time) string {
 	states := make([]model.GPUState, 0, len(s.GPUs))
 	for _, g := range s.GPUs {
 		states = append(states, model.GPUState{TempC: g.TempC, UtilPct: g.UtilPct, MemUsedMiB: g.MemUsedMiB})
 	}
-	kind, text := model.GPULineState(states)
+	kind := model.GPULineKindOf(states)
 	switch {
 	case !e.gpuSet:
-		e.gpuSet, e.gpuKind, e.gpuText, e.gpuAt = true, kind, text, now
+		e.gpuSet = true
+		e.selectGPU(kind, states, now)
 	case kind != e.gpuKind:
 		if e.gpuPending != kind {
 			e.gpuPending, e.gpuPendSince = kind, now
 		}
 		if now.Sub(e.gpuPendSince) >= GPUHold {
-			e.gpuKind, e.gpuText, e.gpuAt, e.gpuPending = kind, text, now, ""
+			e.gpuPending = ""
+			e.selectGPU(kind, states, now)
 		}
 	default:
 		e.gpuPending = ""
 		if now.Sub(e.gpuAt) >= GPURefresh {
-			e.gpuText, e.gpuAt = text, now
+			e.selectGPU(kind, states, now)
 		}
 	}
+	e.gpuShown[e.gpuID] = now
 	return e.gpuText
+}
+
+func (e *Engine) selectGPU(kind model.GPULineKind, states []model.GPUState, now time.Time) {
+	pool := model.GPULinePools[kind]
+	pick := func(cooled bool) (string, string, bool) {
+		bestID, bestText, found := "", "", false
+		var bestAt time.Time
+		for i, tpl := range pool {
+			id := fmt.Sprintf("%s-%d", kind, i+1)
+			text, ok := model.RenderGPULine(tpl, states)
+			if !ok {
+				continue
+			}
+			at, shown := e.gpuShown[id]
+			if cooled && shown && id != e.gpuID && now.Sub(at) < LineCooldown {
+				continue
+			}
+			if !found || at.Before(bestAt) {
+				bestID, bestText, bestAt, found = id, text, at, true
+			}
+		}
+		return bestID, bestText, found
+	}
+	id, text, ok := pick(true)
+	if !ok {
+		id, text, ok = pick(false) // a new state must still say something true
+	}
+	if !ok {
+		return
+	}
+	e.gpuKind, e.gpuID, e.gpuText, e.gpuAt = kind, id, text, now
 }

@@ -57,7 +57,7 @@ tools/discover.sh.
 | internal/server/ | HTTP handlers, fixture replay | code |
 | internal/model/ | snapshot types, bands, severity, Ring, agreement (T3) | code |
 | internal/collect/ | live collectors (T4-T8, D-055, D-057) | code |
-| internal/mood/ | T9 | planned; do not create early |
+| internal/mood/ | mood engine and line pool (T9, D-058, D-059) | code |
 | fixtures/ | calm busy hot dying startup | generated; regenerate, never hand-edit |
 | web/ | index.html + app.js, embedded into marvind (T10, D-011) | code |
 | deploy/ | systemd units, Xorg config, polkit rule, kiosk session (D-052) | code |

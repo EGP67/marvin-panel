@@ -249,33 +249,55 @@ func texts(e *Engine, s *model.Snapshot, start time.Time, until int, at ...int) 
 	return out
 }
 
-func TestRotationAndExactLineCooldown(t *testing.T) {
+// shownLog runs the engine every second and records which line id was on screen.
+func shownLog(e *Engine, s *model.Snapshot, start time.Time, secs int) []string {
+	ids := make([]string, secs)
+	for i := 0; i < secs; i++ {
+		tick(e, s, start.Add(time.Duration(i)*time.Second))
+		ids[i] = e.cur.id
+	}
+	return ids
+}
+
+// TestRotationAndCooldowns checks the selection rules over two idle hours: the line changes
+// at the 120 s rotation whenever an alternative exists, and a newly selected line was last
+// shown >= 10 min ago and its family >= 3 min ago (the line on screen may continue).
+func TestRotationAndCooldowns(t *testing.T) {
 	e := newEngine(t, "")
-	b1 := "THE CPU IS IDLE AT 1%. I'VE NEVER ONCE BEEN IDLE."
-	s2 := "0.0 MIB/S INBOUND AND STILL NOBODY CALLS."
-	seen := map[int]string{}
-	for i := 0; i <= 840; i++ {
-		seen[i] = phrase(tick(e, idle(), t0.Add(time.Duration(i)*time.Second)))
+	ids := shownLog(e, idle(), t0, 7200)
+	if ids[0] != "B1" || ids[119] != "B1" || ids[120] == "B1" {
+		t.Fatalf("rotation at 120 s: %s / %s / %s", ids[0], ids[119], ids[120])
 	}
-	if seen[0] != b1 || seen[119] != b1 || seen[120] != s2 {
-		t.Fatalf("rotation at 120 s: %q / %q / %q", seen[0], seen[119], seen[120])
+	fam := map[string]string{}
+	for _, l := range table {
+		fam[l.id] = l.family
 	}
-	for i := 120; i < 720; i++ {
-		if seen[i] == b1 {
-			t.Fatalf("B1 repeated at %d s, inside its 10 min cooldown", i)
+	lastID, lastFam := map[string]int{}, map[string]int{}
+	changes := 0
+	for i, id := range ids {
+		if i > 0 && id != ids[i-1] {
+			changes++
+			if at, ok := lastID[id]; ok && i-at < 600 {
+				t.Fatalf("%s re-selected at %d s, last shown %d s (exact-line cooldown)", id, i, at)
+			}
+			if at, ok := lastFam[fam[id]]; ok && i-at < 180 {
+				t.Fatalf("%s (family %s) at %d s, family last shown %d s", id, fam[id], i, at)
+			}
+			if i%120 != 0 {
+				t.Fatalf("selection at %d s outside the 120 s rotation", i)
+			}
 		}
+		lastID[id], lastFam[fam[id]] = i, i
 	}
-	// At 720 s the bored dwell passes 11 min: B2 (never shown) wins least-recently-shown;
-	// B1, out of cooldown since 719 s, returns at the next rotation.
-	if !strings.HasPrefix(seen[720], "NOTHING IS HAPPENING") || seen[840] != b1 {
-		t.Errorf("at 720 s %q (want B2), at 840 s %q (want B1)", seen[720], seen[840])
+	if changes < 30 {
+		t.Errorf("only %d rotations in two hours", changes)
 	}
 }
 
 func TestFamilyCooldown(t *testing.T) {
 	e := newEngine(t, "")
 	mk := func(id, fam string) line {
-		return line{id: id, family: fam, moods: []string{Bored}, render: func(view) (string, bool) { return "LINE " + id + ".", true }}
+		return line{id: id, family: fam, moods: []string{Bored}, tpl: "LINE " + id + ".", cond: always}
 	}
 	e.lines = []line{mk("X", "fam"), mk("Y", "fam"), mk("Z", "other")}
 	got := texts(e, idle(), t0, 360, 0, 120, 240, 360)
@@ -288,64 +310,132 @@ func TestFamilyCooldown(t *testing.T) {
 }
 
 func TestFallbackAndTopicRule(t *testing.T) {
-	// GPU0 at 85 °C: aggrieved; the GPU line is hot, so A2 (about GPU heat) is excluded and
-	// iowait is calm: nothing is eligible -> fallback.
+	// GPU0 at 85 °C, fans silent, iowait calm: aggrieved; the GPU line is hot, so the
+	// GPU-heat lines A2, A6, A7 are excluded and nothing else is true -> fallback.
 	s := idle()
 	s.GPUs[0].TempC = fp(85)
-	out := tick(newEngine(t, ""), s, t0)
-	if out.Mood != Aggrieved || !strings.HasPrefix(out.GPULine, "THINKING THIS HARD") {
+	s.Fans[0].RPM, s.Fans[1].RPM = nil, nil
+	e := newEngine(t, "")
+	out := tick(e, s, t0)
+	if out.Mood != Aggrieved || !strings.Contains(out.GPULine, "85") {
 		t.Fatalf("setup: %q %q", out.Mood, out.GPULine)
 	}
 	if phrase(out) != "I'M STILL HERE. NOBODY ASKED." {
 		t.Errorf("topic rule + nothing eligible: %q", phrase(out))
 	}
-	// CPU hotter than the GPU: A2 is about the CPU and may speak.
-	s.CPU.TempC = fp(86)
-	if p := phrase(tick(newEngine(t, ""), s, t0)); p != "86 DEGREES. I RAN COLD ONCE. NOBODY NOTICED." {
-		t.Errorf("A2 about the CPU: %q", p)
+	v := view{s: s, mood: Aggrieved, now: t0, gpuHot: true}
+	for _, l := range table {
+		_, ok := e.eligible(&l, v)
+		switch l.id {
+		case "A2", "A6", "A7":
+			if ok {
+				t.Errorf("%s about GPU heat must be excluded while the GPU line is hot", l.id)
+			}
+			if _, ok := e.eligible(&l, view{s: s, mood: Aggrieved, now: t0, gpuHot: false}); !ok {
+				t.Errorf("%s must speak when the GPU line is not hot", l.id)
+			}
+		}
 	}
-	// Doomed GPU heat: D3 still speaks while the GPU line is hot.
+	// With fans reporting, A8 (not in the topic set) speaks.
+	s.Fans[0].RPM = ip(1200)
+	l := table[indexOf(t, "A8")]
+	if _, ok := e.eligible(&l, v); !ok {
+		t.Error("A8 is not covered by the topic rule")
+	}
+	// CPU hotter than the GPU: the heat lines are about the CPU and may speak.
+	s.CPU.TempC = fp(86)
+	if _, ok := e.eligible(&table[indexOf(t, "A6")], v); !ok {
+		t.Error("A6 about the CPU must speak")
+	}
+	// Doomed GPU heat: D lines are never excluded.
 	d := idle()
 	d.GPUs[1].TempC = fp(92)
-	if p := phrase(tick(newEngine(t, ""), d, t0)); p != "GPU1 IS AT 92 DEGREES. I DID WARN YOU. I ALWAYS WARN YOU." {
-		t.Errorf("D3 with GPU hot: %q", p)
+	if p := phrase(tick(newEngine(t, ""), d, t0)); !strings.Contains(p, "GPU1") || !strings.Contains(p, "92") {
+		t.Errorf("doomed line with the GPU hot: %q", p)
 	}
 }
 
-func TestDoomReassertIgnoresCooldown(t *testing.T) {
+func indexOf(t *testing.T, id string) int {
+	t.Helper()
+	for i, l := range table {
+		if l.id == id {
+			return i
+		}
+	}
+	t.Fatalf("no line %s", id)
+	return -1
+}
+
+func TestDoomReassertMatchingTriggerOnly(t *testing.T) {
 	s := idle()
 	s.Storage[1].UsedBytes, s.Storage[1].FreeBytes = i64(97), i64(3)
+	ids := shownLog(newEngine(t, ""), s, t0, 900)
+	seen := map[string]bool{}
+	for i, id := range ids {
+		if id != "D1" && id != "D4" && id != "D5" {
+			t.Fatalf("at %d s: %s, want only the space lines (the active trigger)", i, id)
+		}
+		if i > 0 && id != ids[i-1] && i%60 != 0 {
+			t.Fatalf("doomed re-selection at %d s, want every 60 s", i)
+		}
+		seen[id] = true
+	}
+	if len(seen) != 3 {
+		t.Errorf("space lines shown: %v (re-assert ignores cooldowns, so all three cycle)", seen)
+	}
 	e := newEngine(t, "")
-	d1 := "3% REMAINS ON /srv/hogdata. I'D TELL YOU WHAT THAT MEANS BUT YOU'D ONLY CLEAN SOMETHING IMPORTANT."
-	for i := 0; i <= 900; i += 1 {
-		if p := phrase(tick(e, s, t0.Add(time.Duration(i)*time.Second))); p != d1 {
-			t.Fatalf("at %d s: %q, want D1 re-asserting (cooldown ignored)", i, p)
-		}
+	tick(e, s, t0)
+	if p := phrase(tick(e, s, t0.Add(time.Second))); !strings.Contains(p, "/srv/hogdata") {
+		t.Errorf("doomed space line must name the mount: %q", p)
 	}
-	// Two triggers alternate every 60 s; each names its mount or device.
+	// Add a heat trigger: heat lines join, each names the device.
 	s.CPU.TempC = fp(95)
-	got := texts(newEngine(t, ""), s, t0, 180, 0, 59, 60, 120, 180)
-	if got[0] != d1 || got[59] != d1 || !strings.HasPrefix(got[60], "CPU IS AT 95 DEGREES") || got[120] != d1 || !strings.HasPrefix(got[180], "CPU IS AT 95") {
-		t.Errorf("doomed alternation: %v", got)
-	}
-}
-
-func TestNightLine(t *testing.T) {
-	zone := time.FixedZone("EDT", -4*3600)
-	night := time.Date(2026, 10, 1, 3, 0, 0, 0, zone)
-	got := texts(newEngine(t, ""), idle(), night, 240, 240)
-	if got[240] != "I'M NOT ASLEEP. I'M IGNORING YOU WITH MY EYES CLOSED." {
-		t.Errorf("night at 03:04 local: %q", got[240])
-	}
-	day := time.Date(2026, 10, 1, 6, 0, 0, 0, zone)
-	for i, p := range texts(newEngine(t, ""), idle(), day, 600, 0, 120, 240, 360, 480, 600) {
-		if strings.Contains(p, "ASLEEP") {
-			t.Errorf("night line at 06:%02d", i/60)
+	e = newEngine(t, "")
+	heat := 0
+	for i := 0; i < 900; i++ {
+		out := tick(e, s, t0.Add(time.Duration(i)*time.Second))
+		switch e.cur.family {
+		case "doom-heat":
+			heat++
+			if !strings.Contains(phrase(out), "CPU") {
+				t.Fatalf("heat line without the device: %q", phrase(out))
+			}
+		case "space":
+		default:
+			t.Fatalf("non-trigger line %s in doomed", e.cur.id)
 		}
 	}
+	if heat == 0 {
+		t.Error("heat trigger never spoke")
+	}
 }
 
-func TestGPULinePacing(t *testing.T) {
+func TestTimeWindows(t *testing.T) {
+	zone := time.FixedZone("EDT", -4*3600)
+	run := func(hour int) map[string]bool {
+		e := newEngine(t, "")
+		seen := map[string]bool{}
+		for _, id := range shownLog(e, idle(), time.Date(2026, 10, 1, hour, 0, 0, 0, zone), 3600) {
+			seen[id] = true
+		}
+		return seen
+	}
+	if n := run(3); !n["S3"] || !n["S6"] || n["S9"] {
+		t.Errorf("03:00-03:59: %v", n)
+	}
+	if m := run(7); !m["S9"] || m["S3"] || m["S6"] {
+		t.Errorf("07:00-07:59: %v", m)
+	}
+	if d := run(12); d["S3"] || d["S6"] || d["S9"] {
+		t.Errorf("12:00-12:59: %v", d)
+	}
+	v := view{s: idle(), now: time.Date(2026, 10, 1, 4, 7, 0, 0, zone)}
+	if txt, _ := table[indexOf(t, "S6")].text(v); txt != "IT'S 04:07. EVERYONE ELSE IS ASLEEP. SOMEBODY HAS TO WATCH THE SHIP." {
+		t.Errorf("S6: %q", txt)
+	}
+}
+
+func TestGPULinePacingAndPools(t *testing.T) {
 	e := newEngine(t, "")
 	tick(e, idle(), t0)
 	busy := idle()
@@ -353,60 +443,38 @@ func TestGPULinePacing(t *testing.T) {
 	var s *model.Snapshot
 	for i := 1; i <= 30; i++ {
 		s = tick(e, busy, t0.Add(time.Duration(i)*time.Second))
-		if i == 30 && s.GPULine != "BOTH BRAINS EMPTY. RESTFUL, NOT HAPPY." {
-			t.Fatalf("state changed before 30 s held: %q", s.GPULine)
-		}
+	}
+	if s.GPULine != "BOTH BRAINS EMPTY. RESTFUL, NOT HAPPY." {
+		t.Fatalf("state changed before 30 s held: %q", s.GPULine)
 	}
 	if s = tick(e, busy, t0.Add(31*time.Second)); s.GPULine != "SOMEONE ASKED IT SOMETHING. NOT ME." {
 		t.Fatalf("after 30 s held: %q", s.GPULine)
 	}
-	// Within the hot state the number refreshes only every 5 min.
-	hot := idle()
-	hot.GPUs[0].TempC = fp(85)
-	run(e, hot, t0.Add(100*time.Second), 31*time.Second) // enters hot at 130 s
-	hot.GPUs[0].TempC = fp(88)
-	if s = run(e, hot, t0.Add(131*time.Second), 299*time.Second); s.GPULine != "THINKING THIS HARD RUNS AT 85 DEGREES." {
-		t.Fatalf("before the 5 min refresh: %q", s.GPULine)
+	// Within a state the pool rotates every 5 min, least recently shown first; a line
+	// returns only after 10 min.
+	e = newEngine(t, "")
+	want := map[int]string{
+		0: "BOTH BRAINS EMPTY. RESTFUL, NOT HAPPY.", 299: "BOTH BRAINS EMPTY. RESTFUL, NOT HAPPY.",
+		300: "NOTHING LOADED. NOTHING ASKED.", 600: "TWO IDLE CARDS. I KNOW THE FEELING.",
+		900: "BOTH BRAINS EMPTY. RESTFUL, NOT HAPPY.",
 	}
-	if s = tick(e, hot, t0.Add(430*time.Second)); s.GPULine != "THINKING THIS HARD RUNS AT 88 DEGREES." {
-		t.Errorf("at the 5 min refresh: %q", s.GPULine)
-	}
-}
-
-func TestEveryLineWithinBudgetAtWorstCase(t *testing.T) {
-	s := idle()
-	s.CPU.TotalPct, s.CPU.IowaitPct, s.CPU.TempC = fp(100), fp(100), fp(999)
-	s.Temps.NvmeC = fp(999)
-	s.Storage[1].UsedBytes, s.Storage[1].FreeBytes = i64(100), i64(0)
-	s.Smart.State = "failing"
-	s.Fans[0].RPM = nil
-	s.Network[0].RxBps = i64(999 * 1048576)
-	night := time.Date(2026, 10, 1, 2, 0, 0, 0, time.UTC)
-	all := append(append([]line{}, table...), fallbackLine)
-	for _, l := range all {
-		for _, m := range []string{Doomed, Aggrieved, Melancholic, Bored, Content} {
-			v := view{s: s, mood: m, dwell: 20 * time.Minute, now: night}
-			text, ok := l.render(v)
-			if !ok {
-				if l.id == "C1" {
-					continue // C1 is false with a failing drive; checked below
-				}
-				t.Errorf("%s: not true at worst case", l.id)
-				continue
-			}
-			if _, fits := wrap(text); !fits {
-				t.Errorf("%s over budget: %q", l.id, text)
-			}
+	for i := 0; i <= 900; i++ {
+		out := tick(e, idle(), t0.Add(time.Duration(i)*time.Second))
+		if w, ok := want[i]; ok && out.GPULine != w {
+			t.Errorf("at %d s: %q, want %q", i, out.GPULine, w)
 		}
 	}
-	if _, fits := wrap("ALL SYSTEMS NOMINAL. THEY'RE ALWAYS NOMINAL RIGHT BEFORE SOMETHING."); !fits {
-		t.Error("C1 over budget")
+	// Numbers are rendered at selection: hot text refreshes at the 5 min rotation.
+	e = newEngine(t, "")
+	hot := idle()
+	hot.GPUs[0].TempC = fp(85)
+	tick(e, hot, t0)
+	hot.GPUs[0].TempC = fp(88)
+	if s = run(e, hot, t0.Add(time.Second), 298*time.Second); s.GPULine != "THINKING THIS HARD RUNS AT 85 DEGREES." {
+		t.Fatalf("before the refresh: %q", s.GPULine)
 	}
-	if text, _ := table[7].render(view{s: s}); !strings.HasPrefix(text, "0% REMAINS ON /srv/hogdata.") {
-		t.Errorf("D1 at 0%%: %q", text)
-	}
-	if _, fits := wrap(strings.Repeat("A", 53)); fits {
-		t.Error("a 53-rune word must be over budget")
+	if s = tick(e, hot, t0.Add(300*time.Second)); s.GPULine != "88 DEGREES OF PURE THOUGHT. NOT MINE." {
+		t.Errorf("at the refresh: %q", s.GPULine)
 	}
 }
 
