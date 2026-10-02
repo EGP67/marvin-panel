@@ -38,18 +38,31 @@ type line struct {
 
 func round(v float64) int { return int(math.Round(v)) }
 
-const mib = 1048576.0
+const (
+	kib = 1024.0
+	mib = 1048576.0
+)
 
-// rate formats a MiB/s value: integer at >= 10, else one decimal.
+// formatRate renders bytes/s in automatic units (D-062), uppercase as drawn: whole B/S
+// below 1024, KIB/S with one decimal below 1 MiB/s, else MIB/S with one decimal. A value
+// that would round to 1024.0 KIB/S moves up to MIB/S. Rounding is half away from zero,
+// as the page's Math.round does for positive values.
+func formatRate(bps int64) string {
+	if bps < 1024 {
+		return fmt.Sprintf("%d B/S", bps)
+	}
+	if k := math.Round(float64(bps)/kib*10) / 10; k < 1024 {
+		return fmt.Sprintf("%.1f KIB/S", k)
+	}
+	return fmt.Sprintf("%.1f MIB/S", math.Round(float64(bps)/mib*10)/10)
+}
+
+// rate formats a nullable byte rate for {rx}, {tx}, {read} and {write}.
 func rate(bps *int64) (string, bool) {
 	if bps == nil {
 		return "", false
 	}
-	v := float64(*bps) / mib
-	if v >= 10 {
-		return fmt.Sprintf("%d", round(v)), true
-	}
-	return fmt.Sprintf("%.1f", v), true
+	return formatRate(*bps), true
 }
 
 func netOf(s *model.Snapshot) *model.Net {
@@ -74,11 +87,14 @@ func days(s *model.Snapshot) (int64, bool) {
 	return *s.Host.UptimeSeconds / 86400, true
 }
 
+// exhaustRPM is the EXHAUST FANS rpm, chosen by label, never by position (D-063).
 func exhaustRPM(s *model.Snapshot) (int, bool) {
-	if len(s.Fans) == 0 || s.Fans[0].RPM == nil {
-		return 0, false
+	for _, f := range s.Fans {
+		if f.Label == model.FanExhaustLabel && f.RPM != nil {
+			return *f.RPM, true
+		}
 	}
-	return *s.Fans[0].RPM, true
+	return 0, false
 }
 
 // placeholder resolves one {name} (D-059 Step 3 formats); ok is false for null.
@@ -175,10 +191,10 @@ func placeholder(v view, name string) (string, bool) {
 		return fmt.Sprintf("%02d", v.now.Hour()), true
 	case "mm":
 		return fmt.Sprintf("%02d", v.now.Minute()), true
-	case "b":
+	case "fan":
 		for _, f := range s.Fans {
 			if f.RPM == nil {
-				return itoa(f.Bank)
+				return f.Label, true
 			}
 		}
 	}
@@ -262,7 +278,7 @@ var table = []line{
 	{id: "B4", family: "freq", moods: b, tpl: "THE CORES ARE IDLING AT {freq} GHZ. THEY COULD DO MORE. THEY DON'T SEE THE POINT.",
 		cond: func(v view) bool { return pctBelow(v.s.CPU.FreqGHz, 3.0) }},
 	{id: "B5", family: "conn", moods: b, tpl: "{conn} CONNECTIONS OPEN. NONE OF THEM ARE TO ME.", cond: always},
-	{id: "B6", family: "disk", moods: b, tpl: "THE DISK IS READING {read} MIB/S. EVEN IT HAS STOPPED LOOKING.",
+	{id: "B6", family: "disk", moods: b, tpl: "THE DISK IS READING {read}. EVEN IT HAS STOPPED LOOKING.",
 		cond: func(v view) bool { return rateCmp(v.s.DiskIO.ReadBps, true, 1) }},
 	{id: "B7", family: "memory", moods: b, tpl: "MEMORY {mem}% USED. THE REST IS SAVING ITSELF FOR SOMETHING BETTER.",
 		cond: func(v view) bool { return pctBelow(v.s.Memory.UsedPct, 30) }},
@@ -309,9 +325,9 @@ var table = []line{
 	{id: "A1", family: "iowait", moods: a, tpl: "IOWAIT {iowait}%. EVERYONE WANTS TO WRITE. NOBODY ASKED HOW I FEEL ABOUT IT.", cond: iowaitAbove},
 	{id: "A2", family: "heat", moods: a, tpl: "{hot} DEGREES. I RAN COLD ONCE. NOBODY NOTICED.", cond: hotAbove(aggrievedTemp), gpuHeat: true},
 	{id: "A3", family: "iowait", moods: a, tpl: "IOWAIT {iowait}%. THE DISK IS THE BOTTLENECK. I'M JUST THE ONE WHO WAITS.", cond: iowaitAbove},
-	{id: "A4", family: "disk", moods: a, tpl: "WRITING {write} MIB/S. SOMEONE IS SAVING SOMETHING. NOT ME, OBVIOUSLY.",
+	{id: "A4", family: "disk", moods: a, tpl: "WRITING {write}. SOMEONE IS SAVING SOMETHING. NOT ME, OBVIOUSLY.",
 		cond: func(v view) bool { return iowaitAbove(v) && rateCmp(v.s.DiskIO.WriteBps, false, 1) }},
-	{id: "A5", family: "disk", moods: a, tpl: "READING {read} MIB/S. EVERYTHING IS BEING READ EXCEPT THE ROOM.",
+	{id: "A5", family: "disk", moods: a, tpl: "READING {read}. EVERYTHING IS BEING READ EXCEPT THE ROOM.",
 		cond: func(v view) bool { return iowaitAbove(v) && rateCmp(v.s.DiskIO.ReadBps, false, 1) }},
 	{id: "A6", family: "heat", moods: a, tpl: "{dev} AT {t} DEGREES. I'D OPEN A WINDOW IF THE SHIP HAD ONE.", cond: hotAbove(aggrievedTemp), gpuHeat: true},
 	{id: "A7", family: "heat", moods: a, tpl: "{t} DEGREES IN {dev}. I DIDN'T ASK FOR THIS. I'M NEVER ASKED.", cond: hotAbove(aggrievedTemp), gpuHeat: true},
@@ -333,11 +349,11 @@ var table = []line{
 	{id: "D10", family: "doom-heat", moods: d, tpl: "{dev} AT {t} DEGREES WITH THE FANS AT {rpm} RPM. THEY'RE TRYING. IT ISN'T ENOUGH.",
 		cond: func(v view) bool { return hotAtLeast(doomTemp)(v) && fansReporting(v) }},
 
-	{id: "S1", family: "fans", situational: true, tpl: "FAN BANK {b}: NO TELEMETRY. I'M COOLING BY FORCE OF WILL.",
-		cond: func(v view) bool { _, ok := placeholder(v, "b"); return ok }},
-	{id: "S2", family: "network", situational: true, tpl: "{rx} MIB/S INBOUND AND STILL NOBODY CALLS.", cond: always},
+	{id: "S1", family: "fans", situational: true, tpl: "{fan}: NO TELEMETRY. I'M COOLING BY FORCE OF WILL.",
+		cond: func(v view) bool { _, ok := placeholder(v, "fan"); return ok }},
+	{id: "S2", family: "network", situational: true, tpl: "{rx} INBOUND AND STILL NOBODY CALLS.", cond: always},
 	{id: "S3", family: "time", situational: true, tpl: "I'M NOT ASLEEP. I'M IGNORING YOU WITH MY EYES CLOSED.", cond: hours(0, 5)},
-	{id: "S4", family: "network", situational: true, tpl: "{tx} MIB/S OUTBOUND. I'M SENDING THINGS INTO THE VOID. IT DOESN'T REPLY.", cond: always},
+	{id: "S4", family: "network", situational: true, tpl: "{tx} OUTBOUND. I'M SENDING THINGS INTO THE VOID. IT DOESN'T REPLY.", cond: always},
 	{id: "S5", family: "network", situational: true, tpl: "{err} NETWORK ERRORS. THE WIFI AND I ARE NOT SPEAKING.",
 		cond: func(v view) bool { e, ok := errSum(v.s); return ok && e > 0 }},
 	{id: "S6", family: "time", situational: true, tpl: "IT'S {hh}:{mm}. EVERYONE ELSE IS ASLEEP. SOMEBODY HAS TO WATCH THE SHIP.", cond: hours(0, 5)},

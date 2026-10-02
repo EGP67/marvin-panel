@@ -175,14 +175,14 @@
   "fans": [
     {
       "bank": 1,
-      "label": "FAN BANK 1",
+      "label": "INTAKE FANS",
       "max_rpm": null,
       "rpm": null,
       "verdict": "unknown"
     },
     {
       "bank": 2,
-      "label": "FAN BANK 2",
+      "label": "EXHAUST FANS",
       "max_rpm": null,
       "rpm": null,
       "verdict": "unknown"

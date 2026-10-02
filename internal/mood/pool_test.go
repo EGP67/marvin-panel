@@ -11,13 +11,17 @@ import (
 	"hog.local/marvin-panel/internal/model"
 )
 
+// Widest rate texts (D-062): "1023.9 KIB/S" and "999.9 MIB/S".
+var worstRates = []int64{1048474, 1048471142}
+
 // worst returns a snapshot with every placeholder at its widest (D-059 Step 6). spaceGiB
-// selects the mount variant: 0 % free (used 100) or 9999.9 GiB free on a huge mount.
-func worst(spaceGiB bool) *model.Snapshot {
+// selects the mount variant: 0 % free (used 100) or 9999.9 GiB free on a huge mount; bps
+// is every byte rate.
+func worst(spaceGiB bool, bps int64) *model.Snapshot {
 	s := idle()
 	s.CPU.TotalPct, s.CPU.FreqGHz, s.CPU.Load1, s.CPU.IowaitPct, s.CPU.TempC = fp(100), fp(9.9), fp(99.99), fp(100), fp(999)
 	s.Connections.Established = ip(99999)
-	big := i64(999 * 1048576)
+	big := i64(bps)
 	s.DiskIO.ReadBps, s.DiskIO.WriteBps = big, big
 	s.Network[0].RxBps, s.Network[0].TxBps = big, big
 	s.Network[0].RxErr, s.Network[0].TxErr = ip(99999), ip(0)
@@ -28,7 +32,7 @@ func worst(spaceGiB bool) *model.Snapshot {
 	for i := range s.GPUs {
 		s.GPUs[i].TempC = fp(999)
 	}
-	s.Fans[0].RPM = ip(9999)
+	s.Fans[exhaust].RPM = ip(9999)
 	s.PanicCount = ip(99999)
 	if spaceGiB {
 		free := int64(99999) * (1 << 30) / 10 // 9999.9 GiB
@@ -41,31 +45,42 @@ func worst(spaceGiB bool) *model.Snapshot {
 
 func TestEveryLineWithinBudgetAtWorstCase(t *testing.T) {
 	zone := time.FixedZone("X", 0)
-	for _, spaceGiB := range []bool{false, true} {
-		v := view{s: worst(spaceGiB), now: time.Date(2026, 10, 1, 23, 59, 0, 0, zone), dwell: time.Hour}
-		for _, l := range append(append([]line{}, table...), fallbackLine) {
-			text, ok := render(l.tpl, v)
-			if !ok {
-				if l.id == "S1" {
-					continue // {b} needs a null fan; checked below
+	for _, bps := range worstRates {
+		for _, spaceGiB := range []bool{false, true} {
+			v := view{s: worst(spaceGiB, bps), now: time.Date(2026, 10, 1, 23, 59, 0, 0, zone), dwell: time.Hour}
+			for _, l := range append(append([]line{}, table...), fallbackLine) {
+				text, ok := render(l.tpl, v)
+				if !ok {
+					if l.id == "S1" {
+						continue // {fan} needs a null fan; checked below
+					}
+					t.Errorf("%s: a placeholder did not resolve at worst case", l.id)
+					continue
 				}
-				t.Errorf("%s: a placeholder did not resolve at worst case", l.id)
-				continue
-			}
-			if out, fits := wrap(text); !fits {
-				t.Errorf("%s over budget (%d runes): %q -> %q", l.id, runes(text), text, out)
+				if out, fits := wrap(text); !fits {
+					t.Errorf("%s over budget (%d runes): %q -> %q", l.id, runes(text), text, out)
+				}
 			}
 		}
 	}
-	s := worst(false)
-	s.Fans[1].RPM = nil
-	if text, ok := render(table[indexOf(t, "S1")].tpl, view{s: s}); !ok || !fitsBudget(text) {
+	for _, id := range []string{"S2", "S4", "B6", "A4", "A5"} {
+		for _, bps := range worstRates {
+			if text := mustRender(t, id, view{s: worst(false, bps)}); !strings.Contains(text, "1023.9 KIB/S") &&
+				!strings.Contains(text, "999.9 MIB/S") {
+				t.Errorf("%s at worst rate: %q", id, text)
+			}
+		}
+	}
+	s := worst(false, worstRates[0])
+	s.Fans[exhaust].RPM = nil // the longest label, EXHAUST FANS
+	if text, ok := render(table[indexOf(t, "S1")].tpl, view{s: s}); !ok || !fitsBudget(text) ||
+		text != "EXHAUST FANS: NO TELEMETRY. I'M COOLING BY FORCE OF WILL." {
 		t.Errorf("S1 at worst case: %q", text)
 	}
-	if !strings.Contains(mustRender(t, "D4", view{s: worst(false)}), "/srv/hogdata IS 100% FULL. 0% LEFT.") {
+	if !strings.Contains(mustRender(t, "D4", view{s: worst(false, worstRates[0])}), "/srv/hogdata IS 100% FULL. 0% LEFT.") {
 		t.Error("D4 at 0% free")
 	}
-	if !strings.Contains(mustRender(t, "D5", view{s: worst(true)}), "ONLY 9999.9 GIB REMAIN ON /srv/hogdata.") {
+	if !strings.Contains(mustRender(t, "D5", view{s: worst(true, worstRates[0])}), "ONLY 9999.9 GIB REMAIN ON /srv/hogdata.") {
 		t.Error("D5 at 9999.9 GiB")
 	}
 	// GPU pools at worst case (n 999, util 100, vram 24.0).
@@ -107,7 +122,7 @@ func TestConditions(t *testing.T) {
 	iowait := set(func(s *model.Snapshot) { s.CPU.IowaitPct = fp(20) })
 	lowSpace := set(func(s *model.Snapshot) { s.Storage[2].UsedBytes, s.Storage[2].FreeBytes = i64(98), i64(2) })
 	failing := set(func(s *model.Snapshot) { s.Smart.State = "failing" })
-	noFans := set(func(s *model.Snapshot) { s.Fans[0].RPM = nil })
+	noFans := set(func(s *model.Snapshot) { s.Fans[exhaust].RPM = nil })
 	hour := func(h int) mut { return func(v *view) { v.now = time.Date(2026, 10, 1, h, 30, 0, 0, time.UTC) } }
 	upDays := func(d int64) mut {
 		return set(func(s *model.Snapshot) { u := d * 86400; s.Host.UptimeSeconds = &u })
@@ -198,7 +213,7 @@ func TestNullPlaceholderMakesLineIneligible(t *testing.T) {
 	cases := map[string]func(s *model.Snapshot){
 		"B3":  func(s *model.Snapshot) { s.CPU.TotalPct = nil },
 		"B5":  func(s *model.Snapshot) { s.Connections.Established = nil },
-		"C7":  func(s *model.Snapshot) { s.Fans[0].RPM = nil },
+		"C7":  func(s *model.Snapshot) { s.Fans[exhaust].RPM = nil },
 		"S4":  func(s *model.Snapshot) { s.Network[0].TxBps = nil },
 		"M3":  func(s *model.Snapshot) { s.CPU.Load1 = nil },
 		"C10": func(s *model.Snapshot) { s.PanicCount = nil },

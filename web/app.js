@@ -7,9 +7,13 @@
 
   var POLL_MS = 1000;
   var FAILS_BEFORE_DARK = 3;
-  var NET_SCALE_MIB = 40;   // S, D-037: "<n>% OF 40 MiB/s"
   var IO_SCALE_MIB = 200;   // D-021: "SCALE 200 MiB/s"
+  var KIB = 1024;
   var MIB = 1048576;
+  // D-062: Wi-Fi bars on a log scale from 1 KiB/s to 100 MiB/s, stated as NET_SCALE_TEXT.
+  var NET_LOG_MIN = Math.log10(KIB);
+  var NET_LOG_MAX = Math.log10(100 * MIB);
+  var NET_SCALE_TEXT = 'LOG 1K–100M';
   var GIB = 1073741824;
   var COLORS = { ok: '#5fd8ef', warn: '#f0b429', danger: '#ff6a3d' };
   var NULL_COLOR = '#6b9dad';
@@ -83,7 +87,22 @@
   function round(v) { return isNum(v) ? String(Math.round(v)) : DASH; }
   function fixed1(v) { return isNum(v) ? v.toFixed(1) : DASH; }
   function fahr(c) { return isNum(c) ? String(CToF(c)) : DASH; }
-  function mibps(bps) { return isNum(bps) ? (bps / MIB).toFixed(1) : DASH; }
+  // D-062 automatic units: whole B/s below 1024, KiB/s 1 dp below 1 MiB/s, else MiB/s
+  // 1 dp; a value that rounds to 1024.0 KiB/s moves up to MiB/s.
+  function rate(bps) {
+    if (!isNum(bps)) { return DASH; }
+    if (bps < KIB) { return Math.round(bps) + ' B/s'; }
+    var k = Math.round(bps / KIB * 10) / 10;
+    if (k < 1024) { return k.toFixed(1) + ' KiB/s'; }
+    return (Math.round(bps / MIB * 10) / 10).toFixed(1) + ' MiB/s';
+  }
+
+  // D-062 log fraction, clamped 0..1; 0, negative or null draws nothing.
+  function netFrac(bps) {
+    if (!isNum(bps) || bps <= 0) { return 0; }
+    var f = (Math.log10(bps) - NET_LOG_MIN) / (NET_LOG_MAX - NET_LOG_MIN);
+    return Math.max(0, Math.min(1, f));
+  }
 
   function sum(vals) {
     var t = 0;
@@ -236,17 +255,16 @@
     setText('b-net-con', 'CON ' + round(get(conn, 'established')) + ' · ERR ' + round(errs));
     [['rx', 'RX'], ['tx', 'TX']].forEach(function (d) {
       var bps = get(n, d[0] + '_bps');
-      var frac = isNum(bps) ? bps / (NET_SCALE_MIB * MIB) : null;
-      setText('b-net-' + d[0], d[1] + ' ' + mibps(bps) + ' MiB/s');
-      setText('b-net-' + d[0] + '-pct', round(isNum(frac) ? frac * 100 : null) + '% OF ' + NET_SCALE_MIB + ' MiB/s');
-      setWidth('b-net-' + d[0] + '-bar', isNum(frac) ? tw('net-' + d[0]) * Math.min(1, frac) : 0);
+      setText('b-net-' + d[0], d[1] + ' ' + rate(bps));
+      setText('b-net-' + d[0] + '-pct', NET_SCALE_TEXT);
+      setWidth('b-net-' + d[0] + '-bar', tw('net-' + d[0]) * netFrac(bps));
     });
   }
 
   function renderIO(d) {
     [['read', 'READ'], ['write', 'WRITE']].forEach(function (k) {
       var bps = get(d, k[0] + '_bps');
-      setText('b-io-' + k[0], k[1] + ' ' + mibps(bps) + ' MiB/s');
+      setText('b-io-' + k[0], k[1] + ' ' + rate(bps));
       setWidth('b-io-' + k[0] + '-bar', isNum(bps) ? tw('io-' + k[0]) * Math.min(1, bps / (IO_SCALE_MIB * MIB)) : 0);
     });
   }
@@ -287,12 +305,14 @@
       var rpm = get(f, 'rpm');
       var max = get(f, 'max_rpm');
       var p = 'b-fan-' + b;
+      // D-063: the wire label is the display text.
+      var label = get(f, 'label') || 'FANS';
       if (isNum(rpm)) {
-        setText(p + '-label', 'FAN BANK ' + (b + 1));
+        setText(p + '-label', label);
         setWidth(p + '-bar', isNum(max) && max > 0 ? tw('fan-' + b) * Math.min(1, rpm / max) : 0);
         setText(p + '-rpm', rpm + ' RPM');
       } else {
-        setText(p + '-label', 'FAN BANK ' + (b + 1) + ': NO TELEMETRY');
+        setText(p + '-label', label + ': NO TELEMETRY');
         setWidth(p + '-bar', 0);
         setText(p + '-rpm', DASH);
       }

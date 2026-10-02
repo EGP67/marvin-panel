@@ -2,7 +2,9 @@ package collect
 
 import (
 	"context"
+	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -111,11 +113,11 @@ func TestHwmonDiscovery(t *testing.T) {
 	if !strings.Contains(p.nvmeTemp, "hwmon1/temp1_input") || !strings.Contains(p.nvmeMax, "hwmon1/temp1_max") {
 		t.Errorf("nvme = %s / %s, want nvme Composite (hwmon1), never mt7921_phy0", p.nvmeTemp, p.nvmeMax)
 	}
-	if !strings.HasSuffix(p.fans[0], "hwmon4/fan3_input") || !strings.HasSuffix(p.fans[1], "hwmon4/fan6_input") {
-		t.Errorf("fans = %v, want nct6687 fan3/fan6", p.fans)
+	if !strings.HasSuffix(p.fans[0], "hwmon4/fan6_input") || !strings.HasSuffix(p.fans[1], "hwmon4/fan3_input") {
+		t.Errorf("fans = %v, want nct6687 intake fan6, exhaust fan3 (D-063)", p.fans)
 	}
 	v, failed := readHwmon(p)
-	if failed || *v.cpuTemp != 42.3 || *v.nvmeTemp != 35.9 || *v.nvmeMax != 83.85 || *v.rpm[0] != 977 || *v.rpm[1] != 1088 {
+	if failed || *v.cpuTemp != 42.3 || *v.nvmeTemp != 35.9 || *v.nvmeMax != 83.85 || *v.rpm[0] != 1088 || *v.rpm[1] != 977 {
 		t.Errorf("values %v %v %v %v %v (failed=%v)", *v.cpuTemp, *v.nvmeTemp, *v.nvmeMax, *v.rpm[0], *v.rpm[1], failed)
 	}
 	// No chips at all: every value null, no failure.
@@ -129,7 +131,8 @@ func TestFanMappingAndVerdicts(t *testing.T) {
 	ip := func(v int) *int { return &v }
 	ok, warn := model.BandOK, model.BandWarn
 	f := fans([2]*int{ip(977), ip(0)}, &ok)
-	if *f[0].MaxRPM != 2000 || *f[1].MaxRPM != 2000 || f[0].Label != "FAN BANK 1" || f[1].Bank != 2 {
+	if *f[0].MaxRPM != 2000 || *f[1].MaxRPM != 2000 || f[0].Label != model.FanIntakeLabel ||
+		f[1].Label != model.FanExhaustLabel || f[0].Bank != 1 || f[1].Bank != 2 {
 		t.Errorf("mapping %+v", f)
 	}
 	if f[0].Verdict != "ok" || f[1].Verdict != "stalled" {
@@ -141,5 +144,43 @@ func TestFanMappingAndVerdicts(t *testing.T) {
 	}
 	if n := fans([2]*int{nil, nil}, &ok); n[0].MaxRPM != nil || n[0].Verdict != "unknown" {
 		t.Errorf("null fan: %+v", n[0])
+	}
+}
+
+// TestFanBindingByName: each role reads its own nct6687 input (D-063); swapping the
+// file values swaps the rpm values, never the labels.
+func TestFanBindingByName(t *testing.T) {
+	ok := model.BandOK
+	for _, c := range []struct{ fan6, fan3, intake, exhaust int }{
+		{1700, 1450, 1700, 1450},
+		{1450, 1700, 1450, 1700},
+	} {
+		root := t.TempDir()
+		d := filepath.Join(root, "sys", "class", "hwmon", "hwmon7")
+		if err := os.MkdirAll(d, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		for name, v := range map[string]string{
+			"name": "nct6687", "fan1_input": "900", "fan6_input": strconv.Itoa(c.fan6), "fan3_input": strconv.Itoa(c.fan3),
+		} {
+			if err := os.WriteFile(filepath.Join(d, name), []byte(v+"\n"), 0o644); err != nil {
+				t.Fatal(err)
+			}
+		}
+		v, failed := readHwmon(scanHwmon(root))
+		if failed {
+			t.Fatal("read failed")
+		}
+		f := fans(v.rpm, &ok)
+		want := []model.Fan{
+			{Bank: 1, Label: model.FanIntakeLabel, RPM: &c.intake},
+			{Bank: 2, Label: model.FanExhaustLabel, RPM: &c.exhaust},
+		}
+		for i := range want {
+			if f[i].Bank != want[i].Bank || f[i].Label != want[i].Label || f[i].RPM == nil || *f[i].RPM != *want[i].RPM {
+				t.Errorf("fan6=%d fan3=%d: fans[%d] = %+v, want bank %d %q rpm %d",
+					c.fan6, c.fan3, i, f[i], want[i].Bank, want[i].Label, *want[i].RPM)
+			}
+		}
 	}
 }

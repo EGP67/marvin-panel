@@ -385,7 +385,7 @@ func TestFullSnapshot(t *testing.T) {
 	if g0.PowerW != nil || *g1.PowerW != 9.8 || *g0.UtilSev != model.BandOK || len(g0.HistUtilPct) != 30 || *g0.HistUtilPct[29] != 3 {
 		t.Errorf("gpu fields: %+v", g0)
 	}
-	for i, want := range []int{977, 1088} {
+	for i, want := range []int{1088, 977} { // intake fan6, exhaust fan3 (D-063)
 		f := s.Fans[i]
 		if *f.RPM != want || *f.MaxRPM != 2000 || f.Verdict != "ok" || f.Bank != i+1 {
 			t.Errorf("fan %+v", f)

@@ -57,9 +57,10 @@ Temps            : /sys/class/hwmon/hwmon*/ matched by NAME first, then label:
                    read failure, log the winning paths (D-057). GPU temperatures come from
                    nvidia-smi.
 SMART            : root-owned handoff file (see SMART handoff below).
-Fans             : hwmon nct6687 (nct6683 force=1, D-057): FAN BANK 1 = fan3_input
-                   (SYS_FAN1 exhaust), FAN BANK 2 = fan6_input (SYS_FAN4 intake), max
-                   2000 RPM each. fan1 is the CPU cooler and is not displayed.
+Fans             : hwmon nct6687 (nct6683 force=1, D-057), bound by input name (D-063):
+                   fans[0] INTAKE FANS = fan6_input (SYS_FAN4), fans[1] EXHAUST FANS =
+                   fan3_input (SYS_FAN1), max 2000 RPM each. fan1 is the CPU cooler and
+                   is not displayed.
 
 ## Handling rules already paid for — keep them
 - Every delta needs a previous sample. The first tick is null and renders "--", never 0.
@@ -80,12 +81,19 @@ PCI address (/sys/bus/pci/devices/0000:11:00.0/drm/). The kiosk sees only the iG
 and render nodes (D-023, D-041).
 
 ## Fans (D-027, D-036)
-FAN BANK 1/2 are the SYSTEM CHASSIS FANS, never GPU fans. The box has eight chassis
-fans: four daisy-chained on each of two motherboard fan headers, so the two banks map
-1:1 onto the two headers. O2 succeeded 2026-10-01 (D-057): the in-kernel nct6683 driver
-with force=1 registers nct6687 (NCT6687D EC); banks are fan3 (exhaust) and fan6 (intake),
-fan1 is the CPU cooler (not displayed). If the driver is absent, fans are null and render
-"FAN BANK n: NO TELEMETRY". Physical facts the verdicts rely on:
+INTAKE FANS and EXHAUST FANS are the SYSTEM CHASSIS FANS, never GPU fans. The box has
+eight chassis fans: four daisy-chained on each of two motherboard fan headers, so the two
+banks map 1:1 onto the two headers. O2 succeeded 2026-10-01 (D-057): the in-kernel nct6683
+driver with force=1 registers nct6687 (NCT6687D EC); fan1 is the CPU cooler (not
+displayed). Roles, inputs and display order (D-063), each role bound to its input by name:
+
+| order | label (wire and page) | header | input | cell |
+|---|---|---|---|---|
+| fans[0], bank 1 | INTAKE FANS | SYS_FAN4 | fan6_input | left |
+| fans[1], bank 2 | EXHAUST FANS | SYS_FAN1 | fan3_input | right |
+
+If the driver is absent, fans are null and render "<label>: NO TELEMETRY". Physical facts
+the verdicts rely on:
 - One tach per header: only the first fan in each chain reports RPM, so a failed fan in
   positions 2-4 is invisible to RPM alone.
 - All four fans on a chain share one PWM domain: bank RPM is a proxy for intent, not for

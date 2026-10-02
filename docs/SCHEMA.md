@@ -29,7 +29,7 @@ triggers come from `docs/MARVIN.md`. Colors and geometry are NOT in this contrac
 | `memory` | object | MEMORY cell |
 | `gpus` | array | GRAPHICS box; exactly 2 entries, real Nvidia cards only |
 | `temps` | object | THERMALS entries not owned by cpu/gpus |
-| `fans` | array | FAN BANK 1/2; exactly 2 entries |
+| `fans` | array | INTAKE FANS, EXHAUST FANS; exactly 2, intake first (D-063) |
 | `network` | array | NETWORK cell; exactly 1 entry |
 | `connections` | object | `{established: int\|null}`: TCP state 01 (ESTABLISHED) in /proc/net/tcp and tcp6 (D-036); displayed as "CON n" (D-049) |
 | `disk_io` | object | STORAGE · I/O cell (physical NVMe) |
@@ -165,4 +165,4 @@ null when the state file is missing or unreadable.
 | startup | content | first tick, no trigger held | deltas, histories, CPU/NVMe temps, both GPUs null; SMART unknown; panic_count null |
 Every fixture's `phrase.lines` is a docs/MARVIN.md seed line that is speakable from that
 fixture's data: the seed line for its mood in calm, busy, hot and dying, and the fans
-line ("FAN BANK 1: NO TELEMETRY", fans[0].rpm null) in startup.
+line S1 ("INTAKE FANS: NO TELEMETRY", fans[0].rpm null; D-063) in startup.

@@ -11,13 +11,15 @@ import (
 	"hog.local/marvin-panel/internal/model"
 )
 
-// Fan banks (D-057): nct6687 on the MSI MS-7D75. fan1 is the CPU cooler (not shown).
+// Fan roles in display order (D-057, D-063): nct6687 on the MSI MS-7D75, each role
+// bound to its input by name. fan1 is the CPU cooler (not shown).
 var fanBanks = [2]struct {
+	label  string
 	input  string
 	maxRPM int
 }{
-	{"fan3_input", 2000}, // FAN BANK 1 = SYS_FAN1 exhaust
-	{"fan6_input", 2000}, // FAN BANK 2 = SYS_FAN4 intake
+	{model.FanIntakeLabel, "fan6_input", 2000},  // header SYS_FAN4, intake chain, left cell
+	{model.FanExhaustLabel, "fan3_input", 2000}, // header SYS_FAN1, exhaust chain, right cell
 }
 
 // hwmonPaths are the winning sensor files; "" when the chip or file is missing.
@@ -27,12 +29,12 @@ type hwmonPaths struct {
 }
 
 func (p hwmonPaths) String() string {
-	return fmt.Sprintf("cpu=%s nvme=%s nvme_max=%s fan_bank1=%s fan_bank2=%s",
+	return fmt.Sprintf("cpu=%s nvme=%s nvme_max=%s fan_intake=%s fan_exhaust=%s",
 		p.cpuTemp, p.nvmeTemp, p.nvmeMax, p.fans[0], p.fans[1])
 }
 
 // scanHwmon matches chips by name, then sensors by label (DATA.md): k10temp "Tctl" is
-// the CPU, nvme "Composite" the NVMe; nct6687 carries the fan banks. amdgpu (the
+// the CPU, nvme "Composite" the NVMe; nct6687 carries the intake and exhaust fans. amdgpu (the
 // display adapter) and mt7921_phy0 (Wi-Fi) are never chosen.
 func scanHwmon(root string) hwmonPaths {
 	var p hwmonPaths
@@ -150,11 +152,12 @@ func readHwmon(p hwmonPaths) (hwmonValues, bool) {
 	return v, failed
 }
 
-// fans renders both banks; verdict via model.FanVerdict on cpu.thermal_band.
+// fans renders both roles in display order; verdict via model.FanVerdict on
+// cpu.thermal_band.
 func fans(rpm [2]*int, cpuThermal *model.Band) []model.Fan {
 	out := make([]model.Fan, 2)
 	for i := range out {
-		f := model.Fan{Bank: i + 1, Label: fmt.Sprintf("FAN BANK %d", i+1), RPM: rpm[i]}
+		f := model.Fan{Bank: i + 1, Label: fanBanks[i].label, RPM: rpm[i]}
 		if rpm[i] != nil {
 			m := fanBanks[i].maxRPM
 			f.MaxRPM = &m

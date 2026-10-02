@@ -45,6 +45,8 @@ T9b LINE POOL  owner-approved pool v1 (B1-B10, C1-C10, M1-M10, A1-A10, D1-D10, S
     GPU-line pools) with truth conditions and a MARVIN.md drift test (D-059).
 WIDE-1 Phase 1 Wide (D-060); fallback tag phase1-thin.
 GPU-BOOT D-061: NVIDIA nodes appearing after start (unit ordering + once-per-boot self-heal).
+NETFANS D-062, D-063: automatic rate units, Wi-Fi log bar (LOG 1K–100M), INTAKE FANS /
+    EXHAUST FANS bound by name, intake on the left.
 
 ## Owner tasks
 O1  HDMI PROBE — DONE for the SunFounder 7" (2026-09-29; see HANDOFF.md, D-044, D-045).
@@ -59,7 +61,8 @@ O3  PANEL WAKE TEST (after purchase). PeakDo powered from the PSU 5 V rail: it m
 ## Build
 Order (owner, 2026-10-01): T10b, T11a, then T4-T9 (display first).
 Next: Owner one-week run on Phase 1 Wide (reboot check after the owner installs the unit),
-then Phase 2. T5/T6 load measurements (F6, D-021) still owed.
+then Phase 2. T6 disk load measurement (D-021) still owed; the T5 Wi-Fi scale measurement
+is no longer needed (log scale, D-062).
 T11b SOAK       24 h soak with flat RSS (D-010). Verify: RSS growth within noise.
 
 ## Follow-ups (Phase 1, non-blocking)
@@ -74,6 +77,7 @@ F4 Push anomaly 2026-10-01: GitHub "cannot lock ref" with the ref already update
    slow pre-push hook; watch.
 F5 Docs lines over 90 columns (GEOMETRY, TASKS, HANDOFF): rewrap pass.
 F6 Network "% OF S" unbounded (D-051 (5)); decide with T5.
+   RESOLVED by D-062 (log bar 1 KiB/s to 100 MiB/s, static "LOG 1K–100M").
 F7 Kiosk slice hits MemoryHigh (reclaim of page cache, no OOM): watch memory.events high and
    CPU during T11b; raise MemoryHigh only on real cost.
 F8 Phase 2: narrower side margins (owner 2026-10-01; layout change, GEOMETRY).

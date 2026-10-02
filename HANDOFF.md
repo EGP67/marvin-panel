@@ -27,6 +27,7 @@ Marvin's and stays attributed to him.
 - Line pool v1 live (D-059).
 - Phase 1 Wide (D-060) live; owner one-week run, then Phase 2.
 - GPU boot race fixed (D-061).
+- Wi-Fi log scale and fan names (D-062, D-063); deploy pending.
 
 ### Fallback: Phase 1 Thin (D-060)
 The last 64 px-margin build is tagged phase1-thin (commit 1ac87b6) and archived as
@@ -156,7 +157,8 @@ graph; 12 per-thread dot matrices) | GRAPHICS (total + GPU0/GPU1 RTX 3060, VRAM,
 sparklines) | MEMORY | NETWORK (header WIFI, CON/ERR counters; wlp14s0, bars against a
 stated scale; D-018, D-046, D-049) | STORAGE · I/O | SPACE (/, /srv/hogdata, /boot as
 percent bars; D-019, D-049) | THERMALS (CPU, GPU0, GPU1,
-NVME M.2 in F and C; amber >=70 °C, red >=90 °C per D-016; FAN BANK 1/2 per D-027) |
+NVME M.2 in F and C; amber >=70 °C, red >=90 °C per D-016; INTAKE FANS / EXHAUST FANS per
+D-027, D-063) |
 footer "UPTIME … · PANIC COUNT n" (D-017) and DON'T PANIC.
 Runs at boot. Survives 24 h with flat RSS. Under 2% of one core idle. make verify clean.
 

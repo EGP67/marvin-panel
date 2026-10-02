@@ -47,13 +47,16 @@ func idle() *model.Snapshot {
 			UsedBytes: i64(30), FreeBytes: i64(70), UsedPct: fp(30), State: band(model.BandOK)})
 	}
 	s.Smart = model.Smart{State: "ok"}
-	s.Fans = []model.Fan{{Bank: 1, Label: "FAN BANK 1", RPM: ip(1000), MaxRPM: ip(2000), Verdict: "ok"},
-		{Bank: 2, Label: "FAN BANK 2", RPM: ip(1100), MaxRPM: ip(2000), Verdict: "ok"}}
+	s.Fans = []model.Fan{{Bank: 1, Label: model.FanIntakeLabel, RPM: ip(1000), MaxRPM: ip(2000), Verdict: "ok"},
+		{Bank: 2, Label: model.FanExhaustLabel, RPM: ip(1100), MaxRPM: ip(2000), Verdict: "ok"}}
 	s.Network = []model.Net{{If: "wlp14s0", RxBps: i64(2000), TxBps: i64(1000), RxErr: ip(0), TxErr: ip(0)}}
 	s.DiskIO = model.DiskIO{Device: "nvme0n1"}
 	s.Connections = model.Connections{Established: ip(10)}
 	return s
 }
+
+// exhaust is the EXHAUST FANS index in display order (D-063).
+const exhaust = 1
 
 func newEngine(t *testing.T, dir string) *Engine {
 	t.Helper()
@@ -336,8 +339,8 @@ func TestFallbackAndTopicRule(t *testing.T) {
 			}
 		}
 	}
-	// With fans reporting, A8 (not in the topic set) speaks.
-	s.Fans[0].RPM = ip(1200)
+	// With the exhaust fans reporting, A8 (not in the topic set) speaks.
+	s.Fans[exhaust].RPM = ip(1200)
 	l := table[indexOf(t, "A8")]
 	if _, ok := e.eligible(&l, v); !ok {
 		t.Error("A8 is not covered by the topic rule")

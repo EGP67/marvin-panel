@@ -1,5 +1,11 @@
 package model
 
+// Fan labels in display order (D-063): the wire label is the display text.
+const (
+	FanIntakeLabel  = "INTAKE FANS"
+	FanExhaustLabel = "EXHAUST FANS"
+)
+
 // FanVerdict implements SCHEMA invariant 6; it keys on cpu.thermal_band and never
 // reports not_cooling while that band is null. Shared by genfixtures and the live
 // collector (D-057).

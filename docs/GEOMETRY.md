@@ -15,7 +15,7 @@ phrase box fill #0c1620 stroke #3a2f14
 ## Font scale (never shrink)
 wordmark 78 ls14 | headline 132 | gpu total 104 | fahrenheit 42 | body 28 | label 23 ls3
 header (hdr) 23 ls3: GRAPHICS, MEMORY, WIFI, STORAGE · I/O, SPACE, THERMALS and the THERMALS
-sub-headers CPU, GPU0, GPU1, NVME M.2, FAN BANK 1, FAN BANK 2 (D-060); TOTAL GPU
+sub-headers CPU, GPU0, GPU1, NVME M.2, INTAKE FANS, EXHAUST FANS (D-060, D-063); TOTAL GPU
 UTILIZATION, the limit legend and the footer stay label (lbl)
 dim 24 | small 19 | celsius 25 | core label 18
 family: ui-monospace,"DejaVu Sans Mono",monospace
@@ -80,13 +80,17 @@ cpu.per_thread_sev and the GPU card percentages from gpus[].util_sev (ok, warn, 
 D-050); the browser never computes severity.
 Processor graph: null hist_pct points are not drawn; the line, area, PEAK and "now"
 markers draw the most recent contiguous non-null run only (hidden when there is none).
-Fans: rpm null renders the label "FAN BANK n: NO TELEMETRY" and "--" in the RPM slot,
-bar width 0 (a 28px "NO TELEMETRY" in the RPM slot would overlap bank 2 and pass the box
-edge).
+Fans (D-063): left cell INTAKE FANS (fans[0]), right cell EXHAUST FANS (fans[1]); the
+label text is the wire fans[].label ("FANS" if absent). rpm null renders "<label>: NO
+TELEMETRY" and "--" in the RPM slot, bar width 0 (a 28px "NO TELEMETRY" in the RPM slot
+would overlap the right cell and pass the box edge). At 16.85 px/char the labels end at
+x≈241.1 (INTAKE FANS), 477.0 (INTAKE FANS: NO TELEMETRY), 760.9 (EXHAUST FANS) and 996.8
+(EXHAUST FANS: NO TELEMETRY, 24.5 px inside 1021.3). The NO TELEMETRY forms pass the RPM
+text's x on the row above it (baseline 1822 vs 1844), as before.
 thermal bars: width = C/100 * bar width; the tick marks the device limit
 (NVMe: temp1_max 83.85 C, x=981.2).
-Throughput bars always print their scale: STORAGE "SCALE 200 MiB/s" (D-021); NETWORK
-"<n>% OF <S> MiB/s" (D-018; S set from T5 measurements). Never "% OF LINK".
+Throughput bars always print their scale: STORAGE "SCALE 200 MiB/s" (D-021, linear);
+NETWORK "LOG 1K–100M" (D-062, logarithmic). Never "% OF LINK".
 Never render a normalized bar without its stated scale.
 
 ## GRAPHICS box
@@ -107,16 +111,22 @@ Percentage text (right, "34%") = used_pct only. Detail line format as drawn:
 ("42.0 / 123 GiB · CACHE 62.0", D-037). SWAP line as drawn; the quip
 " — SPARE, UNLIKE ME" appears only at 0%.
 
-## NETWORK cell (D-018, D-046, D-049)
+## NETWORK cell (D-018, D-046, D-049, D-062)
 Header "WIFI" at x=561.7. Counters "CON n · ERR n", right-aligned at x=1012.6 (wire field
-connections.established). RX/TX right labels "<n>% OF <S> MiB/s". S = 40 MiB/s until T5
-measurements (D-037). Label fit is confirmed in the T10 Brave screenshot. The "% OF S"
-text stays unbounded while its bar clamps; revisit when T5 sets S (D-051). RX/TX tracks
-x=561.7 w=450.9.
+connections.established). RX/TX text "RX <rate>" / "TX <rate>" in automatic units
+(D-062): whole B/s below 1024, KiB/s 1 dp below 1 MiB/s, else MiB/s 1 dp, never
+"1024.0 KiB/s"; null renders "RX --". Bars are logarithmic from 1 KiB/s to 100 MiB/s:
+width = track width x clamp((log10(bps) - log10(1024)) / (log10(104857600) - log10(1024)),
+0, 1); 0 or null draws nothing (6 KiB/s ≈ 16%, 1 MiB/s ≈ 60%, 40 MiB/s ≈ 92%). Right labels
+the static "LOG 1K–100M" (class sm, right-aligned at x=1012.6, starts x≈877). The widest
+text "RX 1023.9 KiB/s" (24px) ends x≈778. RX/TX tracks x=561.7 w=450.9 (D-062 closes the
+D-051 (5) unbounded-text note).
 
-## STORAGE · I/O cell (D-021, D-049, D-060)
+## STORAGE · I/O cell (D-021, D-049, D-060, D-062)
 Header "STORAGE · I/O" (x=58.7, ends x≈277.7) and "SCALE 200 MiB/s" (right-aligned at
 x=501, starts x≈314.4): about 37 px clear, the D-049 (3) crowding is resolved by D-060.
+READ/WRITE text "READ <rate>" / "WRITE <rate>" in the D-062 automatic units (26px; the
+widest, "WRITE 1023.9 KiB/s", ends x≈340); bars stay linear at 200 MiB/s (D-021).
 READ/WRITE tracks x=58.7 w=442.3. No IOPS/QUEUE line (D-056).
 
 ## SPACE cell (D-019, D-049)

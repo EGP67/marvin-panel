@@ -347,6 +347,13 @@ func TestInvariants(t *testing.T) {
 				t.Errorf("%s: fan %v must be rpm null, max_rpm null, verdict unknown (D-027)", name, f["bank"])
 			}
 		}
+		for i, label := range []string{model.FanIntakeLabel, model.FanExhaustLabel} {
+			if i < len(fans) {
+				if f := fans[i].(map[string]any); f["label"] != label || f["bank"] != float64(i+1) {
+					t.Errorf("%s: fans[%d] = %v %v, want bank %d %q (D-063)", name, i, f["bank"], f["label"], i+1, label)
+				}
+			}
+		}
 
 		lines := arr[any](t, sub(t, doc, "phrase"), "lines")
 		if len(lines) < 1 || len(lines) > 2 {
@@ -498,7 +505,7 @@ func TestStartup(t *testing.T) {
 	if s.GPULine != "THE BRAINS ARE NOT ANSWERING." {
 		t.Errorf("startup: gpu_line = %q", s.GPULine)
 	}
-	if got := strings.Join(s.Phrase.Lines, " "); got != "FAN BANK 1: NO TELEMETRY. I'M COOLING BY FORCE OF WILL." {
+	if got := strings.Join(s.Phrase.Lines, " "); got != "INTAKE FANS: NO TELEMETRY. I'M COOLING BY FORCE OF WILL." {
 		t.Errorf("startup: phrase = %q", got)
 	}
 }

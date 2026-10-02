@@ -198,8 +198,9 @@ func phraseLines(scenario string, cpuTotalPct, cpuTempC, dataUsedPct float64) []
 			"MEANS BUT YOU'D ONLY CLEAN SOMETHING IMPORTANT.",
 		}
 	case "startup":
-		// docs/MARVIN.md fans seed line, wrapped to the 52-character line budget.
-		return []string{"FAN BANK 1: NO TELEMETRY.", "I'M COOLING BY FORCE OF WILL."}
+		// docs/MARVIN.md S1 for the first fan without telemetry (D-063), wrapped to the
+		// 52-character line budget.
+		return []string{model.FanIntakeLabel + ": NO TELEMETRY.", "I'M COOLING BY FORCE OF WILL."}
 	}
 	panic("genfixtures: no phrase for scenario " + scenario)
 }
@@ -254,11 +255,11 @@ func base(s spec) model.Snapshot {
 			HistUtilPct: make([]*float64, gpuHistLen),
 		})
 	}
-	// Every fan is unobserved until O2 decides (D-027).
+	// Every fan is unobserved in the fixtures (D-027); display order per D-063.
 	fans := make([]model.Fan, 0, 2)
-	for i := 0; i < 2; i++ {
+	for i, label := range []string{model.FanIntakeLabel, model.FanExhaustLabel} {
 		fans = append(fans, model.Fan{
-			Bank: i + 1, Label: fmt.Sprintf("FAN BANK %d", i+1),
+			Bank: i + 1, Label: label,
 			Verdict: model.FanVerdict(nil, nil, nil),
 		})
 	}

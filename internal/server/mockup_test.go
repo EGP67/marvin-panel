@@ -196,7 +196,7 @@ func TestMockupCoreMatrix(t *testing.T) {
 func TestMockupHeaders(t *testing.T) {
 	body, _ := mockupElems(t)
 	want := map[string]bool{"GRAPHICS": true, "MEMORY": true, "WIFI": true, "STORAGE · I/O": true, "SPACE": true,
-		"THERMALS": true, "CPU": true, "GPU0": true, "GPU1": true, "NVME M.2": true, "FAN BANK 1": true, "FAN BANK 2": true}
+		"THERMALS": true, "CPU": true, "GPU0": true, "GPU1": true, "NVME M.2": true, "INTAKE FANS": true, "EXHAUST FANS": true}
 	n := 0
 	for _, e := range body {
 		if e.name != "text" {

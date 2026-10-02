@@ -70,8 +70,8 @@ type DiskIO struct {
 	WriteBps *int64 `json:"write_bps"`
 }
 
-// Fan is one FAN BANK entry; rpm null is real telemetry (D-027). Verdict is
-// always set ("unknown" when rpm is null).
+// Fan is one fan role, INTAKE FANS or EXHAUST FANS (D-063); rpm null is real
+// telemetry (D-027). Verdict is always set ("unknown" when rpm is null).
 type Fan struct {
 	Bank    int    `json:"bank"`
 	Label   string `json:"label"`

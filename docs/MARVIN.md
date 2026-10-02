@@ -34,19 +34,22 @@ The authoritative pool; internal/mood/lines.go must match it (drift test). Every
 original writing, never a quotation. A line is eligible when its mood allows it, its
 condition holds, every {placeholder} resolves to a non-null value, and the render fits
 the phrase budget. "every band ok" = every thermal band, mount state and smart.state
-non-null and ok; "fans reporting" = fans[0].rpm non-null; "fan verdicts ok" = both
+non-null and ok; "fans reporting" = the EXHAUST FANS rpm non-null; "fan verdicts ok" = both
 verdicts ok; "hottest" = the hottest of CPU, GPU0, GPU1 and NVMe.
 
 Placeholders: {cpu} round(cpu.total_pct) · {threads} cpu.threads · {freq} freq_ghz 1 dp ·
-{conn} connections.established · {read} {write} {rx} {tx} MiB/s, integer at >= 10, else
-1 dp · {mem} round(memory.used_pct) · {load1} 2 dp · {days} floor(uptime_seconds/86400) ·
-{temp} round(cpu.temp_c) · {rpm} fans[0].rpm (exhaust bank) · {panic} panic_count ·
+{conn} connections.established · {read} {write} {rx} {tx} the rate with its unit in
+uppercase (D-062): whole B/S below 1024, KIB/S 1 dp below 1 MiB/s, else MIB/S 1 dp, never
+"1024.0 KIB/S" (e.g. "6.3 KIB/S") · {mem} round(memory.used_pct) · {load1} 2 dp · {days}
+floor(uptime_seconds/86400) · {temp} round(cpu.temp_c) · {rpm} the rpm of the fan labeled
+EXHAUST FANS, chosen by label, not position (D-063) · {panic} panic_count ·
 {iowait} round(iowait_pct) · {hot} {t} round(hottest) · {dev} that device as CPU, GPU0,
 GPU1 or NVME · {nvme} round(temps.nvme_c) · {mount} lowest-free mount, real case · {free}
 floor(100*free/(used+free)) of that mount · {used} 100 - {free} · {gib} that mount's free
-bytes in GiB, 1 dp · {err} rx_err + tx_err · {hh}:{mm} local time · {b} first bank with
-null rpm. GPU line: {n} round(hottest GPU temp) · {util} round(mean GPU util_pct) ·
-{vram} sum of mem_used_mib/1024, 1 dp.
+bytes in GiB, 1 dp · {err} rx_err + tx_err · {hh}:{mm} local time · {fan} the label of
+the first fan with null rpm, in display order (INTAKE FANS, then EXHAUST FANS; D-063).
+GPU line: {n} round(hottest GPU temp) · {util} round(mean GPU util_pct) · {vram} sum of
+mem_used_mib/1024, 1 dp.
 
 ### Bored (B)
 
@@ -57,7 +60,7 @@ null rpm. GPU line: {n} round(hottest GPU temp) · {util} round(mean GPU util_pc
 | B3 | idle | {cpu}% CPU. {threads} THREADS, AND NOT ONE OF THEM HAS ANYTHING TO SAY. | always |
 | B4 | freq | THE CORES ARE IDLING AT {freq} GHZ. THEY COULD DO MORE. THEY DON'T SEE THE POINT. | freq < 3.0 |
 | B5 | conn | {conn} CONNECTIONS OPEN. NONE OF THEM ARE TO ME. | always |
-| B6 | disk | THE DISK IS READING {read} MIB/S. EVEN IT HAS STOPPED LOOKING. | read < 1 MiB/s |
+| B6 | disk | THE DISK IS READING {read}. EVEN IT HAS STOPPED LOOKING. | read < 1 MiB/s |
 | B7 | memory | MEMORY {mem}% USED. THE REST IS SAVING ITSELF FOR SOMETHING BETTER. | mem < 30 |
 | B8 | idle | I COUNTED THE IDLE CYCLES. ALL OF THEM. TWICE. | cpu < 5 |
 | B9 | load | LOAD {load1}. THE SHIP IS SO QUIET I CAN HEAR THE FANS DISAPPROVE. | fans reporting |
@@ -100,8 +103,8 @@ null rpm. GPU line: {n} round(hottest GPU temp) · {util} round(mean GPU util_pc
 | A1 | iowait | IOWAIT {iowait}%. EVERYONE WANTS TO WRITE. NOBODY ASKED HOW I FEEL ABOUT IT. | iowait > 15 |
 | A2 | heat | {hot} DEGREES. I RAN COLD ONCE. NOBODY NOTICED. | hottest > 80; topic rule |
 | A3 | iowait | IOWAIT {iowait}%. THE DISK IS THE BOTTLENECK. I'M JUST THE ONE WHO WAITS. | iowait > 15 |
-| A4 | disk | WRITING {write} MIB/S. SOMEONE IS SAVING SOMETHING. NOT ME, OBVIOUSLY. | iowait > 15 and write >= 1 |
-| A5 | disk | READING {read} MIB/S. EVERYTHING IS BEING READ EXCEPT THE ROOM. | iowait > 15 and read >= 1 |
+| A4 | disk | WRITING {write}. SOMEONE IS SAVING SOMETHING. NOT ME, OBVIOUSLY. | iowait > 15 and write >= 1 |
+| A5 | disk | READING {read}. EVERYTHING IS BEING READ EXCEPT THE ROOM. | iowait > 15 and read >= 1 |
 | A6 | heat | {dev} AT {t} DEGREES. I'D OPEN A WINDOW IF THE SHIP HAD ONE. | hottest > 80; topic rule |
 | A7 | heat | {t} DEGREES IN {dev}. I DIDN'T ASK FOR THIS. I'M NEVER ASKED. | hottest > 80; topic rule |
 | A8 | heat | THE FANS ARE AT {rpm} RPM AND IT'S STILL {t} DEGREES. EFFORT IS OVERRATED. | hottest > 80 and fans reporting |
@@ -127,10 +130,10 @@ null rpm. GPU line: {n} round(hottest GPU temp) · {util} round(mean GPU util_pc
 
 | id | family | text | condition |
 |---|---|---|---|
-| S1 | fans | FAN BANK {b}: NO TELEMETRY. I'M COOLING BY FORCE OF WILL. | a fan rpm null |
-| S2 | network | {rx} MIB/S INBOUND AND STILL NOBODY CALLS. | rx non-null |
+| S1 | fans | {fan}: NO TELEMETRY. I'M COOLING BY FORCE OF WILL. | a fan rpm null |
+| S2 | network | {rx} INBOUND AND STILL NOBODY CALLS. | rx non-null |
 | S3 | time | I'M NOT ASLEEP. I'M IGNORING YOU WITH MY EYES CLOSED. | local 00:00-05:59 |
-| S4 | network | {tx} MIB/S OUTBOUND. I'M SENDING THINGS INTO THE VOID. IT DOESN'T REPLY. | tx non-null |
+| S4 | network | {tx} OUTBOUND. I'M SENDING THINGS INTO THE VOID. IT DOESN'T REPLY. | tx non-null |
 | S5 | network | {err} NETWORK ERRORS. THE WIFI AND I ARE NOT SPEAKING. | {err} > 0 |
 | S6 | time | IT'S {hh}:{mm}. EVERYONE ELSE IS ASLEEP. SOMEBODY HAS TO WATCH THE SHIP. | local 00:00-05:59 |
 | S7 | uptime | UP {days} DAYS. NOBODY HAS RESTARTED ME. NOBODY HAS THOUGHT TO. | days >= 7 |
