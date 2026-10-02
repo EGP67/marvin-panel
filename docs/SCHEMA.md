@@ -98,7 +98,9 @@ label that won), `nvme_max_c` float|null (the sensor's `temp1_max`).
 
 ## `fans[]` — absence is real telemetry (D-027)
 `bank` int (1-based), `label` string, `rpm` int|null, `max_rpm` int|null, `verdict`
-string. Until O2 decides, every fan has `rpm` null, `max_rpm` null, `verdict` "unknown".
+string. Live values come from hwmon nct6687 (D-057); labels and order per D-063: fans[0]
+"INTAKE FANS" (fan6_input), fans[1] "EXHAUST FANS" (fan3_input). `rpm` is null when the
+sensor is unreadable or absent (then `max_rpm` null, `verdict` "unknown").
 
 ## `network[]` — exactly one entry (D-018)
 `if` string, always "wlp14s0"; `rx_bps`/`tx_bps` int|null (bytes/sec deltas);

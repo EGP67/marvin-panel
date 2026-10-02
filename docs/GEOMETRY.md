@@ -100,6 +100,10 @@ class quip at 28px (italic gold #f0b429), <= 38 characters (D-037).
 Card headers "GPU0 · RTX 3060" / "GPU1 · RTX 3060" from gpus[].display_name (D-020).
 Total bar track x=58.7 w=971.3; cards x=50 / 553 w=477; sparkline baselines x=67.4..509.6
 and 570.4..1012.6 (app.js reads them, D-060).
+Sparkline color (D-064): each card's sparkline is gold #f0b429 while that card's current
+util_pct is above 10%, cyan #5fd8ef at or below 10% or when null; line weight unchanged
+(stroke-width 3). Here gold means "active", not "warning": a documented exception to the
+color language; everywhere else gold keeps its warning meaning (D-016, D-050).
 
 ## MEMORY cell (D-034)
 Track x=58.7 y=1250 w=442.3 h=22 rx=11 fill #12303c (D-060).

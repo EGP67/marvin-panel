@@ -171,11 +171,11 @@
   <text x="561.7" y="1272" font-size="24" fill="#cdeef7">RX 18.8 MiB/s</text>
   <text x="1012.6" y="1272" text-anchor="end" class="sm">LOG 1K–100M</text>
   <rect x="561.7" y="1282" width="450.9" height="16" rx="8" fill="#12303c"/>
-  <rect x="561.7" y="1282" width="212.5" height="16" rx="8" fill="url(#bar)"/>
+  <rect x="561.7" y="1282" width="385.6" height="16" rx="8" fill="url(#bar)"/>
   <text x="561.7" y="1326" font-size="24" fill="#cdeef7">TX 2.4 MiB/s</text>
   <text x="1012.6" y="1326" text-anchor="end" class="sm">LOG 1K–100M</text>
   <rect x="561.7" y="1336" width="450.9" height="16" rx="8" fill="#12303c"/>
-  <rect x="561.7" y="1336" width="27.1" height="16" rx="8" fill="url(#bar)"/>
+  <rect x="561.7" y="1336" width="305.1" height="16" rx="8" fill="url(#bar)"/>
 
   <!-- STORAGE: I/O | SPACE -->
   <rect x="24" y="1388" width="1032" height="170" rx="14" fill="#08131c" stroke="#153a48"/>

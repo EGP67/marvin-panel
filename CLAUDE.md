@@ -103,7 +103,8 @@ tools/discover.sh.
    report BLOCKED rather than commit.
 8. Report: write the report file the prompt names. Its last lines are
    "OUTPUT: c2c <report path>" (the owner runs it) and then READY or BLOCKED alone on the
-   final line. READY only if every command passed.
+   final line. READY only if every command passed. Reports go to /tmp/marvin-<task>.md and
+   are deleted once the owner has relayed them; never keep reports in the repo or under /srv.
 9. Commit messages contain no Co-Authored-By or 'Generated with Claude Code' lines;
    never use --no-verify (D-048). New clones run git config core.hooksPath .githooks.
 

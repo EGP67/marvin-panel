@@ -17,6 +17,11 @@
   var GIB = 1073741824;
   var COLORS = { ok: '#5fd8ef', warn: '#f0b429', danger: '#ff6a3d' };
   var NULL_COLOR = '#6b9dad';
+  // D-064: a GPU card's sparkline is gold while its util_pct is above 10%, else cyan.
+  // Gold means "active" here, not "warning" (documented exception).
+  var SPARK_ACTIVE_PCT = 10;
+  var SPARK_ACTIVE = '#f0b429';
+  var SPARK_IDLE = '#5fd8ef';
   var THERMAL_OK_TEXT = '#cdeef7';
   var DASH = '--';
   var TOP_TRIM = 24; // D-054: empty design px cropped above the title
@@ -50,6 +55,12 @@
     if (el) { el.style.fill = color; }
   }
 
+  // Inline style, like setFill, so the stroke attribute drawn in the mockup is overridden.
+  function setStroke(id, color) {
+    var el = $(id);
+    if (el) { el.style.stroke = color; }
+  }
+
   function setWidth(id, w) { setAttr(id, 'width', isNum(w) ? Math.max(0, w) : 0); }
 
   // D-060: horizontal geometry is read from the SVG at load (tracks, plot range,
@@ -74,6 +85,12 @@
     G.peakMin = G.gx1 + (THIN_PEAK_MIN - THIN_PLOT_X1) * (G.gx2 - G.gx1) / (THIN_PLOT_X2 - THIN_PLOT_X1);
     G.spark = [0, 1].map(function (g) {
       return { x1: num('b-gpu' + g + '-base', 'x1'), x2: num('b-gpu' + g + '-base', 'x2') };
+    });
+    // D-064: the drawn fan labels are the fallback when the snapshot carries none.
+    G.fanLabel = [0, 1].map(function (b) {
+      var el = $('b-fan-' + b + '-label');
+      var n = el && el.firstChild;
+      return n && n.nodeType === 3 ? n.nodeValue : '';
     });
     G.core = [];
     for (var c = 0; c < 12; c++) {
@@ -225,6 +242,8 @@
       var run = lastRun(hist);
       var sp = G.spark[g];
       setAttr(p + '-spark', 'points', run ? points(hist, run, sp.x1, (sp.x2 - sp.x1) / 29, 1160, 0.28).join(' ') : '');
+      var up = get(gpu, 'util_pct');
+      setStroke(p + '-spark', isNum(up) && up > SPARK_ACTIVE_PCT ? SPARK_ACTIVE : SPARK_IDLE);
     }
   }
 
@@ -305,8 +324,8 @@
       var rpm = get(f, 'rpm');
       var max = get(f, 'max_rpm');
       var p = 'b-fan-' + b;
-      // D-063: the wire label is the display text.
-      var label = get(f, 'label') || 'FANS';
+      // D-063: the wire label is the display text; D-064: the drawn label is the fallback.
+      var label = get(f, 'label') || G.fanLabel[b];
       if (isNum(rpm)) {
         setText(p + '-label', label);
         setWidth(p + '-bar', isNum(max) && max > 0 ? tw('fan-' + b) * Math.min(1, rpm / max) : 0);

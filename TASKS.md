@@ -47,6 +47,8 @@ WIDE-1 Phase 1 Wide (D-060); fallback tag phase1-thin.
 GPU-BOOT D-061: NVIDIA nodes appearing after start (unit ordering + once-per-boot self-heal).
 NETFANS D-062, D-063: automatic rate units, Wi-Fi log bar (LOG 1K–100M), INTAKE FANS /
     EXHAUST FANS bound by name, intake on the left.
+GPUSPARK D-064: GPU sparkline gold above 10% utilization; drawn Wi-Fi bars on the log scale;
+    drawn fan labels as the page fallback; stale fan wording fixed.
 
 ## Owner tasks
 O1  HDMI PROBE — DONE for the SunFounder 7" (2026-09-29; see HANDOFF.md, D-044, D-045).

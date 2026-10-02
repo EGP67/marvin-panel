@@ -99,8 +99,8 @@ the verdicts rely on:
 - All four fans on a chain share one PWM domain: bank RPM is a proxy for intent, not for
   the health of any single fan.
 - Infer dead fans rather than trusting RPM: RPM pinned near its maximum while
-  temperatures rise means "BANK n RUNNING BUT NOT COOLING" (verdict not_cooling, SCHEMA
-  invariant 6).
+  temperatures rise means "<FAN> RUNNING BUT NOT COOLING" (INTAKE FANS / EXHAUST FANS;
+  verdict not_cooling, SCHEMA invariant 6).
 - If the chains are Molex-powered rather than on PWM/tach splitters, no tach reaches the
   board and O2 cannot succeed.
 - Per-fan health would need a hub with per-port tachs (optional hardware,

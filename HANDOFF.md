@@ -28,6 +28,7 @@ Marvin's and stays attributed to him.
 - Phase 1 Wide (D-060) live; owner one-week run, then Phase 2.
 - GPU boot race fixed (D-061).
 - Wi-Fi log scale and fan names (D-062, D-063); deploy pending.
+- GPU sparkline activity color (D-064); deploy pending.
 
 ### Fallback: Phase 1 Thin (D-060)
 The last 64 px-margin build is tagged phase1-thin (commit 1ac87b6) and archived as
